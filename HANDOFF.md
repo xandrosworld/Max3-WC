@@ -82,23 +82,35 @@ Xay dung MVP web app noi bo cho khoang 70 nguoi theo dung URD V6 slim:
 - [x] Railway pre-deploy chay migration.
 - [ ] PostgreSQL co backup daily/weekly trong Railway.
 
-## Trang thai ban giao 2026-06-05
+## Trang thai production 2026-06-06
 
-- Railway project: `wc-2026-portal`
-- Web service: `wc-2026-portal`
-- Production URL: `https://wc-2026-portal-production.up.railway.app`
+- Railway project: `virtuous-grace`
+- Web service: `Max3-WC`
+- Production URL: `https://max3-wc-production.up.railway.app`
 - PostgreSQL migration: da ap dung, schema up to date.
 - Production deploy: `SUCCESS`, health check `/api/health` tra `200`.
 - Smoke test: login tao session, ep doi mat khau lan dau, route admin chan user chua login.
 - Production chi bootstrap admin dau tien; khong seed tai khoan demo co mat khau cong khai.
 - Kiem tra code: typecheck, lint, production build va 8 unit test deu pass.
-- Security audit: 0 high/critical; con 4 moderate tu dependency Next/PostCSS va ExcelJS/uuid.
+## Doi chieu URD V6 slim
 
-## Viec van hanh con lai
+- [x] 2 man nguoi choi: matches/vote va leaderboard.
+- [x] 1 man admin gom tran, user, payment, export va audit.
+- [x] Mot quy chung; accumulated loss chi tang khi thua.
+- [x] European Handicap 3 cua, handicap nguyen, ty so 90 phut.
+- [x] Khong vote thi khong tinh, khong phat.
+- [x] Polling 45 giay, khong WebSocket.
+- [x] Nhap tay tran/keo/ty so theo yeu cau MVP hien tai.
+- [x] API lich/ty so duoc de ngoai MVP theo chi dao sau URD.
+- [x] NSHV, vote vo dich, auto-bracket va ngan hang tu dong de ngoai MVP.
 
-- [ ] Dang nhap admin production va doi mat khau lan dau.
+## Viec con lai truoc khi dung that
+
+- [ ] Dang nhap admin production va doi mat khau tam: `Max3@2026!Admin`.
 - [ ] Bat Daily/Weekly backup cho PostgreSQL trong Railway dashboard.
-- [ ] Tao user va tran that; chi chay `db:seed` tren local/demo.
+- [ ] Tao danh sach user that va khoa/mo/reset mat khau thu voi 1 user mau.
+- [ ] Tao 1 tran test, mo keo, vote bang 2 user, dong keo, nhap ty so va export Excel de acceptance test end-to-end.
+- [ ] Xoa du lieu test/seed neu co truoc khi mo cho ca phong ban.
 
 ## Ngoai scope MVP
 

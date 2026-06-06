@@ -31,10 +31,10 @@ export default async function MatchesPage() {
     <div className="space-y-7">
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-700">
+          <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
             Kèo đang mở
           </p>
-          <h1 className="mt-1 text-3xl font-black text-emerald-950">Chọn một trong ba cửa</h1>
+          <h1 className="mt-1 text-3xl font-extrabold text-emerald-950">Chọn một trong ba cửa</h1>
         </div>
         <div className="max-w-xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           <b>Hòa-sau-chấp</b>: sau khi trừ số bàn chấp khỏi đội bị chấp, nếu hai đội
@@ -58,17 +58,17 @@ export default async function MatchesPage() {
                   </span>
                   <p className="text-sm font-semibold">{formatVietnamTime(match.kickoffAt)} · UTC+7</p>
                 </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-black ${locked ? "bg-slate-600" : "bg-emerald-500"}`}>
+                <span className={`rounded-full px-3 py-1 text-xs font-extrabold ${locked ? "bg-slate-600" : "bg-emerald-500"}`}>
                   {locked ? "ĐÃ KHÓA" : "ĐANG MỞ"}
                 </span>
               </div>
               <div className="p-5">
                 <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center">
-                  <h2 className="text-xl font-black text-emerald-950">{match.teamA}</h2>
-                  <span className="rounded-full bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-800">
+                  <h2 className="text-xl font-extrabold text-emerald-950">{match.teamA}</h2>
+                  <span className="rounded-full bg-emerald-50 px-3 py-2 text-xs font-extrabold text-emerald-800">
                     VS
                   </span>
-                  <h2 className="text-xl font-black text-emerald-950">{match.teamB}</h2>
+                  <h2 className="text-xl font-extrabold text-emerald-950">{match.teamB}</h2>
                 </div>
                 <div className="mt-4 flex flex-wrap justify-center gap-2 text-sm font-semibold">
                   <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-900">
@@ -98,7 +98,7 @@ export default async function MatchesPage() {
                           <input type="hidden" name="choice" value={choice} />
                           <button
                             disabled={locked}
-                            className={`w-full rounded-xl px-2 py-2 text-sm font-black ${selected ? "bg-emerald-700 text-white" : "bg-white text-emerald-950 hover:bg-emerald-100"} disabled:cursor-not-allowed disabled:opacity-70`}
+                            className={`w-full rounded-xl px-2 py-2 text-sm font-bold ${selected ? "bg-emerald-700 text-white" : "bg-white text-emerald-950 hover:bg-emerald-100"} disabled:cursor-not-allowed disabled:opacity-70`}
                           >
                             {choiceLabel(choice, match.teamA, match.teamB)}
                           </button>

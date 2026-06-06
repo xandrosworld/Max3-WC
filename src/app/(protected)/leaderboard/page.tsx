@@ -10,10 +10,10 @@ export default async function LeaderboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-700">
+        <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
           Vinh danh nhà tài trợ
         </p>
-        <h1 className="mt-1 text-3xl font-black text-emerald-950">Leaderboard quỹ chung</h1>
+        <h1 className="mt-1 text-3xl font-extrabold text-emerald-950">Leaderboard quỹ chung</h1>
         <p className="mt-2 text-sm text-slate-500">
           Mặc định xếp theo accumulated loss giảm dần.
         </p>
@@ -30,13 +30,13 @@ export default async function LeaderboardPage() {
           <tbody>
             {rows.map((row, index) => (
               <tr key={row.id} className={`border-t border-slate-100 ${index % 2 ? "bg-slate-50/70" : ""}`}>
-                <td className="px-4 py-3 text-lg font-black text-emerald-700">#{row.rank}</td>
+                <td className="px-4 py-3 text-lg font-extrabold text-emerald-700">#{row.rank}</td>
                 <td className="px-4 py-3 font-bold text-emerald-950">{row.name}</td>
                 <td className="px-4 py-3 text-slate-600">{row.department}</td>
                 <td className="px-4 py-3">{row.voted}</td>
                 <td className="px-4 py-3">{row.correct}</td>
                 <td className="px-4 py-3">{row.accuracy.toFixed(1)}%</td>
-                <td className="px-4 py-3 font-black text-red-700">{formatCurrency(row.loss)}</td>
+                <td className="px-4 py-3 font-extrabold text-red-700">{formatCurrency(row.loss)}</td>
                 <td className="px-4 py-3 font-semibold text-emerald-700">{formatCurrency(row.paid)}</td>
                 <td className={`px-4 py-3 font-bold ${row.outstanding > 0 ? "text-amber-700" : "text-emerald-700"}`}>
                   {formatCurrency(row.outstanding)}

@@ -31,7 +31,7 @@ export function ChangePasswordForm({ accountLabel }: { accountLabel: string }) {
       className="w-full max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-xl"
     >
       <div>
-        <h1 className="text-2xl font-black text-emerald-950">Đổi mật khẩu</h1>
+        <h1 className="text-2xl font-extrabold text-emerald-950">Đổi mật khẩu</h1>
         <p className="mt-1 text-sm text-slate-500">
           Nhập mật khẩu hiện tại vừa được quản trị viên cấp, sau đó đặt mật khẩu mới.
         </p>

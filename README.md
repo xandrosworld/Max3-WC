@@ -22,9 +22,9 @@ Danh sách milestone và Definition of Done nằm trong [HANDOFF.md](HANDOFF.md)
 
 ## Deployment hiện tại
 
-- URL: `https://wc-2026-portal-production.up.railway.app`
-- Railway project: `wc-2026-portal`
-- Services: `wc-2026-portal` và `Postgres`
+- URL: `https://max3-wc-production.up.railway.app`
+- Railway project: `virtuous-grace`
+- Services: `Max3-WC` và `Postgres`
 - Health check: `GET /api/health`
 
 Production chỉ có admin bootstrap đầu tiên và không chạy demo seed để tránh lộ các mật khẩu
@@ -108,7 +108,7 @@ Trong web service:
 - Add Reference Variable `DATABASE_URL` từ PostgreSQL service.
 - Thêm `BETTER_AUTH_SECRET` tối thiểu 32 ký tự ngẫu nhiên.
 - Thêm `BETTER_AUTH_URL` bằng public URL của app, ví dụ
-  `https://wc-2026-portal-production.up.railway.app`.
+  `https://max3-wc-production.up.railway.app`.
 
 Repository có sẵn [railway.json](railway.json):
 
