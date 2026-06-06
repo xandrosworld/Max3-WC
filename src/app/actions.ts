@@ -305,25 +305,66 @@ export async function voidPaymentAction(formData: FormData) {
   revalidatePath("/leaderboard");
 }
 
-export async function changePasswordAction(formData: FormData) {
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(8).max(128),
+  newPassword: z.string().min(8).max(128),
+  confirmPassword: z.string().min(8).max(128),
+});
+
+export type ChangePasswordState = {
+  error: string;
+};
+
+function getAuthErrorCode(error: unknown) {
+  const code = (error as { body?: { code?: unknown } } | undefined)?.body?.code;
+  return typeof code === "string" ? code : undefined;
+}
+
+export async function changePasswordAction(
+  _previousState: ChangePasswordState,
+  formData: FormData,
+): Promise<ChangePasswordState> {
   const user = await requireUser();
-  const currentPassword = z
-    .string()
-    .min(8)
-    .max(128)
-    .parse(formString(formData, "currentPassword"));
-  const newPassword = z
-    .string()
-    .min(8)
-    .max(128)
-    .parse(formString(formData, "newPassword"));
-  await auth.api.changePassword({
-    headers: await headers(),
-    body: { currentPassword, newPassword, revokeOtherSessions: true },
+  const parsed = changePasswordSchema.safeParse({
+    currentPassword: formString(formData, "currentPassword"),
+    newPassword: formString(formData, "newPassword"),
+    confirmPassword: formString(formData, "confirmPassword"),
   });
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { mustChangePassword: false },
-  });
+
+  if (!parsed.success) {
+    return { error: "Mật khẩu phải có từ 8 đến 128 ký tự." };
+  }
+
+  const { currentPassword, newPassword, confirmPassword } = parsed.data;
+  if (newPassword !== confirmPassword) {
+    return { error: "Mật khẩu mới và ô xác nhận chưa trùng nhau." };
+  }
+
+  try {
+    await auth.api.changePassword({
+      headers: await headers(),
+      body: { currentPassword, newPassword, revokeOtherSessions: true },
+    });
+  } catch (error) {
+    if (getAuthErrorCode(error) === "INVALID_PASSWORD") {
+      return { error: "Mật khẩu hiện tại không đúng. Vui lòng nhập lại mật khẩu vừa được cấp." };
+    }
+    console.error("Failed to change password", error);
+    return { error: "Không thể đổi mật khẩu lúc này. Vui lòng thử lại." };
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { mustChangePassword: false },
+    });
+  } catch (error) {
+    console.error("Failed to clear mustChangePassword", error);
+    return {
+      error:
+        "Mật khẩu đã được đổi nhưng tài khoản chưa được mở khóa. Hãy dùng mật khẩu mới và thử lại.",
+    };
+  }
+
   redirect("/matches");
 }
