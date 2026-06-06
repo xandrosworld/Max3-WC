@@ -1,0 +1,48 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { AutoRefresh } from "@/components/auto-refresh";
+import { LogoutButton } from "@/components/logout-button";
+import { requireUser } from "@/lib/session";
+
+export default async function ProtectedLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const user = await requireUser();
+  if (user.mustChangePassword) redirect("/change-password");
+
+  return (
+    <div className="min-h-screen">
+      <AutoRefresh seconds={45} />
+      <header className="sticky top-0 z-20 border-b border-emerald-900/15 bg-emerald-950/95 text-white shadow-lg backdrop-blur">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <Link href="/matches" className="font-black tracking-tight">
+            WC <span className="text-emerald-300">2026</span> PORTAL
+          </Link>
+          <nav className="flex items-center gap-1 text-sm font-semibold">
+            <Link className="rounded-lg px-3 py-2 hover:bg-white/10" href="/matches">
+              Trận đấu
+            </Link>
+            <Link className="rounded-lg px-3 py-2 hover:bg-white/10" href="/leaderboard">
+              Leaderboard
+            </Link>
+            {user.role === "admin" && (
+              <Link className="rounded-lg px-3 py-2 hover:bg-white/10" href="/admin">
+                Admin
+              </Link>
+            )}
+          </nav>
+          <div className="flex items-center gap-3">
+            <div className="hidden text-right text-xs sm:block">
+              <p className="font-bold">{user.name}</p>
+              <p className="text-emerald-200">{user.department}</p>
+            </div>
+            <LogoutButton />
+          </div>
+        </div>
+      </header>
+      <main className="mx-auto max-w-7xl px-4 py-7">{children}</main>
+    </div>
+  );
+}

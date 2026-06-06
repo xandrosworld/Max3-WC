@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MatchStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  SETTLED
+  CANCELLED
+}
+
+enum RoundType {
+  GROUP
+  ROUND_OF_32
+  ROUND_OF_16
+  QUARTER_FINAL
+  SEMI_FINAL
+  FINAL
+}
+
+enum TeamSide {
+  TEAM_A
+  TEAM_B
+}
+
+enum VoteChoice {
+  TEAM_A
+  DRAW
+  TEAM_B
+}
+
+enum LossTransactionType {
+  LOSS
+  REVERSAL
+}
+
+model User {
+  id                 String   @id @default(cuid())
+  name               String
+  email              String   @unique
+  emailVerified      Boolean  @default(false)
+  image              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  username           String?  @unique
+  displayUsername    String?
+  role               String   @default("user")
+  banned             Boolean  @default(false)
+  banReason          String?
+  banExpires         DateTime?
+  department         String   @default("")
+  mustChangePassword Boolean  @default(false)
+
+  sessions           Session[]
+  accounts           Account[]
+  votes              Vote[]
+  lossTransactions   LossTransaction[]
+  payments           Payment[]        @relation("PaymentOwner")
+  confirmedPayments  Payment[]        @relation("PaymentConfirmer")
+  voidedPayments     Payment[]        @relation("PaymentVoider")
+  settledResults     MatchResult[]     @relation("ResultSettler")
+  resultRevisions    ResultRevision[]  @relation("RevisionCreator")
+  auditLogs          AuditLog[]        @relation("AuditActor")
+}
+
+model Session {
+  id             String   @id
+  expiresAt      DateTime
+  token          String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  ipAddress      String?
+  userAgent      String?
+  userId         String
+  impersonatedBy String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+model Match {
+  id              String      @id @default(cuid())
+  teamA           String
+  teamB           String
+  kickoffAt       DateTime    @db.Timestamptz(3)
+  round           RoundType
+  contributionAmount Int
+  handicap        Int
+  handicappedTeam TeamSide?
+  status          MatchStatus @default(DRAFT)
+  deletedAt       DateTime?   @db.Timestamptz(3)
+  createdAt       DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime    @updatedAt @db.Timestamptz(3)
+
+  votes            Vote[]
+  result           MatchResult?
+  resultRevisions  ResultRevision[]
+  lossTransactions LossTransaction[]
+
+  @@index([status, kickoffAt])
+}
+
+model Vote {
+  id        String     @id @default(cuid())
+  userId    String
+  matchId   String
+  choice    VoteChoice
+  createdAt DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime   @updatedAt @db.Timestamptz(3)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  match Match @relation(fields: [matchId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, matchId])
+  @@index([matchId, choice])
+}
+
+model MatchResult {
+  id              String     @id @default(cuid())
+  matchId         String     @unique
+  teamAScore      Int
+  teamBScore      Int
+  winningChoice   VoteChoice
+  revision        Int
+  settledAt       DateTime   @default(now()) @db.Timestamptz(3)
+  settledById     String
+
+  match       Match @relation(fields: [matchId], references: [id], onDelete: Restrict)
+  settledBy   User  @relation("ResultSettler", fields: [settledById], references: [id], onDelete: Restrict)
+}
+
+model ResultRevision {
+  id            String     @id @default(cuid())
+  matchId       String
+  revision      Int
+  teamAScore    Int
+  teamBScore    Int
+  winningChoice VoteChoice
+  createdById   String
+  createdAt     DateTime   @default(now()) @db.Timestamptz(3)
+
+  match     Match @relation(fields: [matchId], references: [id], onDelete: Restrict)
+  createdBy User  @relation("RevisionCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@unique([matchId, revision])
+}
+
+model LossTransaction {
+  id                 String              @id @default(cuid())
+  userId             String
+  matchId            String
+  amount             Int
+  type               LossTransactionType
+  settlementRevision Int
+  note               String?
+  createdAt          DateTime            @default(now()) @db.Timestamptz(3)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  match Match @relation(fields: [matchId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, matchId, settlementRevision, type])
+  @@index([userId])
+}
+
+model Payment {
+  id            String    @id @default(cuid())
+  userId        String
+  amount        Int
+  paidAt        DateTime  @db.Timestamptz(3)
+  note          String?
+  confirmedById String
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
+  voidedAt      DateTime? @db.Timestamptz(3)
+  voidedById    String?
+  voidReason    String?
+
+  user        User  @relation("PaymentOwner", fields: [userId], references: [id], onDelete: Restrict)
+  confirmedBy User  @relation("PaymentConfirmer", fields: [confirmedById], references: [id], onDelete: Restrict)
+  voidedBy    User? @relation("PaymentVoider", fields: [voidedById], references: [id], onDelete: Restrict)
+
+  @@index([userId, voidedAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  action     String
+  entityType String
+  entityId   String
+  details    Json?
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  actor User @relation("AuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+}

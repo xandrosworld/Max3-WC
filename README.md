@@ -1,36 +1,173 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WC 2026 Portal - V6 Slim
 
-## Getting Started
+Web app nội bộ dự đoán World Cup 2026 cho khoảng 70 người. MVP bám theo
+`URD_WC-2026_v6_slim.md.pdf`, ưu tiên nhập tay trận, kèo và tỷ số để vận hành
+chắc chắn.
 
-First, run the development server:
+## Chức năng
+
+- Đăng nhập username/password; phân quyền user/admin.
+- Admin tạo user, sửa hồ sơ, khóa/mở và reset mật khẩu.
+- Người chơi vote một trong ba cửa European Handicap và đổi vote trước khi khóa.
+- Server khóa vote đúng 5 phút trước giờ bóng lăn.
+- Công khai số lượng và danh sách người vote từng cửa.
+- Admin CRUD trận, mở/đóng kèo, nhập tỷ số 90 phút và tính/tính lại kết quả.
+- Loss ledger bất biến: thua cộng mức đóng góp, thắng không đổi, không vote không tính.
+- Payment ledger: đã nộp, void bản ghi sai, còn thiếu và trạng thái thanh toán.
+- Leaderboard sort accumulated loss giảm dần.
+- Export Excel leaderboard và payments.
+- Polling giao diện 45 giây, không WebSocket.
+
+Danh sách milestone và Definition of Done nằm trong [HANDOFF.md](HANDOFF.md).
+
+## Deployment hiện tại
+
+- URL: `https://wc-2026-portal-production.up.railway.app`
+- Railway project: `wc-2026-portal`
+- Services: `wc-2026-portal` và `Postgres`
+- Health check: `GET /api/health`
+
+Production chỉ có admin bootstrap đầu tiên và không chạy demo seed để tránh lộ các mật khẩu
+mẫu. Dùng `npm run db:seed` cho local/demo.
+
+## Stack
+
+- Next.js 16 App Router + TypeScript + Tailwind CSS
+- Railway PostgreSQL
+- Prisma ORM
+- Better Auth
+- Zod
+- ExcelJS
+- Vitest
+
+## Chạy local
+
+Yêu cầu: Node.js 20+ và PostgreSQL.
+
+```bash
+npm install
+cp .env.example .env
+npm run db:generate
+npm run db:migrate
+npm run db:seed
+npm run dev
+```
+
+Mở `http://localhost:3000`.
+
+### Tài khoản seed
+
+| Vai trò | Username | Password |
+|---|---|---|
+| Admin | `admin` | `Admin@123456` |
+| User | `an.nguyen` | `User@123456` |
+| User | `binh.tran` | `User@123456` |
+| User | `chi.le` | `User@123456` |
+
+Không dùng mật khẩu seed trên production.
+
+## Lệnh thường dùng
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run db:migrate
+npm run db:seed
+npm run db:bootstrap-admin
+npm run db:studio
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Luật settlement
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Ví dụ Brazil -2 vs Serbia, tỷ số 90 phút 2-0:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```text
+Brazil sau chấp = 2 - 2 = 0
+Serbia sau chấp = 0
+Cửa thắng = Hòa-sau-chấp
+```
 
-## Learn More
+- Mỗi lần tính kết quả tạo một `ResultRevision`.
+- Vote sai tạo `LossTransaction` dương bằng mức đóng góp.
+- Khi sửa tỷ số, hệ thống tạo transaction âm đảo các loss cũ rồi tạo loss mới.
+- Cùng một tỷ số/cửa thắng bấm lại sẽ không cộng tiền trùng.
+- Tỷ lệ đúng chỉ tính trên các vote của trận đã có kết quả.
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy Railway
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Tạo một Railway Project gồm:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Một PostgreSQL service.
+2. Một web service kết nối GitHub repository này.
 
-## Deploy on Vercel
+Trong web service:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Add Reference Variable `DATABASE_URL` từ PostgreSQL service.
+- Thêm `BETTER_AUTH_SECRET` tối thiểu 32 ký tự ngẫu nhiên.
+- Thêm `BETTER_AUTH_URL` bằng public URL của app, ví dụ
+  `https://wc-2026-portal-production.up.railway.app`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Repository có sẵn [railway.json](railway.json):
+
+- Build: `npm run build`
+- Pre-deploy migration: `npm run db:deploy`
+- Start: `npm run start`
+- Health check: `/api/health`
+
+Sau deploy đầu tiên, seed demo nếu thực sự cần:
+
+```bash
+railway run npm run db:seed
+```
+
+Không chạy seed demo trên production sau khi đã có dữ liệu thật.
+
+Để tạo duy nhất tài khoản admin đầu tiên trên production, đặt tạm
+`ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `ADMIN_DEPARTMENT`, rồi chạy:
+
+```bash
+railway run npm run db:bootstrap-admin
+```
+
+Script không ghi đè admin đã tồn tại. Xóa `ADMIN_PASSWORD` khỏi biến môi trường sau khi
+bootstrap và đổi mật khẩu ngay ở lần đăng nhập đầu tiên.
+
+### Backup
+
+Trong PostgreSQL service của Railway:
+
+- Bật Daily backup.
+- Bật Weekly backup.
+- Tạo manual backup trước migration lớn hoặc thao tác dữ liệu hàng loạt.
+
+## Biến môi trường
+
+```env
+DATABASE_URL="postgresql://..."
+BETTER_AUTH_SECRET="at-least-32-random-characters"
+BETTER_AUTH_URL="http://localhost:3000"
+NEXT_PUBLIC_APP_NAME="WC 2026 Portal"
+
+# Chỉ dùng tạm khi bootstrap admin đầu tiên
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD="at-least-12-characters"
+ADMIN_NAME="Quản trị viên"
+ADMIN_DEPARTMENT="Ban tổ chức"
+```
+
+## Kiểm soát an toàn
+
+- Tất cả thao tác vote, admin, settlement và payment đều xác thực ở server.
+- Mức đóng góp luôn được server suy ra từ vòng đấu.
+- Kèo có vote không được sửa đội, giờ, vòng hoặc handicap.
+- Trận bị xóa là soft-delete.
+- Payment sai được void, không hard-delete.
+- Thời gian lưu UTC với PostgreSQL `timestamptz`, hiển thị UTC+7.
+
+## Ngoài scope MVP
+
+Không có API lịch/tỷ số, WebSocket, auto-bracket, auto-thua khi không vote, thắng
+giảm nợ, trần 0đ, NSHV, vote đội vô địch hoặc kiểm tra ngân hàng tự động.

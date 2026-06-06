@@ -1,0 +1,276 @@
+import { MatchStatus, RoundType, TeamSide } from "@prisma/client";
+import {
+  addPaymentAction,
+  createUserAction,
+  deleteMatchAction,
+  resetPasswordAction,
+  setMatchStatusAction,
+  setUserLockAction,
+  settleMatchAction,
+  updateUserAction,
+  upsertMatchAction,
+  voidPaymentAction,
+} from "@/app/actions";
+import {
+  formatCurrency,
+  formatHandicap,
+  formatVietnamTime,
+  ROUND_LABELS,
+  toVietnamDateTimeLocal,
+} from "@/lib/domain";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/session";
+
+export const dynamic = "force-dynamic";
+
+const inputClass =
+  "rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100";
+const buttonClass =
+  "rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-800";
+const dangerClass =
+  "rounded-xl bg-red-700 px-3 py-2 text-xs font-bold text-white hover:bg-red-800";
+
+export default async function AdminPage() {
+  await requireAdmin();
+  const [matches, users, payments, audits] = await Promise.all([
+    prisma.match.findMany({
+      where: { deletedAt: null },
+      orderBy: { kickoffAt: "asc" },
+      include: { result: true, _count: { select: { votes: true } } },
+    }),
+    prisma.user.findMany({ orderBy: { name: "asc" } }),
+    prisma.payment.findMany({
+      orderBy: { paidAt: "desc" },
+      include: { user: true, confirmedBy: true, voidedBy: true },
+    }),
+    prisma.auditLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      include: { actor: true },
+    }),
+  ]);
+
+  return (
+    <div className="space-y-10">
+      <section className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-700">
+            Control room
+          </p>
+          <h1 className="mt-1 text-3xl font-black text-emerald-950">Quản trị MVP</h1>
+        </div>
+        <a
+          href="/api/admin/export"
+          className="rounded-xl bg-emerald-950 px-5 py-3 text-sm font-black text-white hover:bg-emerald-800"
+        >
+          Export Excel
+        </a>
+      </section>
+
+      <AdminSection id="matches" title="Trận đấu & kết quả" description="Mức đóng góp tự gán theo vòng và được kiểm tra ở server.">
+        <form action={upsertMatchAction} className="grid gap-3 rounded-2xl bg-emerald-50 p-4 md:grid-cols-4">
+          <input name="teamA" required placeholder="Đội A" className={inputClass} />
+          <input name="teamB" required placeholder="Đội B" className={inputClass} />
+          <input name="kickoffLocal" required type="datetime-local" className={inputClass} />
+          <select name="round" className={inputClass}>
+            {Object.values(RoundType).map((round) => (
+              <option key={round} value={round}>{ROUND_LABELS[round]}</option>
+            ))}
+          </select>
+          <input name="handicap" required type="number" min="0" step="1" defaultValue="0" placeholder="Mức chấp" className={inputClass} />
+          <select name="handicappedTeam" className={inputClass}>
+            <option value="">Không đội nào (kèo 0)</option>
+            <option value={TeamSide.TEAM_A}>Đội A bị chấp</option>
+            <option value={TeamSide.TEAM_B}>Đội B bị chấp</option>
+          </select>
+          <button className={`${buttonClass} md:col-span-2`}>Tạo trận</button>
+        </form>
+
+        <div className="mt-4 space-y-4">
+          {matches.map((match) => (
+            <article key={match.id} className="rounded-2xl border border-slate-200 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-black text-emerald-950">{match.teamA} vs {match.teamB}</h3>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {ROUND_LABELS[match.round]} · {formatVietnamTime(match.kickoffAt)} · {formatHandicap(match)} · {formatCurrency(match.contributionAmount)}
+                  </p>
+                  <p className="mt-1 text-xs font-bold text-slate-500">
+                    {match.status} · {match._count.votes} vote
+                    {match.result && ` · KQ 90': ${match.result.teamAScore}-${match.result.teamBScore} · revision ${match.result.revision}`}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {match.status !== MatchStatus.SETTLED && (
+                    <>
+                      <StatusButton id={match.id} status={MatchStatus.OPEN} label="Mở kèo" />
+                      <StatusButton id={match.id} status={MatchStatus.CLOSED} label="Đóng kèo" />
+                    </>
+                  )}
+                  {match.status !== MatchStatus.SETTLED && !match.result && (
+                    <form action={deleteMatchAction}>
+                      <input type="hidden" name="id" value={match.id} />
+                      <button className={dangerClass}>Xóa mềm</button>
+                    </form>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                {match.status !== MatchStatus.SETTLED && !match.result && (
+                  <details className="rounded-xl bg-slate-50 p-3">
+                    <summary className="text-sm font-black text-slate-700">Sửa thông tin trận</summary>
+                    <form action={upsertMatchAction} className="mt-3 grid gap-2 sm:grid-cols-2">
+                      <input type="hidden" name="id" value={match.id} />
+                      <input name="teamA" required defaultValue={match.teamA} className={inputClass} />
+                      <input name="teamB" required defaultValue={match.teamB} className={inputClass} />
+                      <input name="kickoffLocal" required type="datetime-local" defaultValue={toVietnamDateTimeLocal(match.kickoffAt)} className={inputClass} />
+                      <select name="round" defaultValue={match.round} className={inputClass}>
+                        {Object.values(RoundType).map((round) => <option key={round} value={round}>{ROUND_LABELS[round]}</option>)}
+                      </select>
+                      <input name="handicap" required type="number" min="0" step="1" defaultValue={match.handicap} className={inputClass} />
+                      <select name="handicappedTeam" defaultValue={match.handicappedTeam ?? ""} className={inputClass}>
+                        <option value="">Không đội nào (kèo 0)</option>
+                        <option value={TeamSide.TEAM_A}>Đội A bị chấp</option>
+                        <option value={TeamSide.TEAM_B}>Đội B bị chấp</option>
+                      </select>
+                      <button className={`${buttonClass} sm:col-span-2`}>Lưu sửa đổi</button>
+                    </form>
+                  </details>
+                )}
+                <form action={settleMatchAction} className="grid grid-cols-[1fr_1fr_auto] gap-2 rounded-xl bg-amber-50 p-3">
+                  <input type="hidden" name="matchId" value={match.id} />
+                  <input name="teamAScore" required type="number" min="0" defaultValue={match.result?.teamAScore ?? ""} placeholder={`Bàn ${match.teamA}`} className={inputClass} />
+                  <input name="teamBScore" required type="number" min="0" defaultValue={match.result?.teamBScore ?? ""} placeholder={`Bàn ${match.teamB}`} className={inputClass} />
+                  <button className="rounded-xl bg-amber-600 px-3 py-2 text-sm font-black text-white hover:bg-amber-700">
+                    Tính kết quả
+                  </button>
+                </form>
+              </div>
+            </article>
+          ))}
+        </div>
+      </AdminSection>
+
+      <AdminSection id="users" title="Người dùng" description="Tạo tài khoản nội bộ, sửa hồ sơ, khóa và reset mật khẩu.">
+        <form action={createUserAction} className="grid gap-3 rounded-2xl bg-emerald-50 p-4 md:grid-cols-4">
+          <input name="username" required placeholder="username" className={inputClass} />
+          <input name="name" required placeholder="Họ tên" className={inputClass} />
+          <input name="department" placeholder="Đơn vị/phòng ban" className={inputClass} />
+          <input name="password" required minLength={8} placeholder="Mật khẩu tạm" className={inputClass} />
+          <button className={`${buttonClass} md:col-span-4`}>Tạo user</button>
+        </form>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {users.map((user) => (
+            <article key={user.id} className="rounded-2xl border border-slate-200 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-black text-emerald-950">{user.name}</h3>
+                  <p className="text-xs text-slate-500">@{user.username} · {user.role} · {user.banned ? "Đã khóa" : "Đang hoạt động"}</p>
+                </div>
+                <form action={setUserLockAction}>
+                  <input type="hidden" name="id" value={user.id} />
+                  <input type="hidden" name="banned" value={String(!user.banned)} />
+                  <button className={user.banned ? buttonClass : dangerClass}>{user.banned ? "Mở khóa" : "Khóa"}</button>
+                </form>
+              </div>
+              <form action={updateUserAction} className="mt-3 grid grid-cols-[1fr_1fr_auto] gap-2">
+                <input type="hidden" name="id" value={user.id} />
+                <input name="name" required defaultValue={user.name} className={inputClass} />
+                <input name="department" defaultValue={user.department} className={inputClass} />
+                <button className={buttonClass}>Lưu</button>
+              </form>
+              <form action={resetPasswordAction} className="mt-2 grid grid-cols-[1fr_auto] gap-2">
+                <input type="hidden" name="id" value={user.id} />
+                <input name="newPassword" required minLength={8} placeholder="Mật khẩu mới" className={inputClass} />
+                <button className="rounded-xl bg-slate-700 px-3 py-2 text-xs font-bold text-white">Reset mật khẩu</button>
+              </form>
+            </article>
+          ))}
+        </div>
+      </AdminSection>
+
+      <AdminSection id="payments" title="Tiền nộp quỹ" description="Payment là ledger; bản ghi sai được void thay vì xóa.">
+        <form action={addPaymentAction} className="grid gap-3 rounded-2xl bg-emerald-50 p-4 md:grid-cols-4">
+          <select name="userId" required className={inputClass}>
+            <option value="">Chọn người nộp</option>
+            {users.map((user) => <option key={user.id} value={user.id}>{user.name} · {user.department}</option>)}
+          </select>
+          <input name="amount" required type="number" min="1" step="1000" placeholder="Số tiền" className={inputClass} />
+          <input name="paidAt" required type="datetime-local" defaultValue={toVietnamDateTimeLocal(new Date())} className={inputClass} />
+          <input name="note" placeholder="Ghi chú" className={inputClass} />
+          <button className={`${buttonClass} md:col-span-4`}>Ghi nhận đã nộp</button>
+        </form>
+        <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200">
+          <table className="w-full min-w-[850px] text-sm">
+            <thead className="bg-slate-800 text-left text-white">
+              <tr>{["Người nộp", "Số tiền", "Ngày giờ", "Ghi chú", "Xác nhận", "Trạng thái", "Thao tác"].map((x) => <th key={x} className="px-3 py-2">{x}</th>)}</tr>
+            </thead>
+            <tbody>
+              {payments.map((payment) => (
+                <tr key={payment.id} className="border-t border-slate-100">
+                  <td className="px-3 py-2 font-bold">{payment.user.name}</td>
+                  <td className="px-3 py-2">{formatCurrency(payment.amount)}</td>
+                  <td className="px-3 py-2">{formatVietnamTime(payment.paidAt)}</td>
+                  <td className="px-3 py-2">{payment.note || "-"}</td>
+                  <td className="px-3 py-2">{payment.confirmedBy.name}</td>
+                  <td className="px-3 py-2">{payment.voidedAt ? `Đã void bởi ${payment.voidedBy?.name}` : "Có hiệu lực"}</td>
+                  <td className="px-3 py-2">
+                    {!payment.voidedAt && (
+                      <form action={voidPaymentAction} className="flex gap-2">
+                        <input type="hidden" name="id" value={payment.id} />
+                        <input name="reason" required placeholder="Lý do void" className={`${inputClass} w-32`} />
+                        <button className={dangerClass}>Void</button>
+                      </form>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </AdminSection>
+
+      <AdminSection id="audit" title="Audit gần nhất" description="Dấu vết thao tác quản trị quan trọng.">
+        <div className="space-y-2">
+          {audits.map((log) => (
+            <div key={log.id} className="flex flex-wrap justify-between gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm">
+              <span><b>{log.actor.name}</b> · {log.action} · {log.entityType}/{log.entityId}</span>
+              <span className="text-slate-500">{formatVietnamTime(log.createdAt)}</span>
+            </div>
+          ))}
+        </div>
+      </AdminSection>
+    </div>
+  );
+}
+
+function AdminSection({
+  id,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section id={id} className="rounded-3xl border border-emerald-950/10 bg-white p-5 shadow-lg shadow-emerald-950/5">
+      <h2 className="text-xl font-black text-emerald-950">{title}</h2>
+      <p className="mb-4 mt-1 text-sm text-slate-500">{description}</p>
+      {children}
+    </section>
+  );
+}
+
+function StatusButton({ id, status, label }: { id: string; status: MatchStatus; label: string }) {
+  return (
+    <form action={setMatchStatusAction}>
+      <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="status" value={status} />
+      <button className="rounded-xl bg-slate-700 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800">{label}</button>
+    </form>
+  );
+}
