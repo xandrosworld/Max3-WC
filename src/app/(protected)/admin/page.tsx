@@ -8,6 +8,7 @@ import {
   setMatchStatusAction,
   setUserLockAction,
   settleMatchAction,
+  syncWorldCupFixturesAction,
   updateUserAction,
   upsertMatchAction,
   voidPaymentAction,
@@ -40,6 +41,15 @@ export default async function AdminPage({
   const params = (await searchParams) ?? {};
   const importedMatches = typeof params.importedMatches === "string" ? params.importedMatches : null;
   const skippedMatches = typeof params.skippedMatches === "string" ? params.skippedMatches : null;
+  const fixtureCreated = typeof params.fixtureCreated === "string" ? params.fixtureCreated : null;
+  const fixtureUpdated = typeof params.fixtureUpdated === "string" ? params.fixtureUpdated : null;
+  const fixtureProtected =
+    typeof params.fixtureProtected === "string" ? params.fixtureProtected : null;
+  const fixtureSkippedRounds =
+    typeof params.fixtureSkippedRounds === "string" ? params.fixtureSkippedRounds : null;
+  const fixtureSyncError =
+    typeof params.fixtureSyncError === "string" ? params.fixtureSyncError : null;
+  const apiFootballConfigured = Boolean(process.env.API_FOOTBALL_KEY);
   const [matches, users, payments, audits] = await Promise.all([
     prisma.match.findMany({
       where: { deletedAt: null },
@@ -76,6 +86,47 @@ export default async function AdminPage({
       </section>
 
       <AdminSection id="matches" title="Trận đấu & kết quả" description="Mức đóng góp tự gán theo vòng và được kiểm tra ở server.">
+        <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-emerald-950">
+                Đồng bộ lịch World Cup 2026 từ API-Football
+              </h3>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                Tự lấy toàn bộ lịch với `league=1`, `season=2026`. Trận mới được tạo ở trạng
+                thái nháp; kèo và dữ liệu đã có vote không bị ghi đè.
+              </p>
+            </div>
+            <form action={syncWorldCupFixturesAction}>
+              <button
+                disabled={!apiFootballConfigured}
+                className={`${buttonClass} disabled:cursor-not-allowed disabled:bg-slate-400`}
+              >
+                Đồng bộ lịch ngay
+              </button>
+            </form>
+          </div>
+          {!apiFootballConfigured && (
+            <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              Chưa cấu hình `API_FOOTBALL_KEY` trên Railway nên nút đang bị khóa.
+            </p>
+          )}
+          {fixtureSyncError && (
+            <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
+              Đồng bộ thất bại: {fixtureSyncError}
+            </p>
+          )}
+          {fixtureCreated && (
+            <p className="mt-3 rounded-xl bg-white px-3 py-2 text-sm text-emerald-900">
+              Đồng bộ xong: tạo {fixtureCreated}, cập nhật {fixtureUpdated ?? 0}, giữ nguyên{" "}
+              {fixtureProtected ?? 0} trận đã có vote/kết quả
+              {fixtureSkippedRounds && Number(fixtureSkippedRounds) > 0
+                ? `, bỏ qua ${fixtureSkippedRounds} loại vòng chưa có rule V6.`
+                : "."}
+            </p>
+          )}
+        </div>
+
         {importedMatches && (
           <p className="mb-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
             Đã import {importedMatches} trận

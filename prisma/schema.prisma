@@ -118,18 +118,21 @@ model Verification {
 }
 
 model Match {
-  id              String      @id @default(cuid())
-  teamA           String
-  teamB           String
-  kickoffAt       DateTime    @db.Timestamptz(3)
-  round           RoundType
+  id                 String      @id @default(cuid())
+  teamA              String
+  teamB              String
+  kickoffAt          DateTime    @db.Timestamptz(3)
+  round              RoundType
   contributionAmount Int
-  handicap        Int
-  handicappedTeam TeamSide?
-  status          MatchStatus @default(DRAFT)
-  deletedAt       DateTime?   @db.Timestamptz(3)
-  createdAt       DateTime    @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime    @updatedAt @db.Timestamptz(3)
+  handicap           Int
+  handicappedTeam    TeamSide?
+  status             MatchStatus @default(DRAFT)
+  externalSource     String?
+  externalFixtureId  String?
+  lastSyncedAt       DateTime?   @db.Timestamptz(3)
+  deletedAt          DateTime?   @db.Timestamptz(3)
+  createdAt          DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime    @updatedAt @db.Timestamptz(3)
 
   votes            Vote[]
   result           MatchResult?
@@ -137,6 +140,7 @@ model Match {
   lossTransactions LossTransaction[]
 
   @@index([status, kickoffAt])
+  @@unique([externalSource, externalFixtureId])
 }
 
 model Vote {

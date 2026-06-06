@@ -13,6 +13,7 @@ chắc chắn.
 - Công khai số lượng và danh sách người vote từng cửa.
 - Admin CRUD trận, mở/đóng kèo, nhập tỷ số 90 phút và tính/tính lại kết quả.
 - Admin có bulk import trận từ Excel/CSV để không phải tạo từng trận.
+- Admin có nút đồng bộ lịch World Cup 2026 từ API-Football.
 - Loss ledger bất biến: thua cộng mức đóng góp, thắng không đổi, không vote không tính.
 - Payment ledger: đã nộp, void bản ghi sai, còn thiếu và trạng thái thanh toán.
 - Leaderboard sort accumulated loss giảm dần.
@@ -151,6 +152,7 @@ DATABASE_URL="postgresql://..."
 BETTER_AUTH_SECRET="at-least-32-random-characters"
 BETTER_AUTH_URL="http://localhost:3000"
 NEXT_PUBLIC_APP_NAME="WC 2026 Portal"
+API_FOOTBALL_KEY="api-sports-key"
 
 # Chỉ dùng tạm khi bootstrap admin đầu tiên
 ADMIN_USERNAME="admin"
@@ -168,7 +170,21 @@ ADMIN_DEPARTMENT="Ban tổ chức"
 - Payment sai được void, không hard-delete.
 - Thời gian lưu UTC với PostgreSQL `timestamptz`, hiển thị UTC+7.
 
+### Đồng bộ lịch World Cup
+
+Tạo API key tại API-Sports rồi đặt `API_FOOTBALL_KEY` trong Railway. Ở màn Admin,
+bấm **Đồng bộ lịch ngay** để lấy lịch World Cup 2026. Trận mới được tạo ở trạng thái
+`DRAFT`; app không ghi đè thông tin trận đã có vote hoặc kết quả.
+
+API-Football dùng:
+
+```text
+GET https://v3.football.api-sports.io/fixtures?league=1&season=2026
+```
+
+Trận tranh hạng ba hiện được bỏ qua vì V6 slim chưa quy định mức đóng góp cho vòng này.
+
 ## Ngoài scope MVP
 
-Không có API lịch/tỷ số, WebSocket, auto-bracket, auto-thua khi không vote, thắng
+Không có API tỷ số tự động, WebSocket, auto-bracket, auto-thua khi không vote, thắng
 giảm nợ, trần 0đ, NSHV, vote đội vô địch hoặc kiểm tra ngân hàng tự động.

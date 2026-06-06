@@ -12,6 +12,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import {
+  API_FOOTBALL_SOURCE,
+  fetchWorldCupFixtures,
+} from "@/lib/api-football";
 import { getContributionAmount, isVoteLocked } from "@/lib/domain";
 import { parseMatchImport } from "@/lib/match-import";
 import { prisma } from "@/lib/prisma";
@@ -175,6 +179,121 @@ export async function bulkImportMatchesAction(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/matches");
   redirect(`/admin?importedMatches=${rowsToCreate.length}&skippedMatches=${skipped}`);
+}
+
+function externalMatchKey(source: string, fixtureId: string) {
+  return `${source}|${fixtureId}`;
+}
+
+function scheduledMatchKey(input: { teamA: string; teamB: string; kickoffAt: Date }) {
+  return [
+    input.teamA.trim().toLowerCase(),
+    input.teamB.trim().toLowerCase(),
+    input.kickoffAt.getTime(),
+  ].join("|");
+}
+
+export async function syncWorldCupFixturesAction() {
+  const admin = await requireAdmin();
+  const apiKey = process.env.API_FOOTBALL_KEY ?? "";
+
+  let fetched;
+  try {
+    fetched = await fetchWorldCupFixtures(apiKey);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Không thể gọi API-Football.";
+    redirect(`/admin?fixtureSyncError=${encodeURIComponent(message)}`);
+  }
+
+  const existingMatches = await prisma.match.findMany({
+    where: { deletedAt: null },
+    include: { result: true, _count: { select: { votes: true } } },
+  });
+  const byExternalId = new Map(
+    existingMatches
+      .filter((match) => match.externalSource && match.externalFixtureId)
+      .map((match) => [
+        externalMatchKey(match.externalSource!, match.externalFixtureId!),
+        match,
+      ]),
+  );
+  const bySchedule = new Map(existingMatches.map((match) => [scheduledMatchKey(match), match]));
+
+  let created = 0;
+  let updated = 0;
+  let protectedMatches = 0;
+  const syncedAt = new Date();
+
+  await prisma.$transaction(async (tx) => {
+    for (const fixture of fetched.fixtures) {
+      const externalKey = externalMatchKey(
+        fixture.externalSource,
+        fixture.externalFixtureId,
+      );
+      const existing =
+        byExternalId.get(externalKey) ?? bySchedule.get(scheduledMatchKey(fixture));
+
+      if (!existing) {
+        await tx.match.create({
+          data: {
+            ...fixture,
+            status: MatchStatus.DRAFT,
+            handicap: 0,
+            handicappedTeam: null,
+            lastSyncedAt: syncedAt,
+          },
+        });
+        created += 1;
+        continue;
+      }
+
+      const hasProtectedData = existing._count.votes > 0 || Boolean(existing.result);
+      if (hasProtectedData) {
+        await tx.match.update({
+          where: { id: existing.id },
+          data: {
+            externalSource: fixture.externalSource,
+            externalFixtureId: fixture.externalFixtureId,
+            lastSyncedAt: syncedAt,
+          },
+        });
+        protectedMatches += 1;
+        continue;
+      }
+
+      await tx.match.update({
+        where: { id: existing.id },
+        data: {
+          teamA: fixture.teamA,
+          teamB: fixture.teamB,
+          kickoffAt: fixture.kickoffAt,
+          round: fixture.round,
+          contributionAmount: fixture.contributionAmount,
+          externalSource: fixture.externalSource,
+          externalFixtureId: fixture.externalFixtureId,
+          lastSyncedAt: syncedAt,
+        },
+      });
+      updated += 1;
+    }
+  });
+
+  await audit(admin.id, "WORLD_CUP_FIXTURES_SYNCED", "Match", API_FOOTBALL_SOURCE, {
+    created,
+    updated,
+    protectedMatches,
+    skippedRounds: fetched.skippedRounds,
+  });
+  revalidatePath("/admin");
+  revalidatePath("/matches");
+
+  const params = new URLSearchParams({
+    fixtureCreated: String(created),
+    fixtureUpdated: String(updated),
+    fixtureProtected: String(protectedMatches),
+    fixtureSkippedRounds: String(fetched.skippedRounds.length),
+  });
+  redirect(`/admin?${params.toString()}`);
 }
 
 export async function setMatchStatusAction(formData: FormData) {

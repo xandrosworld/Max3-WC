@@ -102,7 +102,7 @@ Xay dung MVP web app noi bo cho khoang 70 nguoi theo dung URD V6 slim:
 - [x] Khong vote thi khong tinh, khong phat.
 - [x] Polling 45 giay, khong WebSocket.
 - [x] Nhap tay tran/keo/ty so theo yeu cau MVP hien tai.
-- [x] API lich/ty so duoc de ngoai MVP theo chi dao sau URD.
+- [x] API-Football dong bo lich tran theo yeu cau bo sung; ty so van nhap tay.
 - [x] NSHV, vote vo dich, auto-bracket va ngan hang tu dong de ngoai MVP.
 
 ## Viec con lai truoc khi dung that
@@ -116,7 +116,7 @@ Xay dung MVP web app noi bo cho khoang 70 nguoi theo dung URD V6 slim:
 ## Ngoai scope MVP
 
 - WebSocket/realtime subscription.
-- API lich/ty so, auto-bracket.
+- API ty so tu dong va auto-bracket.
 - Casso/check ngan hang/AI doc bien lai.
 - Auto-thua khi khong vote.
 - Thang giam no, clawback, tran 0d.
