@@ -12,6 +12,7 @@ chắc chắn.
 - Server khóa vote đúng 5 phút trước giờ bóng lăn.
 - Công khai số lượng và danh sách người vote từng cửa.
 - Admin CRUD trận, mở/đóng kèo, nhập tỷ số 90 phút và tính/tính lại kết quả.
+- Admin có bulk import trận từ Excel/CSV để không phải tạo từng trận.
 - Loss ledger bất biến: thua cộng mức đóng góp, thắng không đổi, không vote không tính.
 - Payment ledger: đã nộp, void bản ghi sai, còn thiếu và trạng thái thanh toán.
 - Leaderboard sort accumulated loss giảm dần.

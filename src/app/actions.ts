@@ -13,6 +13,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getContributionAmount, isVoteLocked } from "@/lib/domain";
+import { parseMatchImport } from "@/lib/match-import";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireUser } from "@/lib/session";
 import { settleMatch } from "@/lib/settlement";
@@ -130,6 +131,50 @@ export async function upsertMatchAction(formData: FormData) {
   }
   revalidatePath("/admin");
   revalidatePath("/matches");
+}
+
+function matchImportKey(input: { teamA: string; teamB: string; kickoffAt: Date }) {
+  return `${input.teamA.trim().toLowerCase()}|${input.teamB.trim().toLowerCase()}|${input.kickoffAt.getTime()}`;
+}
+
+export async function bulkImportMatchesAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const input = z.string().trim().min(1).max(50_000).parse(formString(formData, "matchesBulk"));
+  const parsed = parseMatchImport(input);
+
+  if (parsed.errors.length > 0) {
+    throw new Error(`Import trận lỗi:\n${parsed.errors.slice(0, 12).join("\n")}`);
+  }
+
+  const existing = await prisma.match.findMany({
+    where: { deletedAt: null },
+    select: { teamA: true, teamB: true, kickoffAt: true },
+  });
+  const existingKeys = new Set(existing.map(matchImportKey));
+  const seenKeys = new Set<string>();
+  const rowsToCreate = [];
+  let skipped = 0;
+
+  for (const row of parsed.rows) {
+    const key = matchImportKey(row);
+    if (existingKeys.has(key) || seenKeys.has(key)) {
+      skipped += 1;
+      continue;
+    }
+    seenKeys.add(key);
+    rowsToCreate.push(row);
+  }
+
+  if (rowsToCreate.length > 0) {
+    await prisma.match.createMany({ data: rowsToCreate });
+  }
+  await audit(admin.id, "MATCHES_BULK_IMPORTED", "Match", "bulk", {
+    imported: rowsToCreate.length,
+    skipped,
+  });
+  revalidatePath("/admin");
+  revalidatePath("/matches");
+  redirect(`/admin?importedMatches=${rowsToCreate.length}&skippedMatches=${skipped}`);
 }
 
 export async function setMatchStatusAction(formData: FormData) {

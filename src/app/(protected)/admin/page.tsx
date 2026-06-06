@@ -1,6 +1,7 @@
 import { MatchStatus, RoundType, TeamSide } from "@prisma/client";
 import {
   addPaymentAction,
+  bulkImportMatchesAction,
   createUserAction,
   deleteMatchAction,
   resetPasswordAction,
@@ -30,8 +31,15 @@ const buttonClass =
 const dangerClass =
   "rounded-xl bg-red-700 px-3 py-2 text-xs font-bold text-white hover:bg-red-800";
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   await requireAdmin();
+  const params = (await searchParams) ?? {};
+  const importedMatches = typeof params.importedMatches === "string" ? params.importedMatches : null;
+  const skippedMatches = typeof params.skippedMatches === "string" ? params.skippedMatches : null;
   const [matches, users, payments, audits] = await Promise.all([
     prisma.match.findMany({
       where: { deletedAt: null },
@@ -68,6 +76,34 @@ export default async function AdminPage() {
       </section>
 
       <AdminSection id="matches" title="Trận đấu & kết quả" description="Mức đóng góp tự gán theo vòng và được kiểm tra ở server.">
+        {importedMatches && (
+          <p className="mb-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+            Đã import {importedMatches} trận
+            {skippedMatches && Number(skippedMatches) > 0 ? `, bỏ qua ${skippedMatches} dòng trùng.` : "."}
+          </p>
+        )}
+
+        <details className="mb-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
+          <summary className="font-bold text-emerald-950">Import nhiều trận từ Excel/CSV</summary>
+          <form action={bulkImportMatchesAction} className="mt-3 space-y-3">
+            <textarea
+              name="matchesBulk"
+              required
+              rows={6}
+              placeholder={`Đội A,Đội B,Giờ Việt Nam,Vòng,Chấp,Đội bị chấp,Trạng thái
+Mexico,South Africa,2026-06-12 02:00,GROUP,0,,DRAFT
+Brazil,Serbia,2026-06-15 02:00,GROUP,2,TEAM_A,OPEN`}
+              className={`${inputClass} min-h-40 w-full font-mono`}
+            />
+            <p className="text-xs leading-5 text-slate-600">
+              Dán từ Excel cũng được: tab/comma/semicolon đều đọc được. Giờ nhập theo UTC+7.
+              Vòng dùng `GROUP`, `ROUND_OF_32`, `ROUND_OF_16`, `QUARTER_FINAL`, `SEMI_FINAL`, `FINAL`.
+              Trạng thái nên để `DRAFT` để chưa hiện ra màn người chơi.
+            </p>
+            <button className={buttonClass}>Import danh sách trận</button>
+          </form>
+        </details>
+
         <form action={upsertMatchAction} className="grid gap-3 rounded-2xl bg-emerald-50 p-4 md:grid-cols-4">
           <input name="teamA" required placeholder="Đội A" className={inputClass} />
           <input name="teamB" required placeholder="Đội B" className={inputClass} />

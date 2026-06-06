@@ -66,6 +66,7 @@ Xay dung MVP web app noi bo cho khoang 70 nguoi theo dung URD V6 slim:
 ### M4 - Admin va quy
 
 - [x] CRUD tran va mo/dong keo.
+- [x] Bulk import tran tu Excel/CSV de giam thao tac tao tay.
 - [x] Muc bet theo vong dung V6.
 - [x] Handicap chi la so nguyen khong am, chon doi bi chap.
 - [x] Khong cho sua thong tin keo nguy hiem sau khi da co vote.
