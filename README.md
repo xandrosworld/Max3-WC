@@ -1,8 +1,8 @@
 # WC 2026 Portal - V6 Slim
 
 Web app nội bộ dự đoán World Cup 2026 cho khoảng 70 người. MVP bám theo
-`URD_WC-2026_v6_slim.md.pdf`, ưu tiên nhập tay trận, kèo và tỷ số để vận hành
-chắc chắn.
+`URD_WC-2026_v6_slim.md.pdf`, ưu tiên đồng bộ lịch từ football-data.org, tự lấy tỷ
+số 90 phút khi API đã có kết quả và vẫn giữ nhập tay làm đường lùi vận hành.
 
 ## Chức năng
 
@@ -11,9 +11,9 @@ chắc chắn.
 - Người chơi vote một trong ba cửa European Handicap và đổi vote trước khi khóa.
 - Server khóa vote đúng 5 phút trước giờ bóng lăn.
 - Công khai số lượng và danh sách người vote từng cửa.
-- Admin CRUD trận, mở/đóng kèo, nhập tỷ số 90 phút và tính/tính lại kết quả.
+- Admin CRUD trận, mở/đóng kèo, lấy/nhập tỷ số 90 phút và tính/tính lại kết quả.
 - Admin có bulk import trận từ Excel/CSV để không phải tạo từng trận.
-- Admin có nút đồng bộ lịch World Cup 2026 từ API-Football.
+- Admin có nút đồng bộ lịch World Cup 2026 từ football-data.org.
 - Loss ledger bất biến: thua cộng mức đóng góp, thắng không đổi, không vote không tính.
 - Payment ledger: đã nộp, void bản ghi sai, còn thiếu và trạng thái thanh toán.
 - Leaderboard sort accumulated loss giảm dần.
@@ -152,7 +152,7 @@ DATABASE_URL="postgresql://..."
 BETTER_AUTH_SECRET="at-least-32-random-characters"
 BETTER_AUTH_URL="http://localhost:3000"
 NEXT_PUBLIC_APP_NAME="WC 2026 Portal"
-API_FOOTBALL_KEY="api-sports-key"
+FOOTBALL_DATA_TOKEN="football-data-org-token"
 
 # Chỉ dùng tạm khi bootstrap admin đầu tiên
 ADMIN_USERNAME="admin"
@@ -170,21 +170,27 @@ ADMIN_DEPARTMENT="Ban tổ chức"
 - Payment sai được void, không hard-delete.
 - Thời gian lưu UTC với PostgreSQL `timestamptz`, hiển thị UTC+7.
 
-### Đồng bộ lịch World Cup
+### Đồng bộ lịch và tỷ số World Cup
 
-Tạo API key tại API-Sports rồi đặt `API_FOOTBALL_KEY` trong Railway. Ở màn Admin,
+Tạo token tại football-data.org rồi đặt `FOOTBALL_DATA_TOKEN` trong Railway. Ở màn Admin,
 bấm **Đồng bộ lịch ngay** để lấy lịch World Cup 2026. Trận mới được tạo ở trạng thái
 `DRAFT`; app không ghi đè thông tin trận đã có vote hoặc kết quả.
 
-API-Football dùng:
+football-data.org dùng:
 
 ```text
-GET https://v3.football.api-sports.io/fixtures?league=1&season=2026
+GET https://api.football-data.org/v4/competitions/WC/matches?season=2026
+GET https://api.football-data.org/v4/matches/{fixture_id}
+Header: X-Auth-Token: <FOOTBALL_DATA_TOKEN>
 ```
+
+Khi trận đã kết thúc, admin có thể bấm **Lấy tỷ số API**. App ưu tiên `score.regularTime`;
+nếu trận kết thúc trong 90 phút và API chỉ có `score.fullTime`, app dùng `fullTime` như tỷ số
+90 phút. Nhập tay vẫn là đường lùi khi API thiếu hoặc lỗi.
 
 Trận tranh hạng ba hiện được bỏ qua vì V6 slim chưa quy định mức đóng góp cho vòng này.
 
 ## Ngoài scope MVP
 
-Không có API tỷ số tự động, WebSocket, auto-bracket, auto-thua khi không vote, thắng
-giảm nợ, trần 0đ, NSHV, vote đội vô địch hoặc kiểm tra ngân hàng tự động.
+Không có WebSocket, auto-bracket, auto-thua khi không vote, thắng giảm nợ, trần 0đ, NSHV,
+vote đội vô địch hoặc kiểm tra ngân hàng tự động.

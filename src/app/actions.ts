@@ -13,9 +13,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import {
-  API_FOOTBALL_SOURCE,
-  fetchWorldCupFixtures,
-} from "@/lib/api-football";
+  fetchFootballDataMatchResult,
+  fetchFootballDataWorldCupFixtures,
+  FOOTBALL_DATA_SOURCE,
+} from "@/lib/football-data";
 import { getContributionAmount, isVoteLocked } from "@/lib/domain";
 import { parseMatchImport } from "@/lib/match-import";
 import { prisma } from "@/lib/prisma";
@@ -195,13 +196,14 @@ function scheduledMatchKey(input: { teamA: string; teamB: string; kickoffAt: Dat
 
 export async function syncWorldCupFixturesAction() {
   const admin = await requireAdmin();
-  const apiKey = process.env.API_FOOTBALL_KEY ?? "";
+  const apiToken = process.env.FOOTBALL_DATA_TOKEN ?? "";
 
   let fetched;
   try {
-    fetched = await fetchWorldCupFixtures(apiKey);
+    fetched = await fetchFootballDataWorldCupFixtures(apiToken);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Không thể gọi API-Football.";
+    const message =
+      error instanceof Error ? error.message : "Không thể gọi football-data.org.";
     redirect(`/admin?fixtureSyncError=${encodeURIComponent(message)}`);
   }
 
@@ -278,7 +280,7 @@ export async function syncWorldCupFixturesAction() {
     }
   });
 
-  await audit(admin.id, "WORLD_CUP_FIXTURES_SYNCED", "Match", API_FOOTBALL_SOURCE, {
+  await audit(admin.id, "WORLD_CUP_FIXTURES_SYNCED", "Match", FOOTBALL_DATA_SOURCE, {
     created,
     updated,
     protectedMatches,
@@ -292,6 +294,51 @@ export async function syncWorldCupFixturesAction() {
     fixtureUpdated: String(updated),
     fixtureProtected: String(protectedMatches),
     fixtureSkippedRounds: String(fetched.skippedRounds.length),
+  });
+  redirect(`/admin?${params.toString()}`);
+}
+
+export async function settleMatchFromApiAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const matchId = z.string().min(1).parse(formString(formData, "matchId"));
+  const match = await prisma.match.findUnique({ where: { id: matchId } });
+  if (!match || match.deletedAt) throw new Error("Không tìm thấy trận");
+  if (
+    match.externalSource !== FOOTBALL_DATA_SOURCE ||
+    !match.externalFixtureId
+  ) {
+    throw new Error("Trận chưa được gắn football-data.org fixture id");
+  }
+
+  const apiToken = process.env.FOOTBALL_DATA_TOKEN ?? "";
+  let result;
+  try {
+    result = await fetchFootballDataMatchResult(apiToken, match.externalFixtureId);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Không thể lấy tỷ số từ football-data.org.";
+    redirect(`/admin?resultSyncError=${encodeURIComponent(message)}`);
+  }
+
+  await settleMatch({
+    matchId,
+    teamAScore: result.teamAScore,
+    teamBScore: result.teamBScore,
+    adminId: admin.id,
+  });
+  await audit(admin.id, "MATCH_RESULT_IMPORTED", "Match", matchId, {
+    source: FOOTBALL_DATA_SOURCE,
+    externalFixtureId: result.externalFixtureId,
+    teamAScore: result.teamAScore,
+    teamBScore: result.teamBScore,
+  });
+  revalidatePath("/admin");
+  revalidatePath("/matches");
+  revalidatePath("/leaderboard");
+
+  const params = new URLSearchParams({
+    resultSynced: "1",
+    resultScore: `${result.teamAScore}-${result.teamBScore}`,
   });
   redirect(`/admin?${params.toString()}`);
 }

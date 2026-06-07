@@ -7,6 +7,7 @@ import {
   resetPasswordAction,
   setMatchStatusAction,
   setUserLockAction,
+  settleMatchFromApiAction,
   settleMatchAction,
   syncWorldCupFixturesAction,
   updateUserAction,
@@ -20,6 +21,7 @@ import {
   ROUND_LABELS,
   toVietnamDateTimeLocal,
 } from "@/lib/domain";
+import { FOOTBALL_DATA_SOURCE } from "@/lib/football-data";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 
@@ -49,7 +51,11 @@ export default async function AdminPage({
     typeof params.fixtureSkippedRounds === "string" ? params.fixtureSkippedRounds : null;
   const fixtureSyncError =
     typeof params.fixtureSyncError === "string" ? params.fixtureSyncError : null;
-  const apiFootballConfigured = Boolean(process.env.API_FOOTBALL_KEY);
+  const resultSynced = typeof params.resultSynced === "string" ? params.resultSynced : null;
+  const resultScore = typeof params.resultScore === "string" ? params.resultScore : null;
+  const resultSyncError =
+    typeof params.resultSyncError === "string" ? params.resultSyncError : null;
+  const footballDataConfigured = Boolean(process.env.FOOTBALL_DATA_TOKEN);
   const [matches, users, payments, audits] = await Promise.all([
     prisma.match.findMany({
       where: { deletedAt: null },
@@ -90,25 +96,25 @@ export default async function AdminPage({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="font-bold text-emerald-950">
-                Đồng bộ lịch World Cup 2026 từ API-Football
+                Đồng bộ lịch World Cup 2026 từ football-data.org
               </h3>
               <p className="mt-1 text-sm leading-6 text-slate-600">
-                Tự lấy toàn bộ lịch với `league=1`, `season=2026`. Trận mới được tạo ở trạng
-                thái nháp; kèo và dữ liệu đã có vote không bị ghi đè.
+                Tự lấy toàn bộ lịch với `competition=WC`, `season=2026`. Trận mới được tạo ở trạng
+                thái nháp; kèo và dữ liệu đã có vote/kết quả không bị ghi đè.
               </p>
             </div>
             <form action={syncWorldCupFixturesAction}>
               <button
-                disabled={!apiFootballConfigured}
+                disabled={!footballDataConfigured}
                 className={`${buttonClass} disabled:cursor-not-allowed disabled:bg-slate-400`}
               >
                 Đồng bộ lịch ngay
               </button>
             </form>
           </div>
-          {!apiFootballConfigured && (
+          {!footballDataConfigured && (
             <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              Chưa cấu hình `API_FOOTBALL_KEY` trên Railway nên nút đang bị khóa.
+              Chưa cấu hình `FOOTBALL_DATA_TOKEN` trên Railway nên nút đang bị khóa.
             </p>
           )}
           {fixtureSyncError && (
@@ -123,6 +129,16 @@ export default async function AdminPage({
               {fixtureSkippedRounds && Number(fixtureSkippedRounds) > 0
                 ? `, bỏ qua ${fixtureSkippedRounds} loại vòng chưa có rule V6.`
                 : "."}
+            </p>
+          )}
+          {resultSyncError && (
+            <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
+              Lấy tỷ số tự động thất bại: {resultSyncError}
+            </p>
+          )}
+          {resultSynced && (
+            <p className="mt-3 rounded-xl bg-white px-3 py-2 text-sm text-emerald-900">
+              Đã lấy tỷ số 90 phút từ football-data.org: {resultScore}.
             </p>
           )}
         </div>
@@ -233,6 +249,20 @@ Brazil,Serbia,2026-06-15 02:00,GROUP,2,TEAM_A,OPEN`}
                     Tính kết quả
                   </button>
                 </form>
+                {match.externalSource === FOOTBALL_DATA_SOURCE && match.externalFixtureId && (
+                  <form action={settleMatchFromApiAction} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-sky-50 p-3">
+                    <input type="hidden" name="matchId" value={match.id} />
+                    <span className="text-sm font-semibold text-sky-950">
+                      football-data.org fixture #{match.externalFixtureId}
+                    </span>
+                    <button
+                      disabled={!footballDataConfigured}
+                      className="rounded-xl bg-sky-700 px-3 py-2 text-sm font-bold text-white hover:bg-sky-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                    >
+                      Lấy tỷ số API
+                    </button>
+                  </form>
+                )}
               </div>
             </article>
           ))}

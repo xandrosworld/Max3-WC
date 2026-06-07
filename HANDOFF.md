@@ -21,7 +21,7 @@ Xay dung MVP web app noi bo cho khoang 70 nguoi theo dung URD V6 slim:
 - Ket qua chi dung ty so 90 phut, khong tinh hiep phu hoac luan luu.
 - Settlement phai idempotent; tinh lai khong duoc cong tien trung.
 - Sua ket qua phai giu lich su va tao giao dich dieu chinh, khong xoa dau vet.
-- Khong them auto-thua, clawback, tran 0d, NSHV, vote vo dich, auto-bracket hay API bong da trong MVP.
+- Khong them auto-thua, clawback, tran 0d, NSHV, vote vo dich hay auto-bracket trong MVP.
 
 ## Milestone va Definition of Done
 
@@ -101,8 +101,8 @@ Xay dung MVP web app noi bo cho khoang 70 nguoi theo dung URD V6 slim:
 - [x] European Handicap 3 cua, handicap nguyen, ty so 90 phut.
 - [x] Khong vote thi khong tinh, khong phat.
 - [x] Polling 45 giay, khong WebSocket.
-- [x] Nhap tay tran/keo/ty so theo yeu cau MVP hien tai.
-- [x] API-Football dong bo lich tran theo yeu cau bo sung; ty so van nhap tay.
+- [x] football-data.org dong bo lich World Cup 2026; bo qua tranh hang ba vi chua co rule V6.
+- [x] Ty so co the lay tu football-data.org khi tran FINISHED va co regular/full time; nhap tay van la fallback.
 - [x] NSHV, vote vo dich, auto-bracket va ngan hang tu dong de ngoai MVP.
 
 ## Viec con lai truoc khi dung that
