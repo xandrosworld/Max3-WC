@@ -121,6 +121,22 @@ export function getPaymentStatus(loss: number, paid: number) {
   return "Nộp thiếu";
 }
 
+export function calculateAccuracy(correct: number, voted: number) {
+  if (voted <= 0) return 0;
+  return (correct / voted) * 100;
+}
+
+export function isPlaceholderTeamName(teamName: string) {
+  const normalized = teamName
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/đ/g, "d");
+
+  return normalized === "tbd" || normalized.startsWith("chua xac dinh");
+}
+
 export function choiceLabel(
   choice: VoteChoice,
   teamA: string,

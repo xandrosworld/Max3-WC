@@ -39,6 +39,7 @@ Xay dung MVP web app noi bo cho khoang 70 nguoi theo dung URD V6 slim:
 - [x] Phan quyen `USER` va `ADMIN`.
 - [x] User bi khoa khong dang nhap/ghi du lieu duoc.
 - [x] Admin tao user, sua ho ten/don vi, khoa/mo va reset mat khau.
+- [x] Admin bulk import user tu Excel/CSV voi mat khau tam chung, user bi buoc doi mat khau lan dau.
 - [x] Co script bootstrap admin dau tien cho production.
 - [x] Khong co dang ky cong khai.
 
@@ -70,6 +71,7 @@ Xay dung MVP web app noi bo cho khoang 70 nguoi theo dung URD V6 slim:
 - [x] Muc bet theo vong dung V6.
 - [x] Handicap chi la so nguyen khong am, chon doi bi chap.
 - [x] Khong cho sua thong tin keo nguy hiem sau khi da co vote.
+- [x] Khong cho mo keo khi doi van la TBD/Chua xac dinh tu API.
 - [x] Ghi nhan payment: so tien, ghi chu, thoi gian, nguoi xac nhan.
 - [x] Payment sai duoc void, khong hard-delete.
 - [x] Audit log cho thao tac admin quan trong.
@@ -109,7 +111,7 @@ Xay dung MVP web app noi bo cho khoang 70 nguoi theo dung URD V6 slim:
 
 - [ ] Dang nhap admin production va doi mat khau tam: `Max3@2026!Admin`.
 - [ ] Bat Daily/Weekly backup cho PostgreSQL trong Railway dashboard.
-- [ ] Tao danh sach user that va khoa/mo/reset mat khau thu voi 1 user mau.
+- [ ] Import danh sach user that, login thu 1 user mau va doi mat khau lan dau.
 - [ ] Tao 1 tran test, mo keo, vote bang 2 user, dong keo, nhap ty so va export Excel de acceptance test end-to-end.
 - [ ] Xoa du lieu test/seed neu co truoc khi mo cho ca phong ban.
 

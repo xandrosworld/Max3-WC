@@ -7,7 +7,7 @@ số 90 phút khi API đã có kết quả và vẫn giữ nhập tay làm đư�
 ## Chức năng
 
 - Đăng nhập username/password; phân quyền user/admin.
-- Admin tạo user, sửa hồ sơ, khóa/mở và reset mật khẩu.
+- Admin tạo từng user hoặc import nhiều user, sửa hồ sơ, khóa/mở và reset mật khẩu.
 - Người chơi vote một trong ba cửa European Handicap và đổi vote trước khi khóa.
 - Server khóa vote đúng 5 phút trước giờ bóng lăn.
 - Công khai số lượng và danh sách người vote từng cửa.
@@ -96,7 +96,7 @@ Cửa thắng = Hòa-sau-chấp
 - Vote sai tạo `LossTransaction` dương bằng mức đóng góp.
 - Khi sửa tỷ số, hệ thống tạo transaction âm đảo các loss cũ rồi tạo loss mới.
 - Cùng một tỷ số/cửa thắng bấm lại sẽ không cộng tiền trùng.
-- Tỷ lệ đúng chỉ tính trên các vote của trận đã có kết quả.
+- Tỷ lệ đúng = số trận đúng / số trận đã vote, đúng theo URD V6.
 
 ## Deploy Railway
 

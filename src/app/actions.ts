@@ -17,11 +17,16 @@ import {
   fetchFootballDataWorldCupFixtures,
   FOOTBALL_DATA_SOURCE,
 } from "@/lib/football-data";
-import { getContributionAmount, isVoteLocked } from "@/lib/domain";
+import {
+  getContributionAmount,
+  isPlaceholderTeamName,
+  isVoteLocked,
+} from "@/lib/domain";
 import { parseMatchImport } from "@/lib/match-import";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireUser } from "@/lib/session";
 import { settleMatch } from "@/lib/settlement";
+import { parseUserImport } from "@/lib/user-import";
 
 const usernameSchema = z
   .string()
@@ -351,8 +356,13 @@ export async function setMatchStatusAction(formData: FormData) {
     .parse(formString(formData, "status"));
   const match = await prisma.match.findUnique({ where: { id } });
   if (!match || match.deletedAt) throw new Error("Không tìm thấy trận");
-  if (status === MatchStatus.OPEN && isVoteLocked({ ...match, status }, new Date())) {
-    throw new Error("Không thể mở kèo đã tới giờ khóa");
+  if (status === MatchStatus.OPEN) {
+    if (isVoteLocked({ ...match, status }, new Date())) {
+      throw new Error("Không thể mở kèo đã tới giờ khóa");
+    }
+    if (isPlaceholderTeamName(match.teamA) || isPlaceholderTeamName(match.teamB)) {
+      throw new Error("Không thể mở kèo khi đội vẫn chưa xác định từ API");
+    }
   }
   if (match.status === MatchStatus.SETTLED) {
     throw new Error("Không thể mở lại trận đã tính kết quả");
@@ -426,6 +436,98 @@ export async function createUserAction(formData: FormData) {
   });
   await audit(admin.id, "USER_CREATED", "User", created.user.id, { username });
   revalidatePath("/admin");
+}
+
+export async function bulkImportUsersAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const input = z.string().trim().min(1).max(50_000).parse(formString(formData, "usersBulk"));
+  const password = z.string().min(8).max(128).parse(formString(formData, "bulkPassword"));
+  const parsed = parseUserImport(input);
+
+  if (parsed.errors.length > 0) {
+    const params = new URLSearchParams({
+      userImportErrors: String(parsed.errors.length),
+      userImportFirstError: parsed.errors.slice(0, 3).join(" | "),
+    });
+    redirect(`/admin?${params.toString()}`);
+  }
+
+  const importedUsernames = Array.from(
+    new Set(parsed.rows.map((row) => row.username.toLowerCase())),
+  );
+  const importedEmails = importedUsernames.map((username) => `${username}@internal.local`);
+  const existingUsers = await prisma.user.findMany({
+    where: {
+      OR: [
+        { username: { in: importedUsernames } },
+        { email: { in: importedEmails } },
+      ],
+    },
+    select: { username: true, email: true },
+  });
+  const existingKeys = new Set<string>();
+  for (const user of existingUsers) {
+    if (user.username) existingKeys.add(user.username.toLowerCase());
+    existingKeys.add(user.email.replace(/@internal\.local$/i, "").toLowerCase());
+  }
+
+  const authHeaders = await headers();
+  const seen = new Set<string>();
+  const errors: string[] = [];
+  let created = 0;
+  let skipped = 0;
+
+  for (const row of parsed.rows) {
+    const username = row.username.toLowerCase();
+    if (seen.has(username) || existingKeys.has(username)) {
+      skipped += 1;
+      continue;
+    }
+    seen.add(username);
+
+    try {
+      const createdUser = await auth.api.createUser({
+        headers: authHeaders,
+        body: {
+          email: `${username}@internal.local`,
+          password,
+          name: row.name,
+          role: "user",
+        },
+      });
+      await prisma.user.update({
+        where: { id: createdUser.user.id },
+        data: {
+          username,
+          displayUsername: row.username,
+          department: row.department,
+          mustChangePassword: true,
+          emailVerified: true,
+        },
+      });
+      created += 1;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "không tạo được user";
+      errors.push(`${row.username}: ${message}`);
+    }
+  }
+
+  await audit(admin.id, "USERS_BULK_IMPORTED", "User", "bulk", {
+    created,
+    skipped,
+    errors: errors.length,
+  });
+  revalidatePath("/admin");
+
+  const params = new URLSearchParams({
+    createdUsers: String(created),
+    skippedUsers: String(skipped),
+  });
+  if (errors.length > 0) {
+    params.set("userImportErrors", String(errors.length));
+    params.set("userImportFirstError", errors.slice(0, 3).join(" | "));
+  }
+  redirect(`/admin?${params.toString()}`);
 }
 
 export async function updateUserAction(formData: FormData) {

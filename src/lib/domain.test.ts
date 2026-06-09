@@ -4,6 +4,7 @@ import {
   calculateWinningChoice,
   getLossAmountForVote,
   getPaymentStatus,
+  isPlaceholderTeamName,
   isVoteLocked,
 } from "./domain";
 
@@ -80,6 +81,14 @@ describe("vote lock", () => {
         new Date("2026-06-12T11:55:00.000Z"),
       ),
     ).toBe(true);
+  });
+});
+
+describe("placeholder teams", () => {
+  it("detects unresolved teams from provider fixtures", () => {
+    expect(isPlaceholderTeamName("Chưa xác định A")).toBe(true);
+    expect(isPlaceholderTeamName("TBD")).toBe(true);
+    expect(isPlaceholderTeamName("Mexico")).toBe(false);
   });
 });
 

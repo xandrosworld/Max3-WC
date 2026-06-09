@@ -1,6 +1,7 @@
 import { MatchStatus, RoundType, TeamSide } from "@prisma/client";
 import {
   addPaymentAction,
+  bulkImportUsersAction,
   bulkImportMatchesAction,
   createUserAction,
   deleteMatchAction,
@@ -18,6 +19,7 @@ import {
   formatCurrency,
   formatHandicap,
   formatVietnamTime,
+  isPlaceholderTeamName,
   ROUND_LABELS,
   toVietnamDateTimeLocal,
 } from "@/lib/domain";
@@ -55,6 +57,12 @@ export default async function AdminPage({
   const resultScore = typeof params.resultScore === "string" ? params.resultScore : null;
   const resultSyncError =
     typeof params.resultSyncError === "string" ? params.resultSyncError : null;
+  const createdUsers = typeof params.createdUsers === "string" ? params.createdUsers : null;
+  const skippedUsers = typeof params.skippedUsers === "string" ? params.skippedUsers : null;
+  const userImportErrors =
+    typeof params.userImportErrors === "string" ? params.userImportErrors : null;
+  const userImportFirstError =
+    typeof params.userImportFirstError === "string" ? params.userImportFirstError : null;
   const footballDataConfigured = Boolean(process.env.FOOTBALL_DATA_TOKEN);
   const [matches, users, payments, audits] = await Promise.all([
     prisma.match.findMany({
@@ -171,26 +179,35 @@ Brazil,Serbia,2026-06-15 02:00,GROUP,2,TEAM_A,OPEN`}
           </form>
         </details>
 
-        <form action={upsertMatchAction} className="grid gap-3 rounded-2xl bg-emerald-50 p-4 md:grid-cols-4">
-          <input name="teamA" required placeholder="Đội A" className={inputClass} />
-          <input name="teamB" required placeholder="Đội B" className={inputClass} />
-          <input name="kickoffLocal" required type="datetime-local" className={inputClass} />
-          <select name="round" className={inputClass}>
-            {Object.values(RoundType).map((round) => (
-              <option key={round} value={round}>{ROUND_LABELS[round]}</option>
-            ))}
-          </select>
-          <input name="handicap" required type="number" min="0" step="1" defaultValue="0" placeholder="Mức chấp" className={inputClass} />
-          <select name="handicappedTeam" className={inputClass}>
-            <option value="">Không đội nào (kèo 0)</option>
-            <option value={TeamSide.TEAM_A}>Đội A bị chấp</option>
-            <option value={TeamSide.TEAM_B}>Đội B bị chấp</option>
-          </select>
-          <button className={`${buttonClass} md:col-span-2`}>Tạo trận</button>
-        </form>
+        <details className="mb-4 rounded-2xl border border-amber-100 bg-amber-50/70 p-4">
+          <summary className="font-bold text-amber-950">
+            Đường lùi nhập tay từng trận khi API thiếu
+          </summary>
+          <form action={upsertMatchAction} className="mt-3 grid gap-3 md:grid-cols-4">
+            <input name="teamA" required placeholder="Đội A" className={inputClass} />
+            <input name="teamB" required placeholder="Đội B" className={inputClass} />
+            <input name="kickoffLocal" required type="datetime-local" className={inputClass} />
+            <select name="round" className={inputClass}>
+              {Object.values(RoundType).map((round) => (
+                <option key={round} value={round}>{ROUND_LABELS[round]}</option>
+              ))}
+            </select>
+            <input name="handicap" required type="number" min="0" step="1" defaultValue="0" placeholder="Mức chấp" className={inputClass} />
+            <select name="handicappedTeam" className={inputClass}>
+              <option value="">Không đội nào (kèo 0)</option>
+              <option value={TeamSide.TEAM_A}>Đội A bị chấp</option>
+              <option value={TeamSide.TEAM_B}>Đội B bị chấp</option>
+            </select>
+            <button className={`${buttonClass} md:col-span-2`}>Tạo trận</button>
+          </form>
+        </details>
 
         <div className="mt-4 space-y-4">
-          {matches.map((match) => (
+          {matches.map((match) => {
+            const hasPlaceholderTeam =
+              isPlaceholderTeamName(match.teamA) || isPlaceholderTeamName(match.teamB);
+
+            return (
             <article key={match.id} className="rounded-2xl border border-slate-200 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -202,11 +219,21 @@ Brazil,Serbia,2026-06-15 02:00,GROUP,2,TEAM_A,OPEN`}
                     {match.status} · {match._count.votes} vote
                     {match.result && ` · KQ 90': ${match.result.teamAScore}-${match.result.teamBScore} · revision ${match.result.revision}`}
                   </p>
+                  {hasPlaceholderTeam && (
+                    <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+                      Chờ API cập nhật đội trước khi mở kèo.
+                    </p>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {match.status !== MatchStatus.SETTLED && (
                     <>
-                      <StatusButton id={match.id} status={MatchStatus.OPEN} label="Mở kèo" />
+                      <StatusButton
+                        id={match.id}
+                        status={MatchStatus.OPEN}
+                        label="Mở kèo"
+                        disabled={hasPlaceholderTeam}
+                      />
                       <StatusButton id={match.id} status={MatchStatus.CLOSED} label="Đóng kèo" />
                     </>
                   )}
@@ -265,11 +292,52 @@ Brazil,Serbia,2026-06-15 02:00,GROUP,2,TEAM_A,OPEN`}
                 )}
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       </AdminSection>
 
       <AdminSection id="users" title="Người dùng" description="Tạo tài khoản nội bộ, sửa hồ sơ, khóa và reset mật khẩu.">
+        {createdUsers && (
+          <p className="mb-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+            Đã tạo {createdUsers} user
+            {skippedUsers && Number(skippedUsers) > 0 ? `, bỏ qua ${skippedUsers} user trùng.` : "."}
+          </p>
+        )}
+        {userImportErrors && (
+          <p className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+            Import user có {userImportErrors} lỗi{userImportFirstError ? `: ${userImportFirstError}` : "."}
+          </p>
+        )}
+        <details className="mb-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
+          <summary className="font-bold text-emerald-950">Import nhiều user từ Excel/CSV</summary>
+          <form action={bulkImportUsersAction} className="mt-3 grid gap-3 md:grid-cols-[1fr_260px]">
+            <textarea
+              name="usersBulk"
+              required
+              rows={6}
+              placeholder={`username,Họ tên,Đơn vị
+an.nguyen,An Nguyễn,Sales
+binh.tran,Bình Trần,Marketing`}
+              className={`${inputClass} min-h-40 w-full font-mono`}
+            />
+            <div className="space-y-3">
+              <input
+                name="bulkPassword"
+                required
+                minLength={8}
+                maxLength={128}
+                placeholder="Mật khẩu tạm chung"
+                className={`${inputClass} w-full`}
+              />
+              <p className="text-xs leading-5 text-slate-600">
+                User sẽ bị buộc đổi mật khẩu ở lần đăng nhập đầu tiên. Dán từ Excel được:
+                tab/comma/semicolon đều đọc được.
+              </p>
+              <button className={`${buttonClass} w-full`}>Import user</button>
+            </div>
+          </form>
+        </details>
         <form action={createUserAction} className="grid gap-3 rounded-2xl bg-emerald-50 p-4 md:grid-cols-4">
           <input name="username" required placeholder="username" className={inputClass} />
           <input name="name" required placeholder="Họ tên" className={inputClass} />
@@ -382,12 +450,27 @@ function AdminSection({
   );
 }
 
-function StatusButton({ id, status, label }: { id: string; status: MatchStatus; label: string }) {
+function StatusButton({
+  id,
+  status,
+  label,
+  disabled = false,
+}: {
+  id: string;
+  status: MatchStatus;
+  label: string;
+  disabled?: boolean;
+}) {
   return (
     <form action={setMatchStatusAction}>
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="status" value={status} />
-      <button className="rounded-xl bg-slate-700 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800">{label}</button>
+      <button
+        disabled={disabled}
+        className="rounded-xl bg-slate-700 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+      >
+        {label}
+      </button>
     </form>
   );
 }
