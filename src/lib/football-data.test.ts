@@ -44,6 +44,15 @@ describe("football-data.org World Cup mapping", () => {
               awayTeam: { name: "TBD" },
               score: { duration: "REGULAR", fullTime: { home: null, away: null } },
             },
+            {
+              id: 537390,
+              utcDate: "2026-07-19T19:00:00Z",
+              status: "TIMED",
+              stage: "FINAL",
+              homeTeam: { name: null },
+              awayTeam: { name: null },
+              score: { duration: "REGULAR", fullTime: { home: null, away: null } },
+            },
           ],
         }),
         { status: 200, headers: { "content-type": "application/json" } },
@@ -52,7 +61,7 @@ describe("football-data.org World Cup mapping", () => {
     const result = await fetchFootballDataWorldCupFixtures("test-token", fetcher);
 
     expect(result.skippedRounds).toEqual(["THIRD_PLACE"]);
-    expect(result.fixtures).toHaveLength(1);
+    expect(result.fixtures).toHaveLength(2);
     expect(result.fixtures[0]).toMatchObject({
       externalFixtureId: "537327",
       teamA: "Mexico",
@@ -63,6 +72,13 @@ describe("football-data.org World Cup mapping", () => {
     expect(result.fixtures[0].kickoffAt.toISOString()).toBe(
       "2026-06-11T19:00:00.000Z",
     );
+    expect(result.fixtures[1]).toMatchObject({
+      externalFixtureId: "537390",
+      teamA: "Chưa xác định A",
+      teamB: "Chưa xác định B",
+      round: RoundType.FINAL,
+      contributionAmount: 100_000,
+    });
   });
 });
 

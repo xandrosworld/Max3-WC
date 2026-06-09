@@ -18,10 +18,10 @@ const footballDataMatchSchema = z
     status: z.string(),
     stage: z.string(),
     homeTeam: z.object({
-      name: z.string().trim().min(1),
+      name: z.string().trim().min(1).nullable().optional(),
     }),
     awayTeam: z.object({
-      name: z.string().trim().min(1),
+      name: z.string().trim().min(1).nullable().optional(),
     }),
     score: z
       .object({
@@ -99,6 +99,13 @@ function scoreFromPair(pair: z.infer<typeof scorePairSchema>) {
   };
 }
 
+function teamName(
+  team: { name?: string | null },
+  fallback: "Chưa xác định A" | "Chưa xác định B",
+) {
+  return team.name?.trim() || fallback;
+}
+
 export function extractRegularTimeScore(match: FootballDataMatch) {
   if (match.status !== "FINISHED") {
     throw new Error("Trận chưa kết thúc trên football-data.org.");
@@ -167,8 +174,8 @@ export async function fetchFootballDataWorldCupFixtures(
     fixtures.push({
       externalSource: FOOTBALL_DATA_SOURCE,
       externalFixtureId: String(match.id),
-      teamA: match.homeTeam.name,
-      teamB: match.awayTeam.name,
+      teamA: teamName(match.homeTeam, "Chưa xác định A"),
+      teamB: teamName(match.awayTeam, "Chưa xác định B"),
       kickoffAt: new Date(match.utcDate),
       round,
       contributionAmount: getContributionAmount(round),
