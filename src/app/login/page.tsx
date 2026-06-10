@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { LoginForm } from "@/components/login-form";
 import { getCurrentUser } from "@/lib/session";
 
@@ -22,6 +23,15 @@ export default async function LoginPage() {
             Một quỹ chung, ba cửa rõ ràng, không chọn thì không phạt. Ai thua nhiều
             nhất được vinh danh trang trọng trên bảng xếp hạng.
           </p>
+          <div className="mt-8 max-w-lg overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-xl shadow-emerald-950/10">
+            <Image
+              src="/world-cup-visual.svg"
+              alt="Minh họa sân bóng World Cup"
+              width={960}
+              height={620}
+              className="h-56 w-full object-cover"
+            />
+          </div>
         </section>
         <section className="rounded-3xl border border-white/80 bg-white/85 p-7 shadow-2xl shadow-emerald-950/10 backdrop-blur">
           <h2 className="text-2xl font-extrabold text-emerald-950">Chào mừng trở lại</h2>

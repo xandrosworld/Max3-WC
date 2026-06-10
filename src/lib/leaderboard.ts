@@ -1,9 +1,10 @@
 import { VoteChoice } from "@prisma/client";
-import { calculateAccuracy, getPaymentStatus } from "@/lib/domain";
-import { prisma } from "@/lib/prisma";
+import { calculateAccuracy, getPaymentStatus } from "./domain";
+import { prisma } from "./prisma";
 
 export async function getLeaderboard() {
   const users = await prisma.user.findMany({
+    where: { role: "user" },
     orderBy: { name: "asc" },
     include: {
       votes: {

@@ -1,4 +1,5 @@
 import { MatchStatus, VoteChoice } from "@prisma/client";
+import Image from "next/image";
 import { voteAction } from "@/app/actions";
 import {
   canUseHopeStar,
@@ -85,7 +86,7 @@ export default async function MatchesPage({
 
   return (
     <div className="space-y-7">
-      <section className="grid gap-5 lg:grid-cols-[1fr_360px] lg:items-end">
+      <section className="grid gap-5 lg:grid-cols-[1fr_420px] lg:items-end">
         <div>
           <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-emerald-700">
             Dự đoán đang mở
@@ -98,10 +99,21 @@ export default async function MatchesPage({
             nếu đoán sai thì khoản phải góp của trận đó nhân đôi.
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-2 rounded-3xl border border-emerald-950/10 bg-white p-3 shadow-sm shadow-emerald-950/5">
-          <Stat label="Đang mở" value={openCount} />
-          <Stat label="Chưa chọn" value={missingOpenCount} tone={missingOpenCount > 0 ? "warn" : "ok"} />
-          <Stat label="Có kết quả" value={settledCount} />
+        <div className="space-y-3">
+          <div className="overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/10">
+            <Image
+              src="/world-cup-visual.svg"
+              alt="Minh họa sân bóng World Cup"
+              width={960}
+              height={620}
+              className="h-44 w-full object-cover"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-2 rounded-3xl border border-emerald-950/10 bg-white p-3 shadow-sm shadow-emerald-950/5">
+            <Stat label="Đang mở" value={openCount} />
+            <Stat label="Chưa chọn" value={missingOpenCount} tone={missingOpenCount > 0 ? "warn" : "ok"} />
+            <Stat label="Có kết quả" value={settledCount} />
+          </div>
         </div>
       </section>
 

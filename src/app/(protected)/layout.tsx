@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AiChatBot } from "@/components/ai-chat-bot";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { AppNav } from "@/components/app-nav";
 import { LogoutButton } from "@/components/logout-button";
@@ -33,6 +34,7 @@ export default async function ProtectedLayout({
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-7">{children}</main>
+      <AiChatBot />
     </div>
   );
 }

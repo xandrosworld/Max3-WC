@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { formatCurrency } from "@/lib/domain";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { requireUser } from "@/lib/session";
@@ -25,10 +26,21 @@ export default async function LeaderboardPage() {
             Xếp hạng theo tổng tiền phải góp. Các chỉ số đúng, sai và Ngôi sao hy vọng giúp mọi người xem lại phong độ dự đoán.
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-2 rounded-3xl border border-emerald-950/10 bg-white p-3 shadow-sm shadow-emerald-950/5">
-          <Summary label="Tổng quỹ" value={formatCurrency(totalLoss)} />
-          <Summary label="Đã nộp" value={formatCurrency(totalPaid)} />
-          <Summary label="Ngôi sao" value={String(hopeStarUsed)} />
+        <div className="space-y-3">
+          <div className="overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/10">
+            <Image
+              src="/world-cup-visual.svg"
+              alt="Minh họa sân bóng World Cup"
+              width={960}
+              height={620}
+              className="h-36 w-full object-cover"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-2 rounded-3xl border border-emerald-950/10 bg-white p-3 shadow-sm shadow-emerald-950/5">
+            <Summary label="Tổng quỹ" value={formatCurrency(totalLoss)} />
+            <Summary label="Đã nộp" value={formatCurrency(totalPaid)} />
+            <Summary label="Ngôi sao" value={String(hopeStarUsed)} />
+          </div>
         </div>
       </section>
 

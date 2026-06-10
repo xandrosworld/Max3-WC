@@ -1,0 +1,28 @@
+<svg width="960" height="620" viewBox="0 0 960 620" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="960" height="620" rx="48" fill="#063F32"/>
+  <path d="M0 174C170 68 340 38 510 84C678 129 824 104 960 28V620H0V174Z" fill="#087757"/>
+  <path d="M0 250C149 170 305 145 468 176C656 212 812 185 960 108V620H0V250Z" fill="#0B8C63"/>
+  <path d="M106 459C260 360 699 361 854 459L790 542H170L106 459Z" fill="#BDF7D3"/>
+  <path d="M148 456C290 389 669 389 812 456L763 519H196L148 456Z" fill="#0D7F55"/>
+  <path d="M217 503H742" stroke="#D8FFE6" stroke-width="6" stroke-linecap="round"/>
+  <path d="M269 461C373 432 585 432 692 461" stroke="#D8FFE6" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="480" cy="474" r="38" stroke="#D8FFE6" stroke-width="6"/>
+  <rect x="336" y="438" width="288" height="98" rx="49" stroke="#D8FFE6" stroke-width="6"/>
+  <path d="M0 355C118 297 236 269 354 270C452 271 518 305 622 307C738 309 842 277 960 210V0H0V355Z" fill="#032D25" fill-opacity=".82"/>
+  <path d="M91 168C248 98 405 82 562 117C684 145 806 127 929 71" stroke="#FDE68A" stroke-width="16" stroke-linecap="round" stroke-dasharray="2 34"/>
+  <path d="M74 210C227 156 377 146 526 174C661 199 793 183 928 127" stroke="#FCA5A5" stroke-width="10" stroke-linecap="round" stroke-dasharray="1 29"/>
+  <circle cx="480" cy="204" r="84" fill="#F8FAFC"/>
+  <path d="M480 120L504 174L563 180L519 220L532 278L480 248L428 278L441 220L397 180L456 174L480 120Z" fill="#064E3B"/>
+  <path d="M480 144L497 183L540 188L508 218L517 259L480 238L443 259L452 218L420 188L463 183L480 144Z" fill="#10B981"/>
+  <path d="M219 223H742" stroke="white" stroke-opacity=".22" stroke-width="18" stroke-linecap="round"/>
+  <path d="M186 274H775" stroke="white" stroke-opacity=".17" stroke-width="14" stroke-linecap="round"/>
+  <path d="M145 324H818" stroke="white" stroke-opacity=".13" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="803" cy="426" r="48" fill="#F8FAFC"/>
+  <path d="M803 388L815 414L843 417L822 437L828 465L803 451L778 465L784 437L763 417L791 414L803 388Z" fill="#064E3B"/>
+  <path d="M124 84H191V126H124V84Z" fill="#10B981"/>
+  <path d="M191 84H258V126H191V84Z" fill="#FDE68A"/>
+  <path d="M258 84H325V126H258V84Z" fill="#F97316"/>
+  <path d="M635 83H702V125H635V83Z" fill="#60A5FA"/>
+  <path d="M702 83H769V125H702V83Z" fill="#F8FAFC"/>
+  <path d="M769 83H836V125H769V83Z" fill="#10B981"/>
+</svg>
