@@ -87,28 +87,27 @@ export default async function AdminPage({
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
-            Control room
+            Khu điều hành
           </p>
-          <h1 className="mt-1 text-3xl font-extrabold text-emerald-950">Quản trị MVP</h1>
+          <h1 className="mt-1 text-3xl font-extrabold text-emerald-950">Quản trị World Cup 2026</h1>
         </div>
         <a
           href="/api/admin/export"
           className="rounded-xl bg-emerald-950 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-800"
         >
-          Export Excel
+          Tải bảng Excel
         </a>
       </section>
 
-      <AdminSection id="matches" title="Trận đấu & kết quả" description="Mức đóng góp tự gán theo vòng và được kiểm tra ở server.">
+      <AdminSection id="matches" title="Quản lý trận đấu" description="Chọn trận, đặt kèo, mở dự đoán và chốt tỷ số sau trận.">
         <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="font-bold text-emerald-950">
-                Đồng bộ lịch World Cup 2026 từ football-data.org
+                Cập nhật lịch World Cup 2026 tự động
               </h3>
               <p className="mt-1 text-sm leading-6 text-slate-600">
-                Tự lấy toàn bộ lịch với `competition=WC`, `season=2026`. Trận mới được tạo ở trạng
-                thái nháp; kèo và dữ liệu đã có vote/kết quả không bị ghi đè.
+                Hệ thống tự lấy danh sách trận và giờ đá. Trận mới sẽ ở trạng thái chưa mở; các trận đã có người chọn hoặc đã chốt kết quả sẽ không bị ghi đè.
               </p>
             </div>
             <form action={syncWorldCupFixturesAction}>
@@ -116,72 +115,70 @@ export default async function AdminPage({
                 disabled={!footballDataConfigured}
                 className={`${buttonClass} disabled:cursor-not-allowed disabled:bg-slate-400`}
               >
-                Đồng bộ lịch ngay
+                Cập nhật lịch
               </button>
             </form>
           </div>
           {!footballDataConfigured && (
             <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              Chưa cấu hình `FOOTBALL_DATA_TOKEN` trên Railway nên nút đang bị khóa.
+              Chưa kết nối nguồn dữ liệu tự động nên nút này đang bị khóa.
             </p>
           )}
           {fixtureSyncError && (
             <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
-              Đồng bộ thất bại: {fixtureSyncError}
+              Cập nhật lịch thất bại: {fixtureSyncError}
             </p>
           )}
           {fixtureCreated && (
             <p className="mt-3 rounded-xl bg-white px-3 py-2 text-sm text-emerald-900">
-              Đồng bộ xong: tạo {fixtureCreated}, cập nhật {fixtureUpdated ?? 0}, giữ nguyên{" "}
-              {fixtureProtected ?? 0} trận đã có vote/kết quả
+              Cập nhật xong: thêm {fixtureCreated} trận, cập nhật {fixtureUpdated ?? 0} trận, giữ nguyên{" "}
+              {fixtureProtected ?? 0} trận đã có người chọn hoặc kết quả
               {fixtureSkippedRounds && Number(fixtureSkippedRounds) > 0
-                ? `, bỏ qua ${fixtureSkippedRounds} loại vòng chưa có rule V6.`
+                ? `, bỏ qua ${fixtureSkippedRounds} trận chưa thuộc luật chơi hiện tại.`
                 : "."}
             </p>
           )}
           {resultSyncError && (
             <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
-              Lấy tỷ số tự động thất bại: {resultSyncError}
+              Lấy tỷ số thất bại: {resultSyncError}
             </p>
           )}
           {resultSynced && (
             <p className="mt-3 rounded-xl bg-white px-3 py-2 text-sm text-emerald-900">
-              Đã lấy tỷ số 90 phút từ football-data.org: {resultScore}.
+              Đã lấy tỷ số 90 phút: {resultScore}.
             </p>
           )}
         </div>
 
         {importedMatches && (
           <p className="mb-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
-            Đã import {importedMatches} trận
+            Đã thêm {importedMatches} trận
             {skippedMatches && Number(skippedMatches) > 0 ? `, bỏ qua ${skippedMatches} dòng trùng.` : "."}
           </p>
         )}
 
         <details className="mb-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
-          <summary className="font-bold text-emerald-950">Import nhiều trận từ Excel/CSV</summary>
+          <summary className="font-bold text-emerald-950">Bỏ qua mục này: thêm nhiều trận thủ công nếu cần</summary>
           <form action={bulkImportMatchesAction} className="mt-3 space-y-3">
             <textarea
               name="matchesBulk"
               required
               rows={6}
               placeholder={`Đội A,Đội B,Giờ Việt Nam,Vòng,Chấp,Đội bị chấp,Trạng thái
-Mexico,South Africa,2026-06-12 02:00,GROUP,0,,DRAFT
-Brazil,Serbia,2026-06-15 02:00,GROUP,2,TEAM_A,OPEN`}
+Mexico,South Africa,2026-06-12 02:00,Vòng bảng,0,,Nháp
+Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
               className={`${inputClass} min-h-40 w-full font-mono`}
             />
             <p className="text-xs leading-5 text-slate-600">
-              Dán từ Excel cũng được: tab/comma/semicolon đều đọc được. Giờ nhập theo UTC+7.
-              Vòng dùng `GROUP`, `ROUND_OF_32`, `ROUND_OF_16`, `QUARTER_FINAL`, `SEMI_FINAL`, `FINAL`.
-              Trạng thái nên để `DRAFT` để chưa hiện ra màn người chơi.
+              Chỉ dùng mục này nếu nguồn tự động thiếu trận. Bình thường không cần nhập ở đây.
             </p>
-            <button className={buttonClass}>Import danh sách trận</button>
+            <button className={buttonClass}>Thêm danh sách trận</button>
           </form>
         </details>
 
         <details className="mb-4 rounded-2xl border border-amber-100 bg-amber-50/70 p-4">
           <summary className="font-bold text-amber-950">
-            Bỏ qua mục này: chỉ tạo trận thủ công khi API thiếu
+            Bỏ qua mục này: chỉ tạo một trận thủ công khi cần
           </summary>
           <form action={upsertMatchAction} className="mt-3 grid gap-3 md:grid-cols-4">
             <input name="teamA" required placeholder="Đội A" className={inputClass} />
@@ -217,12 +214,12 @@ Brazil,Serbia,2026-06-15 02:00,GROUP,2,TEAM_A,OPEN`}
                     {ROUND_LABELS[match.round]} · {formatVietnamTime(match.kickoffAt)} · {formatHandicap(match)} · {formatCurrency(match.contributionAmount)}
                   </p>
                   <p className="mt-1 text-xs font-bold text-slate-500">
-                    {match.status} · {match._count.votes} vote
-                    {match.result && ` · KQ 90': ${match.result.teamAScore}-${match.result.teamBScore} · revision ${match.result.revision}`}
+                    {matchStatusLabel(match.status)} · {match._count.votes} lượt chọn
+                    {match.result && ` · Tỷ số 90': ${match.result.teamAScore}-${match.result.teamBScore}`}
                   </p>
                   {hasPlaceholderTeam && (
                     <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
-                      Chờ API cập nhật đội trước khi mở kèo.
+                      Chờ nguồn dữ liệu cập nhật đội trước khi mở dự đoán.
                     </p>
                   )}
                 </div>
@@ -264,7 +261,7 @@ Brazil,Serbia,2026-06-15 02:00,GROUP,2,TEAM_A,OPEN`}
                     </form>
                     <details className="mt-3 text-xs text-slate-600">
                       <summary className="cursor-pointer font-bold text-slate-700">
-                        Sửa đội/giờ/vòng nếu API sai
+                        Sửa đội/giờ/vòng nếu dữ liệu sai
                       </summary>
                       <form action={upsertMatchAction} className="mt-3 grid gap-2 sm:grid-cols-2">
                         <input type="hidden" name="id" value={match.id} />
@@ -289,19 +286,19 @@ Brazil,Serbia,2026-06-15 02:00,GROUP,2,TEAM_A,OPEN`}
                 {match.status !== MatchStatus.SETTLED && (
                   <section className="rounded-xl bg-slate-50 p-3">
                     <p className="text-xs font-extrabold uppercase tracking-wide text-slate-700">
-                      2. Mở/đóng vote
+                      2. Mở/đóng dự đoán
                     </p>
                     <p className="mt-2 text-xs leading-5 text-slate-600">
-                      Mở kèo thì trận này mới hiện ở màn Trận đấu cho user vote. Đóng kèo thì user không đổi vote được nữa.
+                      Mở dự đoán thì trận này mới hiện cho người chơi. Đóng dự đoán thì người chơi không đổi lựa chọn được nữa.
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <StatusButton
                         id={match.id}
                         status={MatchStatus.OPEN}
-                        label="Mở cho user vote"
+                        label="Mở cho người chơi"
                         disabled={hasPlaceholderTeam}
                       />
-                      <StatusButton id={match.id} status={MatchStatus.CLOSED} label="Đóng vote" />
+                      <StatusButton id={match.id} status={MatchStatus.CLOSED} label="Đóng dự đoán" />
                     </div>
                   </section>
                 )}
@@ -311,19 +308,19 @@ Brazil,Serbia,2026-06-15 02:00,GROUP,2,TEAM_A,OPEN`}
                     3. Sau trận: tính kết quả
                   </p>
                   <p className="mt-2 text-xs leading-5 text-slate-600">
-                    Sau khi có tỷ số 90 phút, lấy từ API trước; chỉ nhập tay nếu API lỗi hoặc chưa có dữ liệu.
+                    Sau khi có tỷ số 90 phút, bấm lấy tự động trước; chỉ nhập tay nếu hệ thống chưa có dữ liệu.
                   </p>
                   {match.externalSource === FOOTBALL_DATA_SOURCE && match.externalFixtureId && (
                     <form action={settleMatchFromApiAction} className="mt-3 flex flex-wrap items-center justify-between gap-3">
                       <input type="hidden" name="matchId" value={match.id} />
                       <span className="text-xs font-semibold text-sky-950">
-                        fixture #{match.externalFixtureId}
+                        Mã trận {match.externalFixtureId}
                       </span>
                       <button
                         disabled={!footballDataConfigured || !matchHasStarted}
                         className="rounded-xl bg-sky-700 px-3 py-2 text-sm font-bold text-white hover:bg-sky-800 disabled:cursor-not-allowed disabled:bg-slate-400"
                       >
-                        Lấy tỷ số API
+                        Lấy tỷ số tự động
                       </button>
                     </form>
                   )}
@@ -353,26 +350,26 @@ Brazil,Serbia,2026-06-15 02:00,GROUP,2,TEAM_A,OPEN`}
         </div>
       </AdminSection>
 
-      <AdminSection id="users" title="Người dùng" description="Tạo tài khoản nội bộ, sửa hồ sơ, khóa và reset mật khẩu.">
+      <AdminSection id="users" title="Người chơi" description="Tạo tài khoản, sửa thông tin, khóa/mở và cấp lại mật khẩu.">
         {createdUsers && (
           <p className="mb-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
-            Đã tạo {createdUsers} user
-            {skippedUsers && Number(skippedUsers) > 0 ? `, bỏ qua ${skippedUsers} user trùng.` : "."}
+            Đã tạo {createdUsers} tài khoản
+            {skippedUsers && Number(skippedUsers) > 0 ? `, bỏ qua ${skippedUsers} tài khoản trùng.` : "."}
           </p>
         )}
         {userImportErrors && (
           <p className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-            Import user có {userImportErrors} lỗi{userImportFirstError ? `: ${userImportFirstError}` : "."}
+            Tạo tài khoản hàng loạt có {userImportErrors} lỗi{userImportFirstError ? `: ${userImportFirstError}` : "."}
           </p>
         )}
         <details className="mb-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
-          <summary className="font-bold text-emerald-950">Import nhiều user từ Excel/CSV</summary>
+          <summary className="font-bold text-emerald-950">Tạo nhiều tài khoản cùng lúc</summary>
           <form action={bulkImportUsersAction} className="mt-3 grid gap-3 md:grid-cols-[1fr_260px]">
             <textarea
               name="usersBulk"
               required
               rows={6}
-              placeholder={`username,Họ tên,Đơn vị
+              placeholder={`Tên đăng nhập,Họ tên,Đơn vị
 an.nguyen,An Nguyễn,Sales
 binh.tran,Bình Trần,Marketing`}
               className={`${inputClass} min-h-40 w-full font-mono`}
@@ -387,19 +384,18 @@ binh.tran,Bình Trần,Marketing`}
                 className={`${inputClass} w-full`}
               />
               <p className="text-xs leading-5 text-slate-600">
-                User sẽ bị buộc đổi mật khẩu ở lần đăng nhập đầu tiên. Dán từ Excel được:
-                tab/comma/semicolon đều đọc được.
+                Người chơi sẽ phải đổi mật khẩu ở lần đăng nhập đầu tiên. Có thể dán thẳng danh sách từ Excel.
               </p>
-              <button className={`${buttonClass} w-full`}>Import user</button>
+              <button className={`${buttonClass} w-full`}>Tạo tài khoản</button>
             </div>
           </form>
         </details>
         <form action={createUserAction} className="grid gap-3 rounded-2xl bg-emerald-50 p-4 md:grid-cols-4">
-          <input name="username" required placeholder="username" className={inputClass} />
+          <input name="username" required placeholder="Tên đăng nhập" className={inputClass} />
           <input name="name" required placeholder="Họ tên" className={inputClass} />
           <input name="department" placeholder="Đơn vị/phòng ban" className={inputClass} />
           <input name="password" required minLength={8} placeholder="Mật khẩu tạm" className={inputClass} />
-          <button className={`${buttonClass} md:col-span-4`}>Tạo user</button>
+          <button className={`${buttonClass} md:col-span-4`}>Tạo tài khoản</button>
         </form>
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           {users.map((user) => (
@@ -407,7 +403,9 @@ binh.tran,Bình Trần,Marketing`}
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h3 className="font-extrabold text-emerald-950">{user.name}</h3>
-                  <p className="text-xs text-slate-500">@{user.username} · {user.role} · {user.banned ? "Đã khóa" : "Đang hoạt động"}</p>
+                  <p className="text-xs text-slate-500">
+                    Tên đăng nhập: {user.username} · {userRoleLabel(user.role)} · {user.banned ? "Đã khóa" : "Đang hoạt động"}
+                  </p>
                 </div>
                 <form action={setUserLockAction}>
                   <input type="hidden" name="id" value={user.id} />
@@ -431,7 +429,7 @@ binh.tran,Bình Trần,Marketing`}
         </div>
       </AdminSection>
 
-      <AdminSection id="payments" title="Tiền nộp quỹ" description="Payment là ledger; bản ghi sai được void thay vì xóa.">
+      <AdminSection id="payments" title="Tiền nộp quỹ" description="Ghi nhận người đã nộp tiền. Nếu nhập sai thì hủy bản ghi và nhập lại.">
         <form action={addPaymentAction} className="grid gap-3 rounded-2xl bg-emerald-50 p-4 md:grid-cols-4">
           <select name="userId" required className={inputClass}>
             <option value="">Chọn người nộp</option>
@@ -455,13 +453,13 @@ binh.tran,Bình Trần,Marketing`}
                   <td className="px-3 py-2">{formatVietnamTime(payment.paidAt)}</td>
                   <td className="px-3 py-2">{payment.note || "-"}</td>
                   <td className="px-3 py-2">{payment.confirmedBy.name}</td>
-                  <td className="px-3 py-2">{payment.voidedAt ? `Đã void bởi ${payment.voidedBy?.name}` : "Có hiệu lực"}</td>
+                  <td className="px-3 py-2">{payment.voidedAt ? `Đã hủy bởi ${payment.voidedBy?.name}` : "Đã ghi nhận"}</td>
                   <td className="px-3 py-2">
                     {!payment.voidedAt && (
                       <form action={voidPaymentAction} className="flex gap-2">
                         <input type="hidden" name="id" value={payment.id} />
-                        <input name="reason" required placeholder="Lý do void" className={`${inputClass} w-32`} />
-                        <button className={dangerClass}>Void</button>
+                        <input name="reason" required placeholder="Lý do hủy" className={`${inputClass} w-32`} />
+                        <button className={dangerClass}>Hủy</button>
                       </form>
                     )}
                   </td>
@@ -472,11 +470,11 @@ binh.tran,Bình Trần,Marketing`}
         </div>
       </AdminSection>
 
-      <AdminSection id="audit" title="Audit gần nhất" description="Dấu vết thao tác quản trị quan trọng.">
+      <AdminSection id="audit" title="Lịch sử thao tác gần nhất" description="Các thay đổi quan trọng do quản trị viên thực hiện.">
         <div className="space-y-2">
           {audits.map((log) => (
             <div key={log.id} className="flex flex-wrap justify-between gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm">
-              <span><b>{log.actor.name}</b> · {log.action} · {log.entityType}/{log.entityId}</span>
+              <span><b>{log.actor.name}</b> · {auditActionLabel(log.action)}</span>
               <span className="text-slate-500">{formatVietnamTime(log.createdAt)}</span>
             </div>
           ))}
@@ -504,6 +502,43 @@ function AdminSection({
       {children}
     </section>
   );
+}
+
+function matchStatusLabel(status: MatchStatus) {
+  if (status === MatchStatus.DRAFT) return "Chưa mở";
+  if (status === MatchStatus.OPEN) return "Đang mở dự đoán";
+  if (status === MatchStatus.CLOSED) return "Đã đóng dự đoán";
+  if (status === MatchStatus.SETTLED) return "Đã tính kết quả";
+  return "Đã hủy";
+}
+
+function userRoleLabel(role: string) {
+  return role === "admin" ? "Quản trị viên" : "Người chơi";
+}
+
+function auditActionLabel(action: string) {
+  const labels: Record<string, string> = {
+    MATCH_CREATED: "đã tạo trận",
+    MATCH_UPDATED: "đã sửa trận hoặc kèo",
+    MATCH_OPEN: "đã mở dự đoán",
+    MATCH_CLOSED: "đã đóng dự đoán",
+    MATCH_SOFT_DELETED: "đã xóa mềm trận",
+    MATCH_SETTLED: "đã tính kết quả trận",
+    MATCH_RESETTLED: "đã tính lại kết quả trận",
+    MATCH_RESULT_IMPORTED: "đã lấy tỷ số tự động",
+    MATCHES_BULK_IMPORTED: "đã thêm nhiều trận",
+    WORLD_CUP_FIXTURES_SYNCED: "đã cập nhật lịch World Cup",
+    USER_CREATED: "đã tạo tài khoản",
+    USERS_BULK_IMPORTED: "đã tạo nhiều tài khoản",
+    USER_UPDATED: "đã sửa thông tin người chơi",
+    USER_LOCKED: "đã khóa tài khoản",
+    USER_UNLOCKED: "đã mở khóa tài khoản",
+    USER_PASSWORD_RESET: "đã cấp lại mật khẩu",
+    PAYMENT_ADDED: "đã ghi nhận tiền nộp",
+    PAYMENT_VOIDED: "đã hủy bản ghi tiền nộp",
+  };
+
+  return labels[action] ?? "đã thực hiện một thay đổi";
 }
 
 function StatusButton({

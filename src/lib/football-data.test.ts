@@ -129,7 +129,7 @@ describe("football-data.org result extraction", () => {
         awayTeam: { name: "South Africa" },
         score: { duration: "REGULAR", fullTime: { home: null, away: null } },
       }),
-    ).toThrow("Trận chưa kết thúc");
+    ).toThrow("Trận này chưa có tỷ số cuối cùng");
   });
 
   it("normalizes a finished match result by fixture id", async () => {

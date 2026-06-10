@@ -74,7 +74,7 @@ export async function voteAction(formData: FormData) {
   const choice = z.nativeEnum(VoteChoice).parse(formString(formData, "choice"));
   const match = await prisma.match.findUnique({ where: { id: matchId } });
   if (!match || match.deletedAt) throw new Error("Không tìm thấy trận");
-  if (isVoteLocked(match, new Date())) throw new Error("Kèo đã khóa");
+  if (isVoteLocked(match, new Date())) throw new Error("Trận này đã khóa lựa chọn");
 
   await prisma.vote.upsert({
     where: { userId_matchId: { userId: user.id, matchId } },
@@ -131,7 +131,7 @@ export async function upsertMatchAction(formData: FormData) {
         existing.round !== payload.round ||
         existing.handicap !== payload.handicap ||
         existing.handicappedTeam !== payload.handicappedTeam;
-      if (changed) throw new Error("Không thể sửa kèo đã có vote");
+      if (changed) throw new Error("Không thể sửa trận đã có người chọn");
     }
     await prisma.match.update({ where: { id: data.id }, data: payload });
     await audit(admin.id, "MATCH_UPDATED", "Match", data.id);
@@ -153,7 +153,7 @@ export async function bulkImportMatchesAction(formData: FormData) {
   const parsed = parseMatchImport(input);
 
   if (parsed.errors.length > 0) {
-    throw new Error(`Import trận lỗi:\n${parsed.errors.slice(0, 12).join("\n")}`);
+    throw new Error(`Danh sách trận có lỗi:\n${parsed.errors.slice(0, 12).join("\n")}`);
   }
 
   const existing = await prisma.match.findMany({
@@ -208,7 +208,7 @@ export async function syncWorldCupFixturesAction() {
     fetched = await fetchFootballDataWorldCupFixtures(apiToken);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Không thể gọi football-data.org.";
+      error instanceof Error ? error.message : "Không thể cập nhật lịch tự động.";
     redirect(`/admin?fixtureSyncError=${encodeURIComponent(message)}`);
   }
 
@@ -312,7 +312,7 @@ export async function settleMatchFromApiAction(formData: FormData) {
     match.externalSource !== FOOTBALL_DATA_SOURCE ||
     !match.externalFixtureId
   ) {
-    throw new Error("Trận chưa được gắn football-data.org fixture id");
+    throw new Error("Trận này chưa lấy được tỷ số tự động");
   }
 
   const apiToken = process.env.FOOTBALL_DATA_TOKEN ?? "";
@@ -321,7 +321,7 @@ export async function settleMatchFromApiAction(formData: FormData) {
     result = await fetchFootballDataMatchResult(apiToken, match.externalFixtureId);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Không thể lấy tỷ số từ football-data.org.";
+      error instanceof Error ? error.message : "Không thể lấy tỷ số tự động.";
     redirect(`/admin?resultSyncError=${encodeURIComponent(message)}`);
   }
 
@@ -358,10 +358,10 @@ export async function setMatchStatusAction(formData: FormData) {
   if (!match || match.deletedAt) throw new Error("Không tìm thấy trận");
   if (status === MatchStatus.OPEN) {
     if (isVoteLocked({ ...match, status }, new Date())) {
-      throw new Error("Không thể mở kèo đã tới giờ khóa");
+      throw new Error("Không thể mở dự đoán vì đã tới giờ khóa");
     }
     if (isPlaceholderTeamName(match.teamA) || isPlaceholderTeamName(match.teamB)) {
-      throw new Error("Không thể mở kèo khi đội vẫn chưa xác định từ API");
+      throw new Error("Không thể mở dự đoán khi đội vẫn chưa xác định");
     }
   }
   if (match.status === MatchStatus.SETTLED) {
@@ -507,7 +507,7 @@ export async function bulkImportUsersAction(formData: FormData) {
       });
       created += 1;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "không tạo được user";
+      const message = error instanceof Error ? error.message : "không tạo được tài khoản";
       errors.push(`${row.username}: ${message}`);
     }
   }
@@ -608,7 +608,7 @@ export async function voidPaymentAction(formData: FormData) {
   const reason = z.string().trim().min(2).max(300).parse(formString(formData, "reason"));
   const payment = await prisma.payment.findUnique({ where: { id } });
   if (!payment) throw new Error("Không tìm thấy khoản nộp");
-  if (payment.voidedAt) throw new Error("Khoản nộp đã được void");
+  if (payment.voidedAt) throw new Error("Khoản nộp này đã bị hủy");
   await prisma.payment.update({
     where: { id },
     data: { voidedAt: new Date(), voidedById: admin.id, voidReason: reason },

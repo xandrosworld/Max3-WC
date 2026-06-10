@@ -56,7 +56,7 @@ export function parseUserImport(input: string): UserImportResult {
 
       try {
         if (columns.length < 2 || columns.length > 3) {
-          throw new Error("cần 2-3 cột: username, họ tên, đơn vị");
+          throw new Error("cần 2-3 cột: tên đăng nhập, họ tên, đơn vị");
         }
 
         const username = columns[0].trim();
@@ -64,7 +64,7 @@ export function parseUserImport(input: string): UserImportResult {
         const department = (columns[2] ?? "").trim();
 
         if (username.length < 3 || username.length > 30 || !usernamePattern.test(username)) {
-          throw new Error("username cần 3-30 ký tự, chỉ gồm chữ, số, dấu chấm hoặc gạch dưới");
+          throw new Error("tên đăng nhập cần 3-30 ký tự, chỉ gồm chữ, số, dấu chấm hoặc gạch dưới");
         }
         if (name.length < 2 || name.length > 100) {
           throw new Error("họ tên cần 2-100 ký tự");
@@ -80,7 +80,7 @@ export function parseUserImport(input: string): UserImportResult {
     });
 
   if (rows.length === 0 && errors.length === 0) {
-    errors.push("Không có dòng user hợp lệ để import.");
+    errors.push("Không có dòng tài khoản hợp lệ để tạo.");
   }
 
   return { rows, errors };

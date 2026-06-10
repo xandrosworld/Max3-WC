@@ -26,6 +26,6 @@ bad user,Sai Username,Ops
       { username: "ok.user", name: "Người Hợp lệ", department: "Ops" },
     ]);
     expect(result.errors[0]).toContain("Dòng 3");
-    expect(result.errors[0]).toContain("username");
+    expect(result.errors[0]).toContain("tên đăng nhập");
   });
 });

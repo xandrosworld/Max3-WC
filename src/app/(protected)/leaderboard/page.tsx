@@ -13,16 +13,16 @@ export default async function LeaderboardPage() {
         <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
           Vinh danh nhà tài trợ
         </p>
-        <h1 className="mt-1 text-3xl font-extrabold text-emerald-950">Leaderboard quỹ chung</h1>
+        <h1 className="mt-1 text-3xl font-extrabold text-emerald-950">Bảng xếp hạng quỹ chung</h1>
         <p className="mt-2 text-sm text-slate-500">
-          Mặc định xếp theo accumulated loss giảm dần.
+          Người đang phải góp quỹ nhiều nhất sẽ đứng trên.
         </p>
       </div>
       <div className="overflow-x-auto rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/5">
         <table className="w-full min-w-[1100px] text-sm">
           <thead className="bg-emerald-950 text-left text-white">
             <tr>
-              {["Rank", "Họ tên", "Đơn vị", "Đã vote", "Đúng", "Tỷ lệ đúng", "Phải nộp", "Đã nộp", "Còn thiếu", "Trạng thái"].map((title) => (
+              {["Hạng", "Họ tên", "Đơn vị", "Đã chọn", "Đúng", "Tỷ lệ đúng", "Phải góp quỹ", "Đã nộp", "Còn thiếu", "Trạng thái"].map((title) => (
                 <th key={title} className="px-4 py-3 font-bold">{title}</th>
               ))}
             </tr>

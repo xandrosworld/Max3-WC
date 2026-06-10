@@ -18,15 +18,15 @@ export async function GET() {
   workbook.creator = "WC 2026 Portal";
   workbook.created = new Date();
 
-  const sheet = workbook.addWorksheet("Leaderboard");
+  const sheet = workbook.addWorksheet("Bảng xếp hạng");
   sheet.columns = [
-    { header: "Rank", key: "rank", width: 10 },
+    { header: "Hạng", key: "rank", width: 10 },
     { header: "Họ tên", key: "name", width: 28 },
     { header: "Đơn vị", key: "department", width: 22 },
-    { header: "Số trận đã vote", key: "voted", width: 18 },
+    { header: "Số trận đã chọn", key: "voted", width: 18 },
     { header: "Số trận đúng", key: "correct", width: 16 },
     { header: "Tỷ lệ đúng (%)", key: "accuracy", width: 16 },
-    { header: "Accumulated loss", key: "loss", width: 20 },
+    { header: "Phải góp quỹ", key: "loss", width: 20 },
     { header: "Đã nộp", key: "paid", width: 18 },
     { header: "Còn thiếu", key: "outstanding", width: 18 },
     { header: "Trạng thái", key: "paymentStatus", width: 18 },
@@ -38,7 +38,7 @@ export async function GET() {
     sheet.getColumn(column).numFmt = '#,##0" đ"';
   });
 
-  const paymentSheet = workbook.addWorksheet("Payments");
+  const paymentSheet = workbook.addWorksheet("Tiền đã nộp");
   paymentSheet.columns = [
     { header: "Họ tên", key: "name", width: 28 },
     { header: "Số tiền", key: "amount", width: 18 },
@@ -54,7 +54,7 @@ export async function GET() {
       paidAt: formatVietnamTime(payment.paidAt),
       note: payment.note ?? "",
       confirmedBy: payment.confirmedBy.name,
-      status: payment.voidedAt ? "Đã void" : "Có hiệu lực",
+      status: payment.voidedAt ? "Đã hủy" : "Đã ghi nhận",
     }),
   );
   paymentSheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };

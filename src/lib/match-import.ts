@@ -112,7 +112,7 @@ function parseRound(value: string) {
 function parseStatus(value: string) {
   if (!value.trim()) return MatchStatus.DRAFT;
   if (value === MatchStatus.SETTLED || value === MatchStatus.CANCELLED) {
-    throw new Error("không import trực tiếp trạng thái SETTLED/CANCELLED");
+    throw new Error("không thêm trực tiếp trận đã xong hoặc đã hủy");
   }
   const direct = MatchStatus[value as keyof typeof MatchStatus];
   const status = direct ?? statusAliases[normalizeKey(value)] ?? statusAliases[normalize(value)];

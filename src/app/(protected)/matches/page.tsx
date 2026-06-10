@@ -32,7 +32,7 @@ export default async function MatchesPage() {
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
-            Kèo đang mở
+            Trận đang mở dự đoán
           </p>
           <h1 className="mt-1 text-3xl font-extrabold text-emerald-950">Chọn một trong ba cửa</h1>
         </div>
@@ -56,10 +56,10 @@ export default async function MatchesPage() {
                   <span className="text-xs font-bold uppercase tracking-wide text-emerald-200">
                     {ROUND_LABELS[match.round]}
                   </span>
-                  <p className="text-sm font-semibold">{formatVietnamTime(match.kickoffAt)} · UTC+7</p>
+                  <p className="text-sm font-semibold">{formatVietnamTime(match.kickoffAt)} · giờ Việt Nam</p>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-extrabold ${locked ? "bg-slate-600" : "bg-emerald-500"}`}>
-                  {locked ? "ĐÃ KHÓA" : "ĐANG MỞ"}
+                  {locked ? "ĐÃ KHÓA CHỌN" : "ĐƯỢC CHỌN"}
                 </span>
               </div>
               <div className="p-5">
@@ -104,7 +104,7 @@ export default async function MatchesPage() {
                           </button>
                         </form>
                         <p className="mt-2 text-center text-xs font-bold text-slate-500">
-                          {voters.length} người
+                          {voters.length} người đã chọn
                         </p>
                         <p className="mt-1 min-h-8 text-center text-xs leading-5 text-slate-500">
                           {voters.map((vote) => vote.user.name).join(", ") || "Chưa có ai"}
@@ -120,7 +120,7 @@ export default async function MatchesPage() {
       </div>
       {matches.length === 0 && (
         <div className="rounded-3xl border border-dashed border-emerald-900/20 bg-white p-12 text-center text-slate-500">
-          Chưa có trận nào được mở.
+          Chưa có trận nào đang mở dự đoán.
         </div>
       )}
     </div>

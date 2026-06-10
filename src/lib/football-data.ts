@@ -108,7 +108,7 @@ function teamName(
 
 export function extractRegularTimeScore(match: FootballDataMatch) {
   if (match.status !== "FINISHED") {
-    throw new Error("Trận chưa kết thúc trên football-data.org.");
+    throw new Error("Trận này chưa có tỷ số cuối cùng.");
   }
 
   if (hasScore(match.score.regularTime)) {
@@ -122,7 +122,7 @@ export function extractRegularTimeScore(match: FootballDataMatch) {
     return scoreFromPair(match.score.fullTime!);
   }
 
-  throw new Error("football-data.org chưa trả tỷ số 90 phút cho trận này.");
+  throw new Error("Chưa có tỷ số 90 phút cho trận này.");
 }
 
 async function parseFootballDataResponse(response: Response) {
@@ -130,8 +130,8 @@ async function parseFootballDataResponse(response: Response) {
   if (!response.ok) {
     const parsedError = apiErrorSchema.safeParse(payload);
     const message = parsedError.success
-      ? parsedError.data.message
-      : `football-data.org trả HTTP ${response.status}.`;
+      ? "Nguồn dữ liệu tự động đang báo lỗi."
+      : "Nguồn dữ liệu tự động đang tạm lỗi.";
     throw new Error(message);
   }
   return payload;
@@ -142,7 +142,7 @@ export async function fetchFootballDataWorldCupFixtures(
   fetcher: typeof fetch = fetch,
 ): Promise<FootballDataFetchResult> {
   if (!apiToken.trim()) {
-    throw new Error("Chưa cấu hình FOOTBALL_DATA_TOKEN.");
+    throw new Error("Chưa kết nối nguồn dữ liệu tự động.");
   }
 
   const url = new URL(
@@ -158,7 +158,7 @@ export async function fetchFootballDataWorldCupFixtures(
   );
   const parsed = matchesResponseSchema.safeParse(payload);
   if (!parsed.success) {
-    throw new Error("Dữ liệu football-data.org không đúng định dạng mong đợi.");
+    throw new Error("Dữ liệu lịch trận trả về chưa đúng định dạng.");
   }
 
   const skippedRounds = new Set<string>();
@@ -183,7 +183,7 @@ export async function fetchFootballDataWorldCupFixtures(
   }
 
   if (fixtures.length === 0) {
-    throw new Error("football-data.org chưa trả về trận World Cup 2026 nào.");
+    throw new Error("Chưa lấy được trận World Cup 2026 nào.");
   }
 
   return { fixtures, skippedRounds: [...skippedRounds] };
@@ -195,10 +195,10 @@ export async function fetchFootballDataMatchResult(
   fetcher: typeof fetch = fetch,
 ): Promise<FootballDataMatchResult> {
   if (!apiToken.trim()) {
-    throw new Error("Chưa cấu hình FOOTBALL_DATA_TOKEN.");
+    throw new Error("Chưa kết nối nguồn dữ liệu tự động.");
   }
   if (!externalFixtureId.trim()) {
-    throw new Error("Trận chưa có football-data.org fixture id.");
+    throw new Error("Trận này chưa lấy được tỷ số tự động.");
   }
 
   const url = new URL(
@@ -212,7 +212,7 @@ export async function fetchFootballDataMatchResult(
   );
   const parsed = footballDataMatchSchema.safeParse(payload);
   if (!parsed.success) {
-    throw new Error("Dữ liệu tỷ số football-data.org không đúng định dạng mong đợi.");
+    throw new Error("Dữ liệu tỷ số trả về chưa đúng định dạng.");
   }
 
   return {
