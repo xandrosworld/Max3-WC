@@ -27,6 +27,10 @@ import { parseMatchImport } from "@/lib/match-import";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireUser } from "@/lib/session";
 import { settleMatch } from "@/lib/settlement";
+import {
+  buildOddsSuggestions,
+  fetchWorldCupOddsEvents,
+} from "@/lib/the-odds-api";
 import { parseUserImport } from "@/lib/user-import";
 
 const usernameSchema = z
@@ -345,7 +349,7 @@ export async function syncWorldCupFixturesAction() {
   const admin = await requireAdmin();
   const apiToken = process.env.FOOTBALL_DATA_TOKEN ?? "";
 
-  let fetched;
+  let fetched: Awaited<ReturnType<typeof fetchFootballDataWorldCupFixtures>>;
   try {
     fetched = await fetchFootballDataWorldCupFixtures(apiToken);
   } catch (error) {
@@ -457,6 +461,104 @@ export async function syncWorldCupFixturesAction() {
     fixtureSkippedRounds: String(fetched.skippedRounds.length),
   });
   redirect(`/admin?${params.toString()}`);
+}
+
+export async function syncOddsSuggestionsAction() {
+  const admin = await requireAdmin();
+  const apiKey = process.env.THE_ODDS_API_KEY ?? "";
+  if (!apiKey.trim()) {
+    redirect(
+      `/admin?oddsSyncError=${encodeURIComponent("Chưa có key lấy kèo gợi ý.")}`,
+    );
+  }
+
+  let fetched: Awaited<ReturnType<typeof fetchWorldCupOddsEvents>>;
+  try {
+    fetched = await fetchWorldCupOddsEvents(apiKey);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Không lấy được kèo gợi ý.";
+    redirect(`/admin?oddsSyncError=${encodeURIComponent(message)}`);
+  }
+
+  const now = new Date();
+  const matches = await prisma.match.findMany({
+    where: {
+      deletedAt: null,
+      status: MatchStatus.DRAFT,
+      kickoffAt: { gt: now },
+    },
+    include: { result: true, _count: { select: { votes: true } } },
+    orderBy: { kickoffAt: "asc" },
+  });
+  const editableMatches = matches.filter(
+    (match) =>
+      !match.result &&
+      match._count.votes === 0 &&
+      !isPlaceholderTeamName(match.teamA) &&
+      !isPlaceholderTeamName(match.teamB),
+  );
+  const suggestions = buildOddsSuggestions(editableMatches, fetched.events);
+
+  let applied = 0;
+  let unchanged = 0;
+  const sourceLines: Array<{
+    matchId: string;
+    bookmaker: string;
+    sourceTeam: string;
+    sourceLine: number;
+    handicap: number;
+  }> = [];
+
+  for (const match of editableMatches) {
+    const suggestion = suggestions.get(match.id);
+    if (!suggestion) continue;
+
+    const sameHandicap =
+      match.handicap === suggestion.handicap &&
+      match.handicappedTeam === suggestion.handicappedTeam;
+    if (sameHandicap) {
+      unchanged += 1;
+      continue;
+    }
+
+    await prisma.match.update({
+      where: { id: match.id },
+      data: {
+        handicap: suggestion.handicap,
+        handicappedTeam: suggestion.handicappedTeam,
+      },
+    });
+    applied += 1;
+    sourceLines.push({
+      matchId: match.id,
+      bookmaker: suggestion.bookmaker,
+      sourceTeam: suggestion.sourceTeam,
+      sourceLine: suggestion.sourceLine,
+      handicap: suggestion.handicap,
+    });
+  }
+
+  await audit(admin.id, "ODDS_SUGGESTIONS_SYNCED", "Match", "bulk", {
+    events: fetched.events.length,
+    editableMatches: editableMatches.length,
+    matched: suggestions.size,
+    applied,
+    unchanged,
+    credits: fetched.usage.lastCost,
+    sourceLines,
+  });
+  revalidatePath("/admin");
+  revalidatePath("/matches");
+
+  const params = new URLSearchParams({
+    oddsEvents: String(fetched.events.length),
+    oddsMatched: String(suggestions.size),
+    oddsApplied: String(applied),
+    oddsUnchanged: String(unchanged),
+  });
+  if (fetched.usage.lastCost) params.set("oddsCredits", fetched.usage.lastCost);
+  redirect(`/admin?matchFilter=draft&${params.toString()}`);
 }
 
 export async function settleMatchFromApiAction(formData: FormData) {

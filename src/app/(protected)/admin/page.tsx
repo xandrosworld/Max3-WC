@@ -10,6 +10,7 @@ import {
   setUserLockAction,
   settleMatchFromApiAction,
   settleMatchAction,
+  syncOddsSuggestionsAction,
   syncWorldCupFixturesAction,
   updateUserAction,
   upsertMatchAction,
@@ -69,6 +70,14 @@ export default async function AdminPage({
   const resultScore = typeof params.resultScore === "string" ? params.resultScore : null;
   const resultSyncError =
     typeof params.resultSyncError === "string" ? params.resultSyncError : null;
+  const oddsSyncError =
+    typeof params.oddsSyncError === "string" ? params.oddsSyncError : null;
+  const oddsEvents = typeof params.oddsEvents === "string" ? params.oddsEvents : null;
+  const oddsMatched = typeof params.oddsMatched === "string" ? params.oddsMatched : null;
+  const oddsApplied = typeof params.oddsApplied === "string" ? params.oddsApplied : null;
+  const oddsUnchanged =
+    typeof params.oddsUnchanged === "string" ? params.oddsUnchanged : null;
+  const oddsCredits = typeof params.oddsCredits === "string" ? params.oddsCredits : null;
   const createdUsers = typeof params.createdUsers === "string" ? params.createdUsers : null;
   const skippedUsers = typeof params.skippedUsers === "string" ? params.skippedUsers : null;
   const userImportErrors =
@@ -81,6 +90,7 @@ export default async function AdminPage({
     : "all";
   const now = new Date();
   const footballDataConfigured = Boolean(process.env.FOOTBALL_DATA_TOKEN);
+  const oddsApiConfigured = Boolean(process.env.THE_ODDS_API_KEY);
   const [matches, users, payments, audits] = await Promise.all([
     prisma.match.findMany({
       where: { deletedAt: null },
@@ -194,6 +204,49 @@ export default async function AdminPage({
               Đã lấy tỷ số 90 phút: {resultScore}.
             </p>
           )}
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-amber-950">
+                  Lấy kèo gợi ý cho các trận chưa mở
+                </h3>
+                <p className="mt-1 text-sm leading-6 text-amber-950/80">
+                  Hệ thống lấy kèo tham khảo, làm tròn thành kèo dễ chơi rồi điền vào
+                  các trận chưa mở. Trận đã mở, đã có người chọn hoặc đã có kết quả sẽ
+                  được giữ nguyên.
+                </p>
+              </div>
+              <form action={syncOddsSuggestionsAction}>
+                <button
+                  disabled={!oddsApiConfigured}
+                  className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-bold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+                >
+                  Lấy kèo gợi ý
+                </button>
+              </form>
+            </div>
+            <p className="mt-2 text-xs font-semibold text-amber-900">
+              Mỗi lần bấm thường tốn khoảng 2 credit. Hãy dùng trước khi mở dự đoán.
+            </p>
+            {!oddsApiConfigured && (
+              <p className="mt-3 rounded-xl bg-white px-3 py-2 text-sm text-amber-900">
+                Chưa có key lấy kèo gợi ý nên nút này đang bị khóa.
+              </p>
+            )}
+            {oddsSyncError && (
+              <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
+                Lấy kèo gợi ý thất bại: {oddsSyncError}
+              </p>
+            )}
+            {oddsApplied && (
+              <p className="mt-3 rounded-xl bg-white px-3 py-2 text-sm text-amber-950">
+                Đã đọc {oddsEvents ?? 0} trận từ nguồn kèo, khớp {oddsMatched ?? 0}
+                trận trong hệ thống, điền mới {oddsApplied} trận
+                {oddsUnchanged ? `, giữ nguyên ${oddsUnchanged} trận đã đúng kèo` : ""}
+                {oddsCredits ? `. Lần bấm này dùng ${oddsCredits} credit.` : "."}
+              </p>
+            )}
+          </div>
         </div>
 
         {importedMatches && (
