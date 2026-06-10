@@ -1,6 +1,7 @@
 import { MatchStatus } from "@prisma/client";
 import { z } from "zod";
 import { buildWorldCupChatReply } from "@/lib/ai-chat";
+import { buildGeminiWorldCupChatReply } from "@/lib/gemini-chat";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
     getLeaderboard(),
   ]);
 
-  const reply = buildWorldCupChatReply(parsed.data.message, {
+  const context = {
     matches,
     leaderboard: leaderboard.map((row) => ({
       name: row.name,
@@ -48,7 +49,15 @@ export async function POST(request: Request) {
       hopeStarUsed: row.hopeStarUsed,
     })),
     now: new Date(),
-  });
+  };
+
+  let reply: string;
+  try {
+    reply = await buildGeminiWorldCupChatReply(parsed.data.message, context);
+  } catch (error) {
+    console.error("Gemini chat failed, using local fallback", error);
+    reply = buildWorldCupChatReply(parsed.data.message, context);
+  }
 
   return Response.json({ reply });
 }
