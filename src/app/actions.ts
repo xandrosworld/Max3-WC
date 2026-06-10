@@ -35,6 +35,12 @@ const usernameSchema = z
   .max(30)
   .regex(/^[a-zA-Z0-9._]+$/);
 
+const passwordSchema = z.string().min(8).max(128);
+const displayNameSchema = z.string().trim().min(2).max(100);
+const departmentSchema = z.string().trim().max(100);
+const avatarMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const maxAvatarBytes = 1024 * 1024;
+
 const matchSchema = z.object({
   id: z.string().optional(),
   teamA: z.string().trim().min(2).max(80),
@@ -66,6 +72,91 @@ async function audit(
   await prisma.auditLog.create({
     data: { actorId, action, entityType, entityId, details: details ?? {} },
   });
+}
+
+export type RegisterState = {
+  error: string;
+};
+
+function getReadableAuthMessage(error: unknown) {
+  const code = getAuthErrorCode(error);
+  if (
+    code === "USER_ALREADY_EXISTS" ||
+    code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL" ||
+    code === "USERNAME_IS_ALREADY_TAKEN"
+  ) {
+    return "Tên đăng nhập này đã có người dùng. Hãy chọn tên khác.";
+  }
+  if (code === "INVALID_USERNAME") {
+    return "Tên đăng nhập chỉ nên gồm chữ, số, dấu chấm hoặc gạch dưới.";
+  }
+  if (code === "USERNAME_TOO_SHORT" || code === "USERNAME_TOO_LONG") {
+    return "Tên đăng nhập cần từ 3 đến 30 ký tự.";
+  }
+  return "Không thể tạo tài khoản lúc này. Vui lòng thử lại.";
+}
+
+export async function registerAction(
+  _previousState: RegisterState,
+  formData: FormData,
+): Promise<RegisterState> {
+  const parsed = z
+    .object({
+      username: usernameSchema,
+      name: displayNameSchema,
+      department: departmentSchema,
+      password: passwordSchema,
+      confirmPassword: passwordSchema,
+    })
+    .safeParse({
+      username: formString(formData, "username"),
+      name: formString(formData, "name"),
+      department: formString(formData, "department"),
+      password: formString(formData, "password"),
+      confirmPassword: formString(formData, "confirmPassword"),
+    });
+
+  if (!parsed.success) {
+    return {
+      error:
+        "Vui lòng kiểm tra lại thông tin. Tên đăng nhập cần 3-30 ký tự, mật khẩu tối thiểu 8 ký tự.",
+    };
+  }
+
+  const { username, name, department, password, confirmPassword } = parsed.data;
+  if (password !== confirmPassword) {
+    return { error: "Mật khẩu xác nhận chưa trùng nhau." };
+  }
+
+  const normalizedUsername = username.toLowerCase();
+
+  try {
+    const created = await auth.api.signUpEmail({
+      headers: await headers(),
+      body: {
+        email: `${normalizedUsername}@internal.local`,
+        password,
+        name,
+        username: normalizedUsername,
+        displayUsername: username,
+      },
+    });
+
+    await prisma.user.update({
+      where: { id: created.user.id },
+      data: {
+        username: normalizedUsername,
+        displayUsername: username,
+        department,
+        mustChangePassword: false,
+        emailVerified: true,
+      },
+    });
+  } catch (error) {
+    return { error: getReadableAuthMessage(error) };
+  }
+
+  redirect("/matches");
 }
 
 export async function voteAction(formData: FormData) {
@@ -618,6 +709,71 @@ export async function voidPaymentAction(formData: FormData) {
   revalidatePath("/leaderboard");
 }
 
+export type ProfileState = {
+  error: string;
+  success: string;
+};
+
+async function avatarFileToDataUrl(file: File) {
+  if (!avatarMimeTypes.has(file.type)) {
+    throw new Error("Ảnh đại diện cần là PNG, JPG, WebP hoặc GIF.");
+  }
+  if (file.size > maxAvatarBytes) {
+    throw new Error("Ảnh đại diện tối đa 1MB.");
+  }
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+  return `data:${file.type};base64,${bytes.toString("base64")}`;
+}
+
+export async function updateProfileAction(
+  _previousState: ProfileState,
+  formData: FormData,
+): Promise<ProfileState> {
+  const user = await requireUser();
+  const parsed = z
+    .object({
+      name: displayNameSchema,
+      department: departmentSchema,
+      removeAvatar: z.boolean(),
+    })
+    .safeParse({
+      name: formString(formData, "name"),
+      department: formString(formData, "department"),
+      removeAvatar: formString(formData, "removeAvatar") === "true",
+    });
+
+  if (!parsed.success) {
+    return { error: "Vui lòng kiểm tra lại họ tên và đơn vị.", success: "" };
+  }
+
+  const data: Prisma.UserUpdateInput = {
+    name: parsed.data.name,
+    department: parsed.data.department,
+  };
+
+  const avatar = formData.get("avatar");
+  try {
+    if (parsed.data.removeAvatar) {
+      data.image = null;
+    } else if (avatar instanceof File && avatar.size > 0) {
+      data.image = await avatarFileToDataUrl(avatar);
+    }
+
+    await prisma.user.update({ where: { id: user.id }, data });
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Không thể cập nhật hồ sơ.",
+      success: "",
+    };
+  }
+
+  revalidatePath("/profile");
+  revalidatePath("/matches");
+  revalidatePath("/leaderboard");
+  return { error: "", success: "Đã lưu hồ sơ." };
+}
+
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(8).max(128),
   newPassword: z.string().min(8).max(128),
@@ -626,6 +782,7 @@ const changePasswordSchema = z.object({
 
 export type ChangePasswordState = {
   error: string;
+  success?: string;
 };
 
 function getAuthErrorCode(error: unknown) {
@@ -677,6 +834,11 @@ export async function changePasswordAction(
       error:
         "Mật khẩu đã được đổi nhưng tài khoản chưa được mở khóa. Hãy dùng mật khẩu mới và thử lại.",
     };
+  }
+
+  if (!user.mustChangePassword) {
+    revalidatePath("/profile");
+    return { error: "", success: "Đã đổi mật khẩu." };
   }
 
   redirect("/matches");

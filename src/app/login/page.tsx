@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { LoginForm } from "@/components/login-form";
 import { getCurrentUser } from "@/lib/session";
 
@@ -25,9 +26,18 @@ export default async function LoginPage() {
         <section className="rounded-3xl border border-white/80 bg-white/85 p-7 shadow-2xl shadow-emerald-950/10 backdrop-blur">
           <h2 className="text-2xl font-extrabold text-emerald-950">Chào mừng trở lại</h2>
           <p className="mb-6 mt-1 text-sm text-emerald-950/55">
-            Tài khoản do quản trị viên cấp.
+            Đăng nhập bằng tài khoản của bạn để tham gia dự đoán.
           </p>
           <LoginForm />
+          <div className="mt-5 border-t border-slate-200 pt-5 text-center">
+            <p className="text-sm text-slate-600">Chưa có tài khoản?</p>
+            <Link
+              href="/register"
+              className="mt-2 inline-flex rounded-xl border border-emerald-700 px-4 py-2 text-sm font-bold text-emerald-800 hover:bg-emerald-50"
+            >
+              Tạo tài khoản mới
+            </Link>
+          </div>
         </section>
       </div>
     </main>

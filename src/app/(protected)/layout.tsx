@@ -32,8 +32,12 @@ export default async function ProtectedLayout({
                 Quản trị
               </Link>
             )}
+            <Link className="rounded-lg px-3 py-2 hover:bg-white/10" href="/profile">
+              Hồ sơ
+            </Link>
           </nav>
           <div className="flex items-center gap-3">
+            <ProfileAvatar image={user.image} name={user.name} />
             <div className="hidden text-right text-xs sm:block">
               <p className="font-bold">{user.name}</p>
               <p className="text-emerald-200">{user.department}</p>
@@ -43,6 +47,26 @@ export default async function ProtectedLayout({
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-7">{children}</main>
+    </div>
+  );
+}
+
+function ProfileAvatar({ image, name }: { image: string | null; name: string }) {
+  const initial = name.trim().charAt(0).toUpperCase() || "U";
+  if (image) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={image}
+        alt={`Ảnh đại diện của ${name}`}
+        className="h-9 w-9 rounded-full object-cover ring-2 ring-emerald-300/60"
+      />
+    );
+  }
+
+  return (
+    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-700 text-sm font-extrabold text-white ring-2 ring-emerald-300/60">
+      {initial}
     </div>
   );
 }
