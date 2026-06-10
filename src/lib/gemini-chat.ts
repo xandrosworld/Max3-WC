@@ -37,8 +37,8 @@ export function buildGeminiPrompt(question: string, context: ChatContext) {
         `${match.teamA} vs ${match.teamB}`,
         `Giờ đá: ${formatVietnamTime(match.kickoffAt)}`,
         `Vòng: ${ROUND_LABELS[match.round]}`,
-        `Kèo: ${formatHandicap(match)}`,
-        `Mức góp: ${formatCurrency(match.contributionAmount)}`,
+        `Mức chấp: ${formatHandicap(match)}`,
+        `Điểm quỹ: ${formatCurrency(match.contributionAmount)}`,
         `Lượt chọn: ${match.teamA} ${voteCounts.TEAM_A}, Hòa-sau-chấp ${voteCounts.DRAW}, ${match.teamB} ${voteCounts.TEAM_B}`,
       ].join(" | ");
     });
@@ -49,20 +49,20 @@ export function buildGeminiPrompt(question: string, context: ChatContext) {
     .map((match) =>
       [
         `${match.teamA} ${match.result?.teamAScore}-${match.result?.teamBScore} ${match.teamB}`,
-        `Cửa thắng: ${match.result ? choiceLabel(match.result.winningChoice, match.teamA, match.teamB) : ""}`,
+        `Cửa đúng: ${match.result ? choiceLabel(match.result.winningChoice, match.teamA, match.teamB) : ""}`,
       ].join(" | "),
     );
 
   const leaderboard = context.leaderboard.slice(0, 10).map((row, index) =>
-    `${index + 1}. ${row.name}: phải góp ${formatCurrency(row.loss)}, đúng ${row.correct}, sai ${row.wrong}, dùng Ngôi sao ${row.hopeStarUsed} lần`,
+    `${index + 1}. ${row.name}: điểm quỹ ${formatCurrency(row.loss)}, đúng ${row.correct}, sai ${row.wrong}, dùng Ngôi sao ${row.hopeStarUsed} lần`,
   );
 
   return [
     "Bạn là AI Chat Bot trong WC 2026 Portal, một web dự đoán vui nội bộ.",
     "Trả lời bằng tiếng Việt, thân thiện, ngắn gọn, dễ hiểu cho người không rành kỹ thuật.",
-    "Chỉ dùng dữ liệu được cung cấp bên dưới. Không bịa tỷ số thật, không bịa tin tức, không nói có dữ liệu nhà cái/live odds.",
-    "Nếu người dùng hỏi dự đoán, hãy nói rõ đó là tham khảo vui, không phải lời khuyên cá cược.",
-    "Luật chơi: mỗi trận chọn đội A, Hòa-sau-chấp hoặc đội B. Đúng thì không mất tiền. Sai thì góp mức của vòng. Ngôi sao hy vọng chỉ từ vòng loại trực tiếp; nếu sai thì nhân đôi khoản góp. Không chọn thì không tự phạt.",
+    "Chỉ dùng dữ liệu được cung cấp bên dưới. Không bịa tỷ số thật, không bịa tin tức, không nói có dữ liệu thương mại bên ngoài hay tỷ lệ thương mại.",
+    "Nếu người dùng hỏi dự đoán, hãy nói rõ đó là tham khảo vui, không phải lời khuyên ăn thua.",
+    "Luật chơi: mỗi trận chọn đội A, Hòa-sau-chấp hoặc đội B. Đúng thì điểm quỹ không phát sinh. Sai thì ghi nhận điểm quỹ theo mức của vòng. Ngôi sao hy vọng chỉ từ vòng loại trực tiếp; nếu sai thì nhân đôi điểm quỹ trận đó. Không chọn thì không tự phạt.",
     "",
     `Thời điểm hiện tại: ${formatVietnamTime(context.now)}.`,
     "",

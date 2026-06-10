@@ -47,6 +47,9 @@ export default async function ProtectedLayout({
           </div>
         </div>
       </header>
+      <div className="border-b border-emerald-900/10 bg-emerald-50 px-4 py-2 text-center text-xs font-semibold text-emerald-950">
+        Dự đoán vui nội bộ, không phải nền tảng cá cược.
+      </div>
       <main className="mx-auto max-w-7xl px-4 py-5 sm:py-7">{children}</main>
       <AiChatBot />
     </div>

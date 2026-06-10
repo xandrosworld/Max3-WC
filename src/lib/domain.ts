@@ -94,7 +94,7 @@ export function formatHandicap(input: {
   handicap: number;
   handicappedTeam: TeamSide | null;
 }) {
-  if (input.handicap === 0) return "Kèo đồng banh (0)";
+  if (input.handicap === 0) return "Không chấp (0)";
   const team =
     input.handicappedTeam === TeamSide.TEAM_A ? input.teamA : input.teamB;
   return `${team} -${input.handicap}`;
@@ -122,10 +122,10 @@ export function toVietnamDateTimeLocal(value: Date | string) {
 }
 
 export function getPaymentStatus(loss: number, paid: number) {
-  if (paid > loss) return "Nộp thừa";
+  if (paid > loss) return "Hoàn tất dư";
   if (paid === loss) return "Đã đủ";
-  if (paid === 0) return "Chưa nộp";
-  return "Nộp thiếu";
+  if (paid === 0) return "Chưa hoàn tất";
+  return "Còn thiếu";
 }
 
 export function calculateAccuracy(correct: number, voted: number) {

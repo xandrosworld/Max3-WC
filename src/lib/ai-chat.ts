@@ -48,9 +48,10 @@ export function buildWorldCupChatReply(question: string, context: ChatContext) {
       "Luật chơi hiện tại rất gọn:",
       "- Mỗi trận chọn một trong ba cửa: đội A, Hòa-sau-chấp, hoặc đội B.",
       "- Admin đặt mức chấp trước trận. Tỷ số tính theo 90 phút chính thức.",
-      "- Chọn đúng thì không mất tiền. Chọn sai thì góp đúng mức của vòng.",
-      "- Ngôi sao hy vọng chỉ dùng từ vòng loại trực tiếp: nếu sai thì khoản góp trận đó nhân đôi.",
+      "- Chọn đúng thì điểm quỹ không phát sinh. Chọn sai thì ghi nhận điểm quỹ theo mức của vòng.",
+      "- Ngôi sao hy vọng chỉ dùng từ vòng loại trực tiếp: nếu sai thì điểm quỹ trận đó nhân đôi.",
       "- Không chọn thì hệ thống hiện tại không tự phạt.",
+      "- Đây là dự đoán vui nội bộ, không phải nền tảng cá cược.",
     ].join("\n");
   }
 
@@ -58,7 +59,7 @@ export function buildWorldCupChatReply(question: string, context: ChatContext) {
     const upcoming = context.matches
       .filter((match) => !match.result && match.kickoffAt.getTime() >= context.now.getTime())
       .slice(0, 5);
-    if (upcoming.length === 0) return "Hiện tôi chưa thấy trận sắp diễn ra trong dữ liệu đang mở. Admin có thể cập nhật lịch hoặc mở kèo thêm.";
+    if (upcoming.length === 0) return "Hiện tôi chưa thấy trận sắp diễn ra trong dữ liệu đang mở. Admin có thể cập nhật lịch hoặc mở dự đoán thêm.";
     return [
       "Các trận gần nhất tôi thấy trong hệ thống:",
       ...upcoming.map((match) => `- ${match.teamA} vs ${match.teamB}, ${formatVietnamTime(match.kickoffAt)} (${ROUND_LABELS[match.round]}).`),
@@ -68,7 +69,7 @@ export function buildWorldCupChatReply(question: string, context: ChatContext) {
   if (includesAny(normalized, ["bang xep hang", "top", "ai dang", "quy", "thua nhieu", "gop nhieu"])) {
     if (context.leaderboard.length === 0) return "Bảng xếp hạng chưa có người chơi nào.";
     return [
-      "Top người đang góp quỹ nhiều nhất:",
+      "Top điểm quỹ nội bộ hiện tại:",
       ...context.leaderboard.slice(0, 5).map((row, index) =>
         `${index + 1}. ${row.name}: ${formatCurrency(row.loss)} · đúng ${row.correct}, sai ${row.wrong}, dùng Ngôi sao ${row.hopeStarUsed} lần.`,
       ),
@@ -77,7 +78,7 @@ export function buildWorldCupChatReply(question: string, context: ChatContext) {
 
   if (includesAny(normalized, ["du doan", "duoc khong", "ai thang", "chon cua nao", "keo nao", "nghieng ve"])) {
     const match = findMentionedMatch(normalized, context.matches) ?? context.matches.find((item) => !item.result);
-    if (!match) return "Tôi chưa thấy trận phù hợp để dự đoán. Khi admin mở lịch/kèo, hỏi tôi theo tên đội là được.";
+    if (!match) return "Tôi chưa thấy trận phù hợp để dự đoán. Khi admin mở lịch hoặc mở dự đoán, hỏi tôi theo tên đội là được.";
     return buildPrediction(match);
   }
 
@@ -102,9 +103,9 @@ function buildPrediction(match: ChatMatch) {
 
   return [
     `Dự đoán vui cho ${match.teamA} vs ${match.teamB}: tôi nghiêng nhẹ về cửa ${choiceLabel(suggestedChoice, match.teamA, match.teamB)}.`,
-    `Kèo hiện tại: ${formatHandicap(match)} · mức góp ${formatCurrency(match.contributionAmount)}.`,
+    `Mức chấp hiện tại: ${formatHandicap(match)} · điểm quỹ ${formatCurrency(match.contributionAmount)}.`,
     `Số người đã chọn: ${match.teamA} ${voteCounts.TEAM_A}, Hòa-sau-chấp ${voteCounts.DRAW}, ${match.teamB} ${voteCounts.TEAM_B}.`,
-    "Đây chỉ là tham khảo vui dựa trên dữ liệu trong portal, không phải lời khuyên cá cược hay tỷ lệ nhà cái.",
+    "Đây chỉ là tham khảo vui dựa trên dữ liệu trong portal, không phải lời khuyên tài chính hay ăn thua.",
   ].join("\n");
 }
 

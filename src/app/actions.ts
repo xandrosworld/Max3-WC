@@ -267,7 +267,7 @@ export async function upsertMatchAction(formData: FormData) {
     });
     if (!existing) throw new Error("Không tìm thấy trận");
     if (existing.status === MatchStatus.SETTLED || existing.result) {
-      throw new Error("Không thể sửa kèo của trận đã tính kết quả");
+      throw new Error("Không thể sửa mức chấp của trận đã tính kết quả");
     }
     if (existing._count.votes > 0) {
       const changed =
@@ -468,7 +468,7 @@ export async function syncOddsSuggestionsAction() {
   const apiKey = process.env.THE_ODDS_API_KEY ?? "";
   if (!apiKey.trim()) {
     redirect(
-      `/admin?oddsSyncError=${encodeURIComponent("Chưa có key lấy kèo gợi ý.")}`,
+      `/admin?oddsSyncError=${encodeURIComponent("Chưa có key lấy mức chấp gợi ý.")}`,
     );
   }
 
@@ -477,7 +477,7 @@ export async function syncOddsSuggestionsAction() {
     fetched = await fetchWorldCupOddsEvents(apiKey);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Không lấy được kèo gợi ý.";
+      error instanceof Error ? error.message : "Không lấy được mức chấp gợi ý.";
     redirect(`/admin?oddsSyncError=${encodeURIComponent(message)}`);
   }
 

@@ -39,6 +39,9 @@ export default async function RegisterPage() {
           <h1 className="mt-2 max-w-xl text-3xl font-extrabold leading-tight text-balance sm:text-4xl lg:text-5xl">
             Một tài khoản, trọn mùa World Cup.
           </h1>
+          <p className="mt-3 max-w-xl text-xs font-semibold uppercase tracking-[0.14em] text-white/55">
+            Dự đoán vui nội bộ, không phải nền tảng cá cược.
+          </p>
         </div>
       </section>
 

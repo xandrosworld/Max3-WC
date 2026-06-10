@@ -26,10 +26,10 @@ export async function GET() {
     { header: "Số trận đã chọn", key: "voted", width: 18 },
     { header: "Số trận đúng", key: "correct", width: 16 },
     { header: "Số trận sai", key: "wrong", width: 16 },
-    { header: "Tỷ lệ đúng (%)", key: "accuracy", width: 16 },
+    { header: "Độ chính xác (%)", key: "accuracy", width: 16 },
     { header: "Ngôi sao đã dùng", key: "hopeStarUsed", width: 18 },
     { header: "Ngôi sao sai", key: "hopeStarWrong", width: 16 },
-    { header: "Phải góp quỹ", key: "loss", width: 20 },
+    { header: "Điểm quỹ", key: "loss", width: 20 },
     { header: "Đã nộp", key: "paid", width: 18 },
     { header: "Còn thiếu", key: "outstanding", width: 18 },
     { header: "Trạng thái", key: "paymentStatus", width: 18 },
@@ -41,10 +41,10 @@ export async function GET() {
     sheet.getColumn(column).numFmt = '#,##0" đ"';
   });
 
-  const paymentSheet = workbook.addWorksheet("Tiền đã nộp");
+  const paymentSheet = workbook.addWorksheet("Quỹ nội bộ");
   paymentSheet.columns = [
     { header: "Họ tên", key: "name", width: 28 },
-    { header: "Số tiền", key: "amount", width: 18 },
+    { header: "Điểm quỹ", key: "amount", width: 18 },
     { header: "Ngày giờ", key: "paidAt", width: 24 },
     { header: "Ghi chú", key: "note", width: 30 },
     { header: "Người xác nhận", key: "confirmedBy", width: 26 },

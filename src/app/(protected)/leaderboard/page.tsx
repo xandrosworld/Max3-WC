@@ -20,10 +20,10 @@ export default async function LeaderboardPage() {
             Bảng xếp hạng
           </p>
           <h1 className="mt-2 text-3xl font-black leading-tight text-emerald-950 md:text-4xl">
-            Ai đang góp quỹ nhiều nhất?
+            Bảng phong độ dự đoán
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-            Xếp hạng theo tổng tiền phải góp. Các chỉ số đúng, sai và Ngôi sao hy vọng giúp mọi người xem lại phong độ dự đoán.
+            Theo dõi lựa chọn, độ chính xác, Ngôi sao hy vọng và điểm quỹ nội bộ. Đây là trò dự đoán vui, không phải nền tảng cá cược.
           </p>
         </div>
         <div className="space-y-3">
@@ -37,8 +37,8 @@ export default async function LeaderboardPage() {
             />
           </div>
           <div className="grid grid-cols-3 gap-2 rounded-3xl border border-emerald-950/10 bg-white p-3 shadow-sm shadow-emerald-950/5">
-            <Summary label="Tổng quỹ" value={formatCurrency(totalLoss)} />
-            <Summary label="Đã nộp" value={formatCurrency(totalPaid)} />
+            <Summary label="Tổng điểm quỹ" value={formatCurrency(totalLoss)} />
+            <Summary label="Đã hoàn tất" value={formatCurrency(totalPaid)} />
             <Summary label="Ngôi sao" value={String(hopeStarUsed)} />
           </div>
         </div>
@@ -54,11 +54,11 @@ export default async function LeaderboardPage() {
                 "Đã chọn",
                 "Đúng",
                 "Sai",
-                "Tỷ lệ đúng",
+                "Độ chính xác",
                 "Ngôi sao",
                 "Ngôi sao sai",
-                "Phải góp",
-                "Đã nộp",
+                "Điểm quỹ",
+                "Đã hoàn tất",
                 "Còn thiếu",
                 "Trạng thái",
               ].map((title) => (

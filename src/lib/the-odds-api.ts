@@ -80,7 +80,7 @@ export async function fetchWorldCupOddsEvents(apiKey: string): Promise<{
   usage: OddsUsage;
 }> {
   const trimmedKey = apiKey.trim();
-  if (!trimmedKey) throw new Error("Chưa có key lấy kèo gợi ý.");
+  if (!trimmedKey) throw new Error("Chưa có key lấy mức chấp gợi ý.");
 
   const url = new URL(
     `https://api.the-odds-api.com/v4/sports/${THE_ODDS_WORLD_CUP_SPORT_KEY}/odds`,
@@ -93,12 +93,12 @@ export async function fetchWorldCupOddsEvents(apiKey: string): Promise<{
 
   const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) {
-    throw new Error(`Không lấy được kèo gợi ý. Mã lỗi ${response.status}.`);
+    throw new Error(`Không lấy được mức chấp gợi ý. Mã lỗi ${response.status}.`);
   }
 
   const raw = await response.json();
   if (!Array.isArray(raw)) {
-    throw new Error("Nguồn kèo trả dữ liệu không đúng định dạng.");
+    throw new Error("Nguồn mức chấp trả dữ liệu không đúng định dạng.");
   }
 
   return {
@@ -151,7 +151,7 @@ export function buildOddsSuggestions(
 
 export function simplifyHandicap(sourceLine: number) {
   if (!Number.isFinite(sourceLine) || sourceLine < 0) {
-    throw new Error("Kèo gợi ý không hợp lệ.");
+    throw new Error("Mức chấp gợi ý không hợp lệ.");
   }
   if (sourceLine < 0.75) return 0;
   return Math.min(20, Math.round(sourceLine));

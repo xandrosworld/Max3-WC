@@ -184,7 +184,7 @@ export function parseMatchImport(input: string): MatchImportResult {
           throw new Error("mức chấp phải là số nguyên từ 0 đến 20");
         }
         const handicappedTeam = handicap === 0 ? null : parseSide(columns[5] ?? "");
-        if (handicap > 0 && !handicappedTeam) throw new Error("kèo chấp dương cần đội bị chấp");
+        if (handicap > 0 && !handicappedTeam) throw new Error("mức chấp dương cần đội bị chấp");
 
         rows.push({
           teamA,

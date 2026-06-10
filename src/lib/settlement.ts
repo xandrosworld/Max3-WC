@@ -111,8 +111,8 @@ export async function settleMatch(input: {
           type: LossTransactionType.LOSS,
           settlementRevision: revision,
           note: vote.hopeStar
-            ? `Ngôi sao hy vọng sai; cửa thắng ${winningChoice}`
-            : `Thua cửa ${vote.choice}; cửa thắng ${winningChoice}`,
+            ? `Ngôi sao hy vọng sai; cửa đúng ${winningChoice}`
+            : `Sai cửa ${vote.choice}; cửa đúng ${winningChoice}`,
         };
       });
 

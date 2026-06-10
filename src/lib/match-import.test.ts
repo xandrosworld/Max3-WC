@@ -34,6 +34,6 @@ Brazil,Serbia,15/06/2026 02:00,Vòng bảng,2,TEAM_A,OPEN
 
     expect(result.rows).toEqual([]);
     expect(result.errors[0]).toContain("Dòng 1");
-    expect(result.errors[0]).toContain("kèo chấp dương");
+    expect(result.errors[0]).toContain("mức chấp dương");
   });
 });

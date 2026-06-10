@@ -11,7 +11,7 @@ type ChatMessage = {
 const starter: ChatMessage = {
   role: "assistant",
   content:
-    "Tôi là AI Chat Bot của WC 2026 Portal. Bạn có thể hỏi luật chơi, lịch trận, bảng xếp hạng hoặc nhờ tôi dự đoán vui một trận.",
+    "Tôi là AI Chat Bot của WC 2026 Portal. Bạn có thể hỏi luật chơi, lịch trận, bảng xếp hạng hoặc nhờ tôi dự đoán vui một trận. Đây là dự đoán nội bộ, không phải nền tảng cá cược.",
 };
 
 export function AiChatBot() {

@@ -145,7 +145,7 @@ export default async function MatchesPage({
             Lịch đấu rõ, dự đoán nhanh
           </h1>
           <p className="mt-2 hidden max-w-lg text-sm leading-6 text-white/70 sm:block">
-            Theo dõi toàn bộ giải đấu. Khi dự đoán mở, bạn chọn ngay tại trận.
+            Dự đoán vui nội bộ, không phải nền tảng cá cược. Khi dự đoán mở, bạn chọn ngay tại trận.
           </p>
           <div className="mt-4 grid max-w-lg grid-cols-4 gap-2 text-sm sm:mt-5">
             <BannerStat value={totalCount} label="trận" />
@@ -354,7 +354,7 @@ export default async function MatchesPage({
                                     {formatHandicap(match)}
                                   </span>
                                   <span className="rounded-lg bg-white px-2.5 py-1.5 text-slate-600 ring-1 ring-slate-200">
-                                    Mức góp {formatCurrency(match.contributionAmount)}
+                                    Điểm quỹ {formatCurrency(match.contributionAmount)}
                                   </span>
                                 </div>
                                 <p className="flex items-center gap-1.5 text-xs font-bold text-emerald-700">
@@ -621,7 +621,7 @@ function SettledMatchSummary({
           {match.result.teamBScore} {match.teamB}
         </p>
         <p className="mt-1 text-xs font-semibold text-slate-600">
-          Cửa thắng:{" "}
+          Cửa đúng:{" "}
           {choiceLabel(match.result.winningChoice, match.teamA, match.teamB)}
         </p>
       </div>
@@ -635,7 +635,7 @@ function SettledMatchSummary({
         >
           Bạn dự đoán {correct ? "đúng" : "sai"}
           {!correct &&
-            ` · Góp ${formatCurrency(
+            ` · Điểm quỹ +${formatCurrency(
               match.contributionAmount * (myVote.hopeStar ? 2 : 1),
             )}`}
         </div>
@@ -666,7 +666,7 @@ function LockedMatchSummary({
           {formatHandicap(match)}
         </span>
         <span className="rounded-lg bg-white px-2.5 py-1.5 text-slate-600 ring-1 ring-slate-200">
-          Mức góp {formatCurrency(match.contributionAmount)}
+          Điểm quỹ {formatCurrency(match.contributionAmount)}
         </span>
       </div>
       <p className="text-sm font-semibold text-slate-600">

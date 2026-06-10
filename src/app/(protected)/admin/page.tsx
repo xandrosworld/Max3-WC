@@ -148,14 +148,14 @@ export default async function AdminPage({
       </section>
 
       <section className="grid gap-3 md:grid-cols-5">
-        <AdminMetric label="Cần mở kèo" value={workStats.draft} href="/admin?matchFilter=draft" />
+        <AdminMetric label="Cần mở dự đoán" value={workStats.draft} href="/admin?matchFilter=draft" />
         <AdminMetric label="Đang mở" value={workStats.open} href="/admin?matchFilter=open" />
         <AdminMetric label="Sắp khóa" value={workStats.soonLocking} href="/admin?matchFilter=open" tone="warn" />
         <AdminMetric label="Cần chốt tỷ số" value={workStats.needsResult} href="/admin?matchFilter=needsResult" tone="danger" />
         <AdminMetric label="Đã chốt" value={workStats.settled} href="/admin?matchFilter=settled" />
       </section>
 
-      <AdminSection id="matches" title="Quản lý trận đấu" description="Chọn trận, đặt kèo, mở dự đoán và chốt tỷ số sau trận.">
+      <AdminSection id="matches" title="Quản lý trận đấu" description="Chọn trận, đặt mức chấp, mở dự đoán và chốt tỷ số sau trận.">
         <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -208,10 +208,10 @@ export default async function AdminPage({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="font-bold text-amber-950">
-                  Lấy kèo gợi ý cho các trận chưa mở
+                  Lấy mức chấp gợi ý cho các trận chưa mở
                 </h3>
                 <p className="mt-1 text-sm leading-6 text-amber-950/80">
-                  Hệ thống lấy kèo tham khảo, làm tròn thành kèo dễ chơi rồi điền vào
+                  Hệ thống lấy mức chấp tham khảo, làm tròn thành lựa chọn dễ chơi rồi điền vào
                   các trận chưa mở. Trận đã mở, đã có người chọn hoặc đã có kết quả sẽ
                   được giữ nguyên.
                 </p>
@@ -221,7 +221,7 @@ export default async function AdminPage({
                   disabled={!oddsApiConfigured}
                   className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-bold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-slate-400"
                 >
-                  Lấy kèo gợi ý
+                  Lấy mức chấp gợi ý
                 </button>
               </form>
             </div>
@@ -230,19 +230,19 @@ export default async function AdminPage({
             </p>
             {!oddsApiConfigured && (
               <p className="mt-3 rounded-xl bg-white px-3 py-2 text-sm text-amber-900">
-                Chưa có key lấy kèo gợi ý nên nút này đang bị khóa.
+                Chưa có key lấy mức chấp gợi ý nên nút này đang bị khóa.
               </p>
             )}
             {oddsSyncError && (
               <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
-                Lấy kèo gợi ý thất bại: {oddsSyncError}
+                Lấy mức chấp gợi ý thất bại: {oddsSyncError}
               </p>
             )}
             {oddsApplied && (
               <p className="mt-3 rounded-xl bg-white px-3 py-2 text-sm text-amber-950">
-                Đã đọc {oddsEvents ?? 0} trận từ nguồn kèo, khớp {oddsMatched ?? 0}
+                Đã đọc {oddsEvents ?? 0} trận từ nguồn tham khảo, khớp {oddsMatched ?? 0}
                 trận trong hệ thống, điền mới {oddsApplied} trận
-                {oddsUnchanged ? `, giữ nguyên ${oddsUnchanged} trận đã đúng kèo` : ""}
+                {oddsUnchanged ? `, giữ nguyên ${oddsUnchanged} trận đã đúng mức chấp` : ""}
                 {oddsCredits ? `. Lần bấm này dùng ${oddsCredits} credit.` : "."}
               </p>
             )}
@@ -290,7 +290,7 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
             </select>
             <input name="handicap" required type="number" min="0" step="1" defaultValue="0" placeholder="Mức chấp" className={inputClass} />
             <select name="handicappedTeam" className={inputClass}>
-              <option value="">Không đội nào (kèo 0)</option>
+              <option value="">Không đội nào (0)</option>
               <option value={TeamSide.TEAM_A}>Đội A bị chấp</option>
               <option value={TeamSide.TEAM_B}>Đội B bị chấp</option>
             </select>
@@ -350,7 +350,7 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                 {match.status !== MatchStatus.SETTLED && !match.result && (
                   <section className="rounded-xl bg-emerald-50 p-3">
                     <p className="text-xs font-extrabold uppercase tracking-wide text-emerald-800">
-                      1. Đặt kèo trước trận
+                      1. Đặt mức chấp trước trận
                     </p>
                     <form action={upsertMatchAction} className="mt-3 grid gap-2">
                       <input type="hidden" name="id" value={match.id} />
@@ -365,12 +365,12 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                       <label className="grid gap-1 text-xs font-bold text-slate-600">
                         Đội bị chấp
                         <select name="handicappedTeam" defaultValue={match.handicappedTeam ?? ""} className={inputClass}>
-                          <option value="">Không đội nào (kèo 0)</option>
+                          <option value="">Không đội nào (0)</option>
                           <option value={TeamSide.TEAM_A}>{match.teamA} bị chấp</option>
                           <option value={TeamSide.TEAM_B}>{match.teamB} bị chấp</option>
                         </select>
                       </label>
-                      <button className={buttonClass}>Lưu kèo</button>
+                      <button className={buttonClass}>Lưu mức chấp</button>
                     </form>
                     <details className="mt-3 text-xs text-slate-600">
                       <summary className="cursor-pointer font-bold text-slate-700">
@@ -386,7 +386,7 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                         </select>
                         <input name="handicap" required type="number" min="0" step="1" defaultValue={match.handicap} className={inputClass} />
                         <select name="handicappedTeam" defaultValue={match.handicappedTeam ?? ""} className={inputClass}>
-                          <option value="">Không đội nào (kèo 0)</option>
+                          <option value="">Không đội nào (0)</option>
                           <option value={TeamSide.TEAM_A}>Đội A bị chấp</option>
                           <option value={TeamSide.TEAM_B}>Đội B bị chấp</option>
                         </select>
@@ -547,21 +547,21 @@ binh.tran,Bình Trần,Marketing`}
         </div>
       </AdminSection>
 
-      <AdminSection id="payments" title="Tiền nộp quỹ" description="Ghi nhận người đã nộp tiền. Nếu nhập sai thì hủy bản ghi và nhập lại.">
+      <AdminSection id="payments" title="Quỹ nội bộ" description="Ghi nhận phần quỹ nội bộ đã hoàn tất. Nếu nhập sai thì hủy bản ghi và nhập lại.">
         <form action={addPaymentAction} className="grid gap-3 rounded-2xl bg-emerald-50 p-4 md:grid-cols-4">
           <select name="userId" required className={inputClass}>
             <option value="">Chọn người nộp</option>
             {users.map((user) => <option key={user.id} value={user.id}>{user.name} · {user.department}</option>)}
           </select>
-          <input name="amount" required type="number" min="1" step="1000" placeholder="Số tiền" className={inputClass} />
+          <input name="amount" required type="number" min="1" step="1000" placeholder="Số điểm quỹ" className={inputClass} />
           <input name="paidAt" required type="datetime-local" defaultValue={toVietnamDateTimeLocal(new Date())} className={inputClass} />
           <input name="note" placeholder="Ghi chú" className={inputClass} />
-          <button className={`${buttonClass} md:col-span-4`}>Ghi nhận đã nộp</button>
+          <button className={`${buttonClass} md:col-span-4`}>Ghi nhận hoàn tất</button>
         </form>
         <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200">
           <table className="w-full min-w-[850px] text-sm">
             <thead className="bg-slate-800 text-left text-white">
-              <tr>{["Người nộp", "Số tiền", "Ngày giờ", "Ghi chú", "Xác nhận", "Trạng thái", "Thao tác"].map((x) => <th key={x} className="px-3 py-2">{x}</th>)}</tr>
+              <tr>{["Người hoàn tất", "Điểm quỹ", "Ngày giờ", "Ghi chú", "Xác nhận", "Trạng thái", "Thao tác"].map((x) => <th key={x} className="px-3 py-2">{x}</th>)}</tr>
             </thead>
             <tbody>
               {payments.map((payment) => (
@@ -690,7 +690,7 @@ function userRoleLabel(role: string) {
 function auditActionLabel(action: string) {
   const labels: Record<string, string> = {
     MATCH_CREATED: "đã tạo trận",
-    MATCH_UPDATED: "đã sửa trận hoặc kèo",
+    MATCH_UPDATED: "đã sửa trận hoặc mức chấp",
     MATCH_OPEN: "đã mở dự đoán",
     MATCH_CLOSED: "đã đóng dự đoán",
     MATCH_SOFT_DELETED: "đã xóa mềm trận",
@@ -705,8 +705,8 @@ function auditActionLabel(action: string) {
     USER_LOCKED: "đã khóa tài khoản",
     USER_UNLOCKED: "đã mở khóa tài khoản",
     USER_PASSWORD_RESET: "đã cấp lại mật khẩu",
-    PAYMENT_ADDED: "đã ghi nhận tiền nộp",
-    PAYMENT_VOIDED: "đã hủy bản ghi tiền nộp",
+    PAYMENT_ADDED: "đã ghi nhận quỹ nội bộ",
+    PAYMENT_VOIDED: "đã hủy bản ghi quỹ nội bộ",
   };
 
   return labels[action] ?? "đã thực hiện một thay đổi";

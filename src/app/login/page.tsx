@@ -65,6 +65,9 @@ export default async function LoginPage() {
           <p className="mt-3 max-w-xl text-sm leading-6 text-white/75 sm:text-base">
             Hòa-sau-chấp mới là nghệ thuật. Chọn rõ ràng, theo dõi dễ dàng và xem thứ hạng sau mỗi trận.
           </p>
+          <p className="mt-3 max-w-xl text-xs font-semibold uppercase tracking-[0.14em] text-white/55">
+            Dự đoán vui nội bộ, không phải nền tảng cá cược.
+          </p>
 
           {nextMatch && (
             <div className="mt-5 inline-flex max-w-full items-center gap-3 rounded-xl border border-white/15 bg-[#07141d]/70 px-4 py-3 shadow-xl backdrop-blur-md">

@@ -56,7 +56,7 @@ describe("European Handicap V6", () => {
 });
 
 describe("settlement money rule", () => {
-  it("thắng không cộng tiền, thua cộng đúng mức đóng góp", () => {
+  it("thắng không phát sinh quỹ, thua ghi nhận đúng mức quỹ", () => {
     expect(getLossAmountForVote(VoteChoice.DRAW, VoteChoice.DRAW, 40_000)).toBe(0);
     expect(getLossAmountForVote(VoteChoice.TEAM_A, VoteChoice.DRAW, 40_000)).toBe(
       40_000,
@@ -113,9 +113,9 @@ describe("placeholder teams", () => {
 
 describe("payment status", () => {
   it("phân loại đủ bốn trạng thái", () => {
-    expect(getPaymentStatus(40_000, 0)).toBe("Chưa nộp");
-    expect(getPaymentStatus(40_000, 20_000)).toBe("Nộp thiếu");
+    expect(getPaymentStatus(40_000, 0)).toBe("Chưa hoàn tất");
+    expect(getPaymentStatus(40_000, 20_000)).toBe("Còn thiếu");
     expect(getPaymentStatus(40_000, 40_000)).toBe("Đã đủ");
-    expect(getPaymentStatus(40_000, 50_000)).toBe("Nộp thừa");
+    expect(getPaymentStatus(40_000, 50_000)).toBe("Hoàn tất dư");
   });
 });
