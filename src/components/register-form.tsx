@@ -20,7 +20,7 @@ export function RegisterForm() {
           required
           minLength={3}
           maxLength={30}
-          className="w-full rounded-xl border border-emerald-950/15 bg-white px-4 py-3 outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+          className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
         />
       </label>
 
@@ -34,7 +34,7 @@ export function RegisterForm() {
           required
           minLength={2}
           maxLength={100}
-          className="w-full rounded-xl border border-emerald-950/15 bg-white px-4 py-3 outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+          className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
         />
       </label>
 
@@ -45,7 +45,7 @@ export function RegisterForm() {
         <input
           name="department"
           maxLength={100}
-          className="w-full rounded-xl border border-emerald-950/15 bg-white px-4 py-3 outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+          className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
         />
       </label>
 
@@ -60,7 +60,7 @@ export function RegisterForm() {
           required
           minLength={8}
           maxLength={128}
-          className="w-full rounded-xl border border-emerald-950/15 bg-white px-4 py-3 outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+          className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
         />
       </label>
 
@@ -75,7 +75,7 @@ export function RegisterForm() {
           required
           minLength={8}
           maxLength={128}
-          className="w-full rounded-xl border border-emerald-950/15 bg-white px-4 py-3 outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+          className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
         />
       </label>
 
@@ -83,7 +83,7 @@ export function RegisterForm() {
 
       <button
         disabled={pending}
-        className="w-full rounded-xl bg-emerald-700 px-4 py-3 font-bold text-white shadow-lg shadow-emerald-900/15 hover:bg-emerald-800 disabled:opacity-60"
+        className="min-h-12 w-full rounded-xl bg-emerald-700 px-4 py-3 font-bold text-white shadow-lg shadow-emerald-900/15 hover:bg-emerald-800 active:translate-y-px disabled:opacity-60"
       >
         {pending ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
       </button>

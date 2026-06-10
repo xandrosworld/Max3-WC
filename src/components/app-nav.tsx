@@ -6,10 +6,10 @@ import { usePathname } from "next/navigation";
 export function AppNav({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
   const items = [
-    { href: "/matches", label: "Lịch & dự đoán" },
-    { href: "/leaderboard", label: "Bảng xếp hạng" },
-    ...(isAdmin ? [{ href: "/admin", label: "Quản trị" }] : []),
-    { href: "/profile", label: "Hồ sơ" },
+    { href: "/matches", label: "Lịch & dự đoán", mobileLabel: "Lịch" },
+    { href: "/leaderboard", label: "Bảng xếp hạng", mobileLabel: "Xếp hạng" },
+    ...(isAdmin ? [{ href: "/admin", label: "Quản trị", mobileLabel: "Quản trị" }] : []),
+    { href: "/profile", label: "Hồ sơ", mobileLabel: "Hồ sơ" },
   ];
 
   return (
@@ -26,7 +26,8 @@ export function AppNav({ isAdmin }: { isAdmin: boolean }) {
             }`}
             href={item.href}
           >
-            {item.label}
+            <span className="sm:hidden">{item.mobileLabel}</span>
+            <span className="hidden sm:inline">{item.label}</span>
           </Link>
         );
       })}

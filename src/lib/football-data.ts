@@ -19,9 +19,13 @@ const footballDataMatchSchema = z
     stage: z.string(),
     homeTeam: z.object({
       name: z.string().trim().min(1).nullable().optional(),
+      tla: z.string().trim().min(2).max(8).nullable().optional(),
+      crest: z.string().url().nullable().optional(),
     }),
     awayTeam: z.object({
       name: z.string().trim().min(1).nullable().optional(),
+      tla: z.string().trim().min(2).max(8).nullable().optional(),
+      crest: z.string().url().nullable().optional(),
     }),
     score: z
       .object({
@@ -50,6 +54,10 @@ export type FootballDataFixture = {
   externalFixtureId: string;
   teamA: string;
   teamB: string;
+  teamACode: string | null;
+  teamBCode: string | null;
+  teamACrest: string | null;
+  teamBCrest: string | null;
   kickoffAt: Date;
   round: RoundType;
   contributionAmount: number;
@@ -82,8 +90,8 @@ export function mapFootballDataStage(value: string): RoundType | null {
   }
   if (stage.includes("QUARTER")) return RoundType.QUARTER_FINAL;
   if (stage.includes("SEMI")) return RoundType.SEMI_FINAL;
+  if (stage.includes("THIRD") || stage.includes("3RD")) return RoundType.THIRD_PLACE;
   if (stage === "FINAL") return RoundType.FINAL;
-  if (stage.includes("THIRD") || stage.includes("3RD")) return null;
 
   return null;
 }
@@ -176,6 +184,10 @@ export async function fetchFootballDataWorldCupFixtures(
       externalFixtureId: String(match.id),
       teamA: teamName(match.homeTeam, "Chưa xác định A"),
       teamB: teamName(match.awayTeam, "Chưa xác định B"),
+      teamACode: match.homeTeam.tla?.trim() || null,
+      teamBCode: match.awayTeam.tla?.trim() || null,
+      teamACrest: match.homeTeam.crest?.trim() || null,
+      teamBCrest: match.awayTeam.crest?.trim() || null,
       kickoffAt: new Date(match.utcDate),
       round,
       contributionAmount: getContributionAmount(round),

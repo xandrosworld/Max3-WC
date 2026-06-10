@@ -22,8 +22,10 @@ export default async function ProtectedLayout({
           <Link href="/matches" className="font-extrabold">
             WC <span className="text-emerald-300">2026</span>
           </Link>
-          <AppNav isAdmin={user.role === "admin"} />
-          <div className="flex items-center gap-3">
+          <div className="order-3 w-full md:order-none md:w-auto">
+            <AppNav isAdmin={user.role === "admin"} />
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3">
             <ProfileAvatar image={user.image} name={user.name} />
             <div className="hidden text-right text-xs sm:block">
               <p className="font-bold">{user.name}</p>
@@ -33,7 +35,7 @@ export default async function ProtectedLayout({
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-7">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-5 sm:py-7">{children}</main>
       <AiChatBot />
     </div>
   );

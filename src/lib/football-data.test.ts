@@ -14,11 +14,8 @@ describe("football-data.org World Cup mapping", () => {
     expect(mapFootballDataStage("LAST_16")).toBe(RoundType.ROUND_OF_16);
     expect(mapFootballDataStage("QUARTER_FINALS")).toBe(RoundType.QUARTER_FINAL);
     expect(mapFootballDataStage("SEMI_FINALS")).toBe(RoundType.SEMI_FINAL);
+    expect(mapFootballDataStage("THIRD_PLACE")).toBe(RoundType.THIRD_PLACE);
     expect(mapFootballDataStage("FINAL")).toBe(RoundType.FINAL);
-  });
-
-  it("skips third-place because V6 has no contribution rule", () => {
-    expect(mapFootballDataStage("THIRD_PLACE")).toBeNull();
   });
 
   it("normalizes fixtures returned by the provider", async () => {
@@ -31,8 +28,16 @@ describe("football-data.org World Cup mapping", () => {
               utcDate: "2026-06-11T19:00:00Z",
               status: "TIMED",
               stage: "GROUP_STAGE",
-              homeTeam: { name: "Mexico" },
-              awayTeam: { name: "South Africa" },
+              homeTeam: {
+                name: "Mexico",
+                tla: "MEX",
+                crest: "https://crests.football-data.org/769.svg",
+              },
+              awayTeam: {
+                name: "South Africa",
+                tla: "RSA",
+                crest: "https://crests.football-data.org/9396.svg",
+              },
               score: { duration: "REGULAR", fullTime: { home: null, away: null } },
             },
             {
@@ -40,8 +45,8 @@ describe("football-data.org World Cup mapping", () => {
               utcDate: "2026-07-18T20:00:00Z",
               status: "TIMED",
               stage: "THIRD_PLACE",
-              homeTeam: { name: "TBD" },
-              awayTeam: { name: "TBD" },
+              homeTeam: { name: "TBD", tla: null, crest: null },
+              awayTeam: { name: "TBD", tla: null, crest: null },
               score: { duration: "REGULAR", fullTime: { home: null, away: null } },
             },
             {
@@ -60,12 +65,16 @@ describe("football-data.org World Cup mapping", () => {
 
     const result = await fetchFootballDataWorldCupFixtures("test-token", fetcher);
 
-    expect(result.skippedRounds).toEqual(["THIRD_PLACE"]);
-    expect(result.fixtures).toHaveLength(2);
+    expect(result.skippedRounds).toEqual([]);
+    expect(result.fixtures).toHaveLength(3);
     expect(result.fixtures[0]).toMatchObject({
       externalFixtureId: "537327",
       teamA: "Mexico",
       teamB: "South Africa",
+      teamACode: "MEX",
+      teamBCode: "RSA",
+      teamACrest: "https://crests.football-data.org/769.svg",
+      teamBCrest: "https://crests.football-data.org/9396.svg",
       round: RoundType.GROUP,
       contributionAmount: 20_000,
     });
@@ -73,6 +82,11 @@ describe("football-data.org World Cup mapping", () => {
       "2026-06-11T19:00:00.000Z",
     );
     expect(result.fixtures[1]).toMatchObject({
+      externalFixtureId: "537430",
+      round: RoundType.THIRD_PLACE,
+      contributionAmount: 50_000,
+    });
+    expect(result.fixtures[2]).toMatchObject({
       externalFixtureId: "537390",
       teamA: "Chưa xác định A",
       teamB: "Chưa xác định B",

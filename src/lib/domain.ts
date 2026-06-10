@@ -13,6 +13,7 @@ export const ROUND_LABELS: Record<RoundType, string> = {
   ROUND_OF_16: "Vòng 16",
   QUARTER_FINAL: "Tứ kết",
   SEMI_FINAL: "Bán kết",
+  THIRD_PLACE: "Tranh hạng ba",
   FINAL: "Chung kết",
 };
 
@@ -22,6 +23,7 @@ export const CONTRIBUTION_BY_ROUND: Record<RoundType, number> = {
   ROUND_OF_16: 40_000,
   QUARTER_FINAL: 40_000,
   SEMI_FINAL: 50_000,
+  THIRD_PLACE: 50_000,
   FINAL: 100_000,
 };
 

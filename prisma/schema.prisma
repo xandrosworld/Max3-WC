@@ -21,6 +21,7 @@ enum RoundType {
   ROUND_OF_16
   QUARTER_FINAL
   SEMI_FINAL
+  THIRD_PLACE
   FINAL
 }
 
@@ -121,6 +122,10 @@ model Match {
   id                 String      @id @default(cuid())
   teamA              String
   teamB              String
+  teamACode          String?
+  teamBCode          String?
+  teamACrest         String?
+  teamBCrest         String?
   kickoffAt          DateTime    @db.Timestamptz(3)
   round              RoundType
   contributionAmount Int
