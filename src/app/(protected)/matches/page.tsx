@@ -171,11 +171,6 @@ export default async function MatchesPage({
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              <MoodPill label="Messi 10" tone="sky" />
-              <MoodPill label="Ronaldo 7" tone="rose" />
-              <MoodPill label="Ngôi sao" tone="amber" />
-            </div>
           </div>
         </div>
       </section>
@@ -421,27 +416,6 @@ function Stat({
     <div className="rounded-2xl bg-slate-50 px-3 py-3 text-center">
       <p className={`text-2xl font-black tabular-nums ${toneClass}`}>{value}</p>
       <p className="mt-1 text-xs font-bold text-slate-500">{label}</p>
-    </div>
-  );
-}
-
-function MoodPill({
-  label,
-  tone,
-}: {
-  label: string;
-  tone: "sky" | "rose" | "amber";
-}) {
-  const toneClass =
-    tone === "sky"
-      ? "bg-sky-100 text-sky-950"
-      : tone === "rose"
-        ? "bg-rose-100 text-rose-950"
-        : "bg-amber-100 text-amber-950";
-
-  return (
-    <div className={`rounded-2xl px-3 py-2 text-center text-xs font-black ${toneClass}`}>
-      {label}
     </div>
   );
 }
