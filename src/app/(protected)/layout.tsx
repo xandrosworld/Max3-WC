@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { AiChatBot } from "@/components/ai-chat-bot";
 import { AutoRefresh } from "@/components/auto-refresh";
@@ -19,8 +20,19 @@ export default async function ProtectedLayout({
       <AutoRefresh seconds={45} />
       <header className="sticky top-0 z-20 border-b border-emerald-900/15 bg-emerald-950/95 text-white shadow-lg backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <Link href="/matches" className="font-extrabold">
-            WC <span className="text-emerald-300">2026</span>
+          <Link
+            href="/matches"
+            className="inline-flex items-center rounded-xl bg-white/95 px-2.5 py-1.5 shadow-sm ring-1 ring-white/20"
+            aria-label="WC 2026 Portal"
+          >
+            <Image
+              src="/logo-ngang.png"
+              alt="WC 2026"
+              width={160}
+              height={40}
+              priority
+              className="h-7 w-auto"
+            />
           </Link>
           <div className="order-3 w-full md:order-none md:w-auto">
             <AppNav isAdmin={user.role === "admin"} />

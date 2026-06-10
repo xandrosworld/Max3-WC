@@ -17,6 +17,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "WC 2026 Portal",
   description: "Dự đoán World Cup 2026 nội bộ",
+  icons: {
+    icon: "/bieutuong.png",
+    apple: "/bieutuong.png",
+  },
 };
 
 export default function RootLayout({

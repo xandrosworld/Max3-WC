@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CalendarDays, Trophy } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { LoginForm } from "@/components/login-form";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
@@ -38,11 +38,19 @@ export default async function LoginPage() {
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,12,18,0.12)_25%,rgba(3,12,18,0.92)_100%)] lg:bg-[linear-gradient(90deg,rgba(3,12,18,0.12)_40%,rgba(3,12,18,0.72)_100%),linear-gradient(180deg,rgba(3,12,18,0.08)_35%,rgba(3,12,18,0.92)_100%)]" />
 
         <div className="absolute inset-x-0 top-0 flex items-center justify-between px-5 py-5 text-white sm:px-8 lg:px-10">
-          <Link href="/login" className="flex items-center gap-2 font-extrabold">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500 text-[#07141d]">
-              <Trophy size={19} strokeWidth={2.4} aria-hidden="true" />
-            </span>
-            WC <span className="text-emerald-300">2026</span>
+          <Link
+            href="/login"
+            className="inline-flex items-center rounded-xl bg-white/95 px-3 py-2 shadow-lg shadow-black/15"
+            aria-label="WC 2026 Portal"
+          >
+            <Image
+              src="/logo-ngang.png"
+              alt="WC 2026"
+              width={180}
+              height={45}
+              priority
+              className="h-8 w-auto"
+            />
           </Link>
           <span className="hidden text-xs font-bold uppercase tracking-[0.16em] text-white/70 sm:block">
             Cổng dự đoán nội bộ

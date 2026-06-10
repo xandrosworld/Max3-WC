@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Trophy } from "lucide-react";
 import { RegisterForm } from "@/components/register-form";
 import { getCurrentUser } from "@/lib/session";
 
@@ -21,12 +20,20 @@ export default async function RegisterPage() {
           className="object-cover object-center"
         />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,12,18,0.12)_25%,rgba(3,12,18,0.9)_100%)] lg:bg-[linear-gradient(90deg,rgba(3,12,18,0.08)_45%,rgba(3,12,18,0.75)_100%),linear-gradient(180deg,rgba(3,12,18,0.06)_40%,rgba(3,12,18,0.9)_100%)]" />
-        <div className="absolute left-5 top-5 flex items-center gap-2 font-extrabold text-white sm:left-8 sm:top-8">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500 text-[#07141d]">
-            <Trophy size={19} strokeWidth={2.4} aria-hidden="true" />
-          </span>
-          WC <span className="text-emerald-300">2026</span>
-        </div>
+        <Link
+          href="/login"
+          className="absolute left-5 top-5 inline-flex items-center rounded-xl bg-white/95 px-3 py-2 shadow-lg shadow-black/15 sm:left-8 sm:top-8"
+          aria-label="WC 2026 Portal"
+        >
+          <Image
+            src="/logo-ngang.png"
+            alt="WC 2026"
+            width={180}
+            height={45}
+            priority
+            className="h-8 w-auto"
+          />
+        </Link>
         <div className="absolute inset-x-0 bottom-0 p-5 text-white sm:p-8 lg:p-10">
           <p className="text-sm font-bold text-emerald-300">Gia nhập cuộc vui</p>
           <h1 className="mt-2 max-w-xl text-3xl font-extrabold leading-tight text-balance sm:text-4xl lg:text-5xl">
