@@ -61,25 +61,27 @@ export async function settleMatch(input: {
         const activeLosses = match.lossTransactions.filter(
           (row) => row.type === LossTransactionType.LOSS,
         );
-        for (const oldLoss of activeLosses) {
-          const reversed = match.lossTransactions.some(
-            (row) =>
-              row.type === LossTransactionType.REVERSAL &&
-              row.settlementRevision === oldLoss.settlementRevision &&
-              row.userId === oldLoss.userId,
-          );
-          if (!reversed) {
-            await tx.lossTransaction.create({
-              data: {
-                userId: oldLoss.userId,
-                matchId: match.id,
-                amount: -oldLoss.amount,
-                type: LossTransactionType.REVERSAL,
-                settlementRevision: oldLoss.settlementRevision,
-                note: `Đảo settlement revision ${oldLoss.settlementRevision}`,
-              },
-            });
-          }
+        const reversals = activeLosses
+          .filter(
+            (oldLoss) =>
+              !match.lossTransactions.some(
+                (row) =>
+                  row.type === LossTransactionType.REVERSAL &&
+                  row.settlementRevision === oldLoss.settlementRevision &&
+                  row.userId === oldLoss.userId,
+              ),
+          )
+          .map((oldLoss) => ({
+            userId: oldLoss.userId,
+            matchId: match.id,
+            amount: -oldLoss.amount,
+            type: LossTransactionType.REVERSAL,
+            settlementRevision: oldLoss.settlementRevision,
+            note: `Đảo settlement revision ${oldLoss.settlementRevision}`,
+          }));
+
+        if (reversals.length > 0) {
+          await tx.lossTransaction.createMany({ data: reversals });
         }
       }
 
@@ -94,27 +96,28 @@ export async function settleMatch(input: {
         },
       });
 
-      for (const vote of match.votes) {
+      const losses = match.votes.flatMap((vote) => {
         const amount = getLossAmountForVote(
           vote.choice,
           winningChoice,
           match.contributionAmount,
           vote.hopeStar,
         );
-        if (amount > 0) {
-          await tx.lossTransaction.create({
-            data: {
-              userId: vote.userId,
-              matchId: match.id,
-              amount,
-              type: LossTransactionType.LOSS,
-              settlementRevision: revision,
-              note: vote.hopeStar
-                ? `Ngôi sao hy vọng sai; cửa thắng ${winningChoice}`
-                : `Thua cửa ${vote.choice}; cửa thắng ${winningChoice}`,
-            },
-          });
-        }
+        if (amount <= 0) return [];
+        return {
+          userId: vote.userId,
+          matchId: match.id,
+          amount,
+          type: LossTransactionType.LOSS,
+          settlementRevision: revision,
+          note: vote.hopeStar
+            ? `Ngôi sao hy vọng sai; cửa thắng ${winningChoice}`
+            : `Thua cửa ${vote.choice}; cửa thắng ${winningChoice}`,
+        };
+      });
+
+      if (losses.length > 0) {
+        await tx.lossTransaction.createMany({ data: losses });
       }
 
       const result = await tx.matchResult.upsert({
@@ -159,6 +162,10 @@ export async function settleMatch(input: {
 
       return result;
     },
-    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      maxWait: 10_000,
+      timeout: 20_000,
+    },
   );
 }

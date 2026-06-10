@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { RegisterForm } from "@/components/register-form";
 import { getCurrentUser } from "@/lib/session";
 
@@ -8,9 +9,17 @@ export default async function RegisterPage() {
   if (user) redirect("/matches");
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#d1fae5,_transparent_42%),linear-gradient(135deg,#f8fafc,#ecfdf5)] px-4 py-12">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#bfdbfe,_transparent_34%),radial-gradient(circle_at_bottom_right,_#fde68a,_transparent_32%),linear-gradient(135deg,#f8fafc,#ecfdf5)] px-4 py-12">
       <div className="mx-auto flex min-h-[75vh] max-w-xl items-center">
-        <section className="w-full rounded-3xl border border-white/80 bg-white/90 p-7 shadow-2xl shadow-emerald-950/10 backdrop-blur">
+        <section className="w-full overflow-hidden rounded-2xl border border-white/80 bg-white/90 shadow-2xl shadow-emerald-950/10 backdrop-blur">
+          <Image
+            src="/world-cup-hero.svg"
+            alt="Không khí World Cup 2026"
+            width={1200}
+            height={720}
+            className="h-40 w-full object-cover"
+          />
+          <div className="p-7">
           <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
             WC 2026
           </p>
@@ -27,6 +36,7 @@ export default async function RegisterPage() {
               Đăng nhập
             </Link>
           </p>
+          </div>
         </section>
       </div>
     </main>

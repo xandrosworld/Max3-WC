@@ -7,7 +7,7 @@ const txMock = vi.hoisted(() => ({
     update: vi.fn(),
   },
   lossTransaction: {
-    create: vi.fn(),
+    createMany: vi.fn(),
   },
   resultRevision: {
     create: vi.fn(),
@@ -48,7 +48,7 @@ describe("settleMatch hope star", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     txMock.match.update.mockResolvedValue({});
-    txMock.lossTransaction.create.mockResolvedValue({});
+    txMock.lossTransaction.createMany.mockResolvedValue({});
     txMock.resultRevision.create.mockResolvedValue({});
     txMock.matchResult.upsert.mockResolvedValue({ id: "result-1" });
     txMock.auditLog.create.mockResolvedValue({});
@@ -72,20 +72,20 @@ describe("settleMatch hope star", () => {
       adminId: "admin-1",
     });
 
-    expect(txMock.lossTransaction.create).toHaveBeenCalledTimes(2);
-    expect(txMock.lossTransaction.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        userId: "normal",
-        amount: 40_000,
-        type: LossTransactionType.LOSS,
-      }),
-    });
-    expect(txMock.lossTransaction.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        userId: "star",
-        amount: 80_000,
-        type: LossTransactionType.LOSS,
-      }),
+    expect(txMock.lossTransaction.createMany).toHaveBeenCalledTimes(1);
+    expect(txMock.lossTransaction.createMany).toHaveBeenCalledWith({
+      data: expect.arrayContaining([
+        expect.objectContaining({
+          userId: "normal",
+          amount: 40_000,
+          type: LossTransactionType.LOSS,
+        }),
+        expect.objectContaining({
+          userId: "star",
+          amount: 80_000,
+          type: LossTransactionType.LOSS,
+        }),
+      ]),
     });
   });
 
@@ -117,21 +117,25 @@ describe("settleMatch hope star", () => {
       adminId: "admin-1",
     });
 
-    expect(txMock.lossTransaction.create).toHaveBeenNthCalledWith(1, {
-      data: expect.objectContaining({
-        userId: "star",
-        amount: -80_000,
-        type: LossTransactionType.REVERSAL,
-        settlementRevision: 1,
-      }),
+    expect(txMock.lossTransaction.createMany).toHaveBeenNthCalledWith(1, {
+      data: [
+        expect.objectContaining({
+          userId: "star",
+          amount: -80_000,
+          type: LossTransactionType.REVERSAL,
+          settlementRevision: 1,
+        }),
+      ],
     });
-    expect(txMock.lossTransaction.create).toHaveBeenNthCalledWith(2, {
-      data: expect.objectContaining({
-        userId: "star",
-        amount: 80_000,
-        type: LossTransactionType.LOSS,
-        settlementRevision: 2,
-      }),
+    expect(txMock.lossTransaction.createMany).toHaveBeenNthCalledWith(2, {
+      data: [
+        expect.objectContaining({
+          userId: "star",
+          amount: 80_000,
+          type: LossTransactionType.LOSS,
+          settlementRevision: 2,
+        }),
+      ],
     });
   });
 });

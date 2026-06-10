@@ -9,7 +9,7 @@ export default async function LoginPage() {
   if (user) redirect("/matches");
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#d1fae5,_transparent_42%),linear-gradient(135deg,#f8fafc,#ecfdf5)] px-4 py-12">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#bfdbfe,_transparent_34%),radial-gradient(circle_at_bottom_right,_#fecdd3,_transparent_32%),linear-gradient(135deg,#f8fafc,#ecfdf5)] px-4 py-12">
       <div className="mx-auto grid min-h-[75vh] max-w-5xl items-center gap-8 lg:grid-cols-[1.1fr_.9fr]">
         <section>
           <p className="mb-3 text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
@@ -23,17 +23,17 @@ export default async function LoginPage() {
             Một quỹ chung, ba cửa rõ ràng, không chọn thì không phạt. Ai thua nhiều
             nhất được vinh danh trang trọng trên bảng xếp hạng.
           </p>
-          <div className="mt-8 max-w-lg overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-xl shadow-emerald-950/10">
+          <div className="mt-8 max-w-lg overflow-hidden rounded-2xl border border-emerald-950/10 bg-white shadow-xl shadow-emerald-950/10">
             <Image
-              src="/world-cup-visual.svg"
-              alt="Minh họa sân bóng World Cup"
-              width={960}
-              height={620}
-              className="h-56 w-full object-cover"
+              src="/world-cup-hero.svg"
+              alt="Không khí World Cup 2026"
+              width={1200}
+              height={720}
+              className="h-56 w-full object-cover object-[center_72%]"
             />
           </div>
         </section>
-        <section className="rounded-3xl border border-white/80 bg-white/85 p-7 shadow-2xl shadow-emerald-950/10 backdrop-blur">
+        <section className="rounded-2xl border border-white/80 bg-white/90 p-7 shadow-2xl shadow-emerald-950/10 backdrop-blur">
           <h2 className="text-2xl font-extrabold text-emerald-950">Chào mừng trở lại</h2>
           <p className="mb-6 mt-1 text-sm text-emerald-950/55">
             Đăng nhập bằng tài khoản của bạn để tham gia dự đoán.

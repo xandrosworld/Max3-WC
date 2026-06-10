@@ -21,6 +21,7 @@ type MatchFilter =
   | "today"
   | "tomorrow"
   | "soon"
+  | "scheduled"
   | "open"
   | "picked"
   | "missing"
@@ -31,7 +32,8 @@ const filters: Array<{ id: MatchFilter; label: string }> = [
   { id: "all", label: "Tất cả" },
   { id: "today", label: "Hôm nay" },
   { id: "tomorrow", label: "Ngày mai" },
-  { id: "soon", label: "Sắp diễn ra" },
+  { id: "soon", label: "Lịch thi đấu" },
+  { id: "scheduled", label: "Chưa mở" },
   { id: "open", label: "Đang mở" },
   { id: "picked", label: "Đã chọn" },
   { id: "missing", label: "Chưa chọn" },
@@ -56,7 +58,14 @@ export default async function MatchesPage({
   const matches = await prisma.match.findMany({
     where: {
       deletedAt: null,
-      status: { in: [MatchStatus.OPEN, MatchStatus.CLOSED, MatchStatus.SETTLED] },
+      status: {
+        in: [
+          MatchStatus.DRAFT,
+          MatchStatus.OPEN,
+          MatchStatus.CLOSED,
+          MatchStatus.SETTLED,
+        ],
+      },
     },
     orderBy: { kickoffAt: "asc" },
     include: {
@@ -78,41 +87,95 @@ export default async function MatchesPage({
     matchPassesFilter(activeFilter, match, locked, Boolean(myVote), now),
   );
   const myRows = rows.filter((row) => row.myVote).slice(0, 4);
+  const totalCount = rows.length;
+  const scheduledCount = rows.filter(({ match }) => match.status === MatchStatus.DRAFT).length;
   const openCount = rows.filter(({ match, locked }) => match.status === MatchStatus.OPEN && !locked).length;
   const missingOpenCount = rows.filter(
     ({ match, locked, myVote }) => match.status === MatchStatus.OPEN && !locked && !myVote,
   ).length;
-  const settledCount = rows.filter(({ match }) => Boolean(match.result)).length;
+  const nextRows = rows
+    .filter(({ match }) => !match.result && match.kickoffAt.getTime() >= now.getTime())
+    .slice(0, 4);
 
   return (
     <div className="space-y-7">
-      <section className="grid gap-5 lg:grid-cols-[1fr_420px] lg:items-end">
-        <div>
-          <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-emerald-700">
-            Dự đoán đang mở
-          </p>
-          <h1 className="mt-2 text-3xl font-black leading-tight text-emerald-950 md:text-4xl">
-            Chọn kèo rõ ràng, xem lại dễ dàng
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-            Mỗi trận chọn một cửa. Từ vòng loại trực tiếp có thể bật Ngôi sao hy vọng:
-            nếu đoán sai thì khoản phải góp của trận đó nhân đôi.
-          </p>
-        </div>
-        <div className="space-y-3">
-          <div className="overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/10">
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-[#07140f] shadow-2xl shadow-emerald-950/20">
+        <div className="grid gap-0 lg:grid-cols-[1.08fr_0.92fr]">
+          <div className="relative min-h-[320px] bg-[#07140f]">
             <Image
-              src="/world-cup-visual.svg"
-              alt="Minh họa sân bóng World Cup"
-              width={960}
-              height={620}
-              className="h-44 w-full object-cover"
+              src="/world-cup-hero.svg"
+              alt="Không khí World Cup 2026 với sân bóng và các ngôi sao"
+              width={1200}
+              height={720}
+              priority
+              className="absolute inset-0 h-full w-full object-contain object-center"
             />
           </div>
-          <div className="grid grid-cols-3 gap-2 rounded-3xl border border-emerald-950/10 bg-white p-3 shadow-sm shadow-emerald-950/5">
-            <Stat label="Đang mở" value={openCount} />
-            <Stat label="Chưa chọn" value={missingOpenCount} tone={missingOpenCount > 0 ? "warn" : "ok"} />
-            <Stat label="Có kết quả" value={settledCount} />
+
+          <div className="bg-white p-5 md:p-6">
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-emerald-700">
+              WC 2026 đang nóng dần
+            </p>
+            <h1 className="mt-2 text-3xl font-black leading-tight text-slate-950 md:text-4xl">
+              Lịch trận rõ, kèo dễ chọn
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Xem trước toàn bộ lịch World Cup. Khi admin mở dự đoán, mỗi trận chọn một cửa.
+              Từ vòng loại trực tiếp có thể bật Ngôi sao hy vọng để chơi lớn hơn.
+            </p>
+
+            <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2">
+              <Stat label="Tổng trận" value={totalCount} />
+              <Stat label="Chưa mở" value={scheduledCount} />
+              <Stat label="Đang mở" value={openCount} tone={openCount > 0 ? "ok" : "neutral"} />
+              <Stat label="Chưa chọn" value={missingOpenCount} tone={missingOpenCount > 0 ? "warn" : "ok"} />
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-black text-slate-950">Trận sắp tới</h2>
+                  <p className="text-xs font-semibold text-slate-500">
+                    Dù chưa mở kèo, lịch vẫn hiển thị để mọi người theo dõi.
+                  </p>
+                </div>
+                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-900">
+                  2026
+                </span>
+              </div>
+              <div className="mt-3 space-y-2">
+                {nextRows.length > 0 ? (
+                  nextRows.map(({ match, locked }) => (
+                    <div
+                      key={match.id}
+                      className="rounded-xl bg-white px-3 py-2 text-sm ring-1 ring-slate-200"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <b className="text-slate-950">
+                          {match.teamA} vs {match.teamB}
+                        </b>
+                        <span className="text-xs font-bold text-emerald-700">
+                          {timeStatusLabel(match, locked, now)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs font-semibold text-slate-500">
+                        {formatVietnamTime(match.kickoffAt)} · {ROUND_LABELS[match.round]}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="rounded-xl bg-white px-3 py-4 text-center text-sm font-semibold text-slate-500 ring-1 ring-slate-200">
+                    Chưa có trận sắp tới trong dữ liệu.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <MoodPill label="Messi 10" tone="sky" />
+              <MoodPill label="Ronaldo 7" tone="rose" />
+              <MoodPill label="Ngôi sao" tone="amber" />
+            </div>
           </div>
         </div>
       </section>
@@ -176,12 +239,22 @@ export default async function MatchesPage({
       <div className="grid gap-5 xl:grid-cols-2">
         {filteredRows.map(({ match, locked, myVote }) => {
           const hopeStarAllowed = canUseHopeStar(match.round);
+          const isScheduled = match.status === MatchStatus.DRAFT;
+          const canPick = match.status === MatchStatus.OPEN && !locked;
           return (
             <article
               key={match.id}
-              className="overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/5"
+              className={`overflow-hidden rounded-2xl border bg-white shadow-lg shadow-emerald-950/5 ${
+                isScheduled ? "border-sky-200" : "border-emerald-950/10"
+              }`}
             >
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-950/10 bg-emerald-950 px-5 py-4 text-white">
+              <div
+                className={`flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4 text-white ${
+                  isScheduled
+                    ? "border-sky-900/20 bg-slate-900"
+                    : "border-emerald-950/10 bg-emerald-950"
+                }`}
+              >
                 <div>
                   <p className="text-xs font-extrabold uppercase tracking-wide text-emerald-200">
                     {ROUND_LABELS[match.round]}
@@ -203,9 +276,15 @@ export default async function MatchesPage({
                 </div>
 
                 <div className="flex flex-wrap justify-center gap-2 text-sm font-semibold">
-                  <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-900 ring-1 ring-amber-100">
-                    {formatHandicap(match)}
-                  </span>
+                  {isScheduled ? (
+                    <span className="rounded-full bg-sky-50 px-3 py-1 text-sky-900 ring-1 ring-sky-100">
+                      Lịch thi đấu đã có
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-900 ring-1 ring-amber-100">
+                      {formatHandicap(match)}
+                    </span>
+                  )}
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">
                     Mức góp {formatCurrency(match.contributionAmount)}
                   </span>
@@ -219,6 +298,15 @@ export default async function MatchesPage({
                   </div>
                 )}
 
+                {isScheduled ? (
+                  <div className="rounded-2xl border border-sky-100 bg-sky-50 p-4 text-center">
+                    <p className="font-black text-sky-950">Trận này đã có trong lịch</p>
+                    <p className="mt-1 text-sm leading-6 text-sky-900/75">
+                      Admin sẽ mở dự đoán trước trận. Khi mở, bạn sẽ chọn được đội thắng,
+                      Hòa-sau-chấp hoặc đội còn lại ngay tại đây.
+                    </p>
+                  </div>
+                ) : (
                 <form action={voteAction} className="space-y-4">
                   <input type="hidden" name="matchId" value={match.id} />
                   <div className="grid gap-3 sm:grid-cols-3">
@@ -232,7 +320,7 @@ export default async function MatchesPage({
                             name="choice"
                             value={choice}
                             required
-                            disabled={locked}
+                            disabled={!canPick}
                             defaultChecked={selected}
                             className="peer sr-only"
                           />
@@ -264,7 +352,7 @@ export default async function MatchesPage({
                       name="hopeStar"
                       value="true"
                       defaultChecked={Boolean(myVote?.hopeStar)}
-                      disabled={!hopeStarAllowed || locked}
+                      disabled={!hopeStarAllowed || !canPick}
                       className="mt-1 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                     />
                     <span>
@@ -281,18 +369,19 @@ export default async function MatchesPage({
                     <p className="text-sm font-semibold text-slate-500">
                       {myVote
                         ? `Đang chọn: ${choiceLabel(myVote.choice, match.teamA, match.teamB)}`
-                        : locked
+                        : !canPick
                           ? "Trận này đã khóa lựa chọn."
                           : "Bạn chưa chọn trận này."}
                     </p>
                     <button
-                      disabled={locked}
+                      disabled={!canPick}
                       className="min-h-11 rounded-2xl bg-emerald-800 px-5 py-2 text-sm font-extrabold text-white shadow-sm shadow-emerald-950/20 hover:bg-emerald-900 active:translate-y-px disabled:cursor-not-allowed disabled:bg-slate-400"
                     >
                       {myVote ? "Cập nhật lựa chọn" : "Lưu lựa chọn"}
                     </button>
                   </div>
                 </form>
+                )}
               </div>
             </article>
           );
@@ -303,13 +392,13 @@ export default async function MatchesPage({
         <div className="rounded-3xl border border-dashed border-emerald-900/20 bg-white p-10 text-center">
           <h2 className="text-xl font-extrabold text-emerald-950">Chưa có trận phù hợp</h2>
           <p className="mt-2 text-sm text-slate-500">
-            Hãy đổi bộ lọc hoặc quay lại khi admin mở thêm trận cho người chơi.
+            Hãy đổi bộ lọc hoặc xem toàn bộ lịch World Cup đã có trong hệ thống.
           </p>
           <a
             href="/matches"
             className="mt-4 inline-flex rounded-2xl bg-emerald-800 px-5 py-2 text-sm font-bold text-white hover:bg-emerald-900"
           >
-            Xem tất cả trận
+            Xem toàn bộ lịch
           </a>
         </div>
       )}
@@ -336,6 +425,27 @@ function Stat({
   );
 }
 
+function MoodPill({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "sky" | "rose" | "amber";
+}) {
+  const toneClass =
+    tone === "sky"
+      ? "bg-sky-100 text-sky-950"
+      : tone === "rose"
+        ? "bg-rose-100 text-rose-950"
+        : "bg-amber-100 text-amber-950";
+
+  return (
+    <div className={`rounded-2xl px-3 py-2 text-center text-xs font-black ${toneClass}`}>
+      {label}
+    </div>
+  );
+}
+
 function matchPassesFilter(
   filter: MatchFilter,
   match: { status: MatchStatus; kickoffAt: Date; result: unknown },
@@ -347,10 +457,11 @@ function matchPassesFilter(
   if (filter === "today") return vietnamDateKey(match.kickoffAt) === vietnamDateKey(now);
   if (filter === "tomorrow") return vietnamDateKey(match.kickoffAt) === offsetVietnamDateKey(now, 1);
   if (filter === "soon") return match.kickoffAt.getTime() > now.getTime() && match.status !== MatchStatus.SETTLED;
+  if (filter === "scheduled") return match.status === MatchStatus.DRAFT;
   if (filter === "open") return match.status === MatchStatus.OPEN && !locked;
   if (filter === "picked") return picked;
-  if (filter === "missing") return !picked && match.status !== MatchStatus.SETTLED;
-  if (filter === "locked") return locked && !match.result;
+  if (filter === "missing") return !picked && match.status === MatchStatus.OPEN && !locked;
+  if (filter === "locked") return locked && match.status !== MatchStatus.DRAFT && !match.result;
   return Boolean(match.result);
 }
 
@@ -360,6 +471,7 @@ function timeStatusLabel(
   now: Date,
 ) {
   if (match.result || match.status === MatchStatus.SETTLED) return "Đã có kết quả";
+  if (match.status === MatchStatus.DRAFT) return "Sắp mở dự đoán";
   if (locked) return "Đã khóa";
 
   const lockAt = new Date(match.kickoffAt.getTime() - LOCK_MINUTES * 60_000);

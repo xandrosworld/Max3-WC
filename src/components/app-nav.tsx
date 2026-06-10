@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 export function AppNav({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
   const items = [
-    { href: "/matches", label: "Dự đoán" },
+    { href: "/matches", label: "Lịch & dự đoán" },
     { href: "/leaderboard", label: "Bảng xếp hạng" },
     ...(isAdmin ? [{ href: "/admin", label: "Quản trị" }] : []),
     { href: "/profile", label: "Hồ sơ" },
