@@ -181,7 +181,7 @@ Brazil,Serbia,2026-06-15 02:00,GROUP,2,TEAM_A,OPEN`}
 
         <details className="mb-4 rounded-2xl border border-amber-100 bg-amber-50/70 p-4">
           <summary className="font-bold text-amber-950">
-            Đường lùi nhập tay từng trận khi API thiếu
+            Bỏ qua mục này: chỉ tạo trận thủ công khi API thiếu
           </summary>
           <form action={upsertMatchAction} className="mt-3 grid gap-3 md:grid-cols-4">
             <input name="teamA" required placeholder="Đội A" className={inputClass} />
@@ -206,6 +206,7 @@ Brazil,Serbia,2026-06-15 02:00,GROUP,2,TEAM_A,OPEN`}
           {matches.map((match) => {
             const hasPlaceholderTeam =
               isPlaceholderTeamName(match.teamA) || isPlaceholderTeamName(match.teamB);
+            const matchHasStarted = new Date().getTime() >= match.kickoffAt.getTime();
 
             return (
             <article key={match.id} className="rounded-2xl border border-slate-200 p-4">
@@ -226,17 +227,6 @@ Brazil,Serbia,2026-06-15 02:00,GROUP,2,TEAM_A,OPEN`}
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {match.status !== MatchStatus.SETTLED && (
-                    <>
-                      <StatusButton
-                        id={match.id}
-                        status={MatchStatus.OPEN}
-                        label="Mở kèo"
-                        disabled={hasPlaceholderTeam}
-                      />
-                      <StatusButton id={match.id} status={MatchStatus.CLOSED} label="Đóng kèo" />
-                    </>
-                  )}
                   {match.status !== MatchStatus.SETTLED && !match.result && (
                     <form action={deleteMatchAction}>
                       <input type="hidden" name="id" value={match.id} />
@@ -246,50 +236,116 @@ Brazil,Serbia,2026-06-15 02:00,GROUP,2,TEAM_A,OPEN`}
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              <div className="mt-4 grid gap-3 xl:grid-cols-3">
                 {match.status !== MatchStatus.SETTLED && !match.result && (
-                  <details className="rounded-xl bg-slate-50 p-3">
-                    <summary className="text-sm font-bold text-slate-700">Sửa thông tin trận</summary>
-                    <form action={upsertMatchAction} className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <section className="rounded-xl bg-emerald-50 p-3">
+                    <p className="text-xs font-extrabold uppercase tracking-wide text-emerald-800">
+                      1. Đặt kèo trước trận
+                    </p>
+                    <form action={upsertMatchAction} className="mt-3 grid gap-2">
                       <input type="hidden" name="id" value={match.id} />
-                      <input name="teamA" required defaultValue={match.teamA} className={inputClass} />
-                      <input name="teamB" required defaultValue={match.teamB} className={inputClass} />
-                      <input name="kickoffLocal" required type="datetime-local" defaultValue={toVietnamDateTimeLocal(match.kickoffAt)} className={inputClass} />
-                      <select name="round" defaultValue={match.round} className={inputClass}>
-                        {Object.values(RoundType).map((round) => <option key={round} value={round}>{ROUND_LABELS[round]}</option>)}
-                      </select>
-                      <input name="handicap" required type="number" min="0" step="1" defaultValue={match.handicap} className={inputClass} />
-                      <select name="handicappedTeam" defaultValue={match.handicappedTeam ?? ""} className={inputClass}>
-                        <option value="">Không đội nào (kèo 0)</option>
-                        <option value={TeamSide.TEAM_A}>Đội A bị chấp</option>
-                        <option value={TeamSide.TEAM_B}>Đội B bị chấp</option>
-                      </select>
-                      <button className={`${buttonClass} sm:col-span-2`}>Lưu sửa đổi</button>
+                      <input type="hidden" name="teamA" value={match.teamA} />
+                      <input type="hidden" name="teamB" value={match.teamB} />
+                      <input type="hidden" name="kickoffLocal" value={toVietnamDateTimeLocal(match.kickoffAt)} />
+                      <input type="hidden" name="round" value={match.round} />
+                      <label className="grid gap-1 text-xs font-bold text-slate-600">
+                        Mức chấp
+                        <input name="handicap" required type="number" min="0" step="1" defaultValue={match.handicap} className={inputClass} />
+                      </label>
+                      <label className="grid gap-1 text-xs font-bold text-slate-600">
+                        Đội bị chấp
+                        <select name="handicappedTeam" defaultValue={match.handicappedTeam ?? ""} className={inputClass}>
+                          <option value="">Không đội nào (kèo 0)</option>
+                          <option value={TeamSide.TEAM_A}>{match.teamA} bị chấp</option>
+                          <option value={TeamSide.TEAM_B}>{match.teamB} bị chấp</option>
+                        </select>
+                      </label>
+                      <button className={buttonClass}>Lưu kèo</button>
+                    </form>
+                    <details className="mt-3 text-xs text-slate-600">
+                      <summary className="cursor-pointer font-bold text-slate-700">
+                        Sửa đội/giờ/vòng nếu API sai
+                      </summary>
+                      <form action={upsertMatchAction} className="mt-3 grid gap-2 sm:grid-cols-2">
+                        <input type="hidden" name="id" value={match.id} />
+                        <input name="teamA" required defaultValue={match.teamA} className={inputClass} />
+                        <input name="teamB" required defaultValue={match.teamB} className={inputClass} />
+                        <input name="kickoffLocal" required type="datetime-local" defaultValue={toVietnamDateTimeLocal(match.kickoffAt)} className={inputClass} />
+                        <select name="round" defaultValue={match.round} className={inputClass}>
+                          {Object.values(RoundType).map((round) => <option key={round} value={round}>{ROUND_LABELS[round]}</option>)}
+                        </select>
+                        <input name="handicap" required type="number" min="0" step="1" defaultValue={match.handicap} className={inputClass} />
+                        <select name="handicappedTeam" defaultValue={match.handicappedTeam ?? ""} className={inputClass}>
+                          <option value="">Không đội nào (kèo 0)</option>
+                          <option value={TeamSide.TEAM_A}>Đội A bị chấp</option>
+                          <option value={TeamSide.TEAM_B}>Đội B bị chấp</option>
+                        </select>
+                        <button className={`${buttonClass} sm:col-span-2`}>Lưu sửa đổi</button>
+                      </form>
+                    </details>
+                  </section>
+                )}
+
+                {match.status !== MatchStatus.SETTLED && (
+                  <section className="rounded-xl bg-slate-50 p-3">
+                    <p className="text-xs font-extrabold uppercase tracking-wide text-slate-700">
+                      2. Mở/đóng vote
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-slate-600">
+                      Mở kèo thì trận này mới hiện ở màn Trận đấu cho user vote. Đóng kèo thì user không đổi vote được nữa.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <StatusButton
+                        id={match.id}
+                        status={MatchStatus.OPEN}
+                        label="Mở cho user vote"
+                        disabled={hasPlaceholderTeam}
+                      />
+                      <StatusButton id={match.id} status={MatchStatus.CLOSED} label="Đóng vote" />
+                    </div>
+                  </section>
+                )}
+
+                <section className="rounded-xl bg-sky-50 p-3">
+                  <p className="text-xs font-extrabold uppercase tracking-wide text-sky-800">
+                    3. Sau trận: tính kết quả
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-slate-600">
+                    Sau khi có tỷ số 90 phút, lấy từ API trước; chỉ nhập tay nếu API lỗi hoặc chưa có dữ liệu.
+                  </p>
+                  {match.externalSource === FOOTBALL_DATA_SOURCE && match.externalFixtureId && (
+                    <form action={settleMatchFromApiAction} className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                      <input type="hidden" name="matchId" value={match.id} />
+                      <span className="text-xs font-semibold text-sky-950">
+                        fixture #{match.externalFixtureId}
+                      </span>
+                      <button
+                        disabled={!footballDataConfigured || !matchHasStarted}
+                        className="rounded-xl bg-sky-700 px-3 py-2 text-sm font-bold text-white hover:bg-sky-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                      >
+                        Lấy tỷ số API
+                      </button>
+                    </form>
+                  )}
+                  {!matchHasStarted && (
+                    <p className="mt-2 text-xs font-semibold text-slate-500">
+                      Chưa đến giờ đá nên chưa lấy được tỷ số.
+                    </p>
+                  )}
+                  <details className="mt-3 text-xs text-slate-600">
+                    <summary className="cursor-pointer font-bold text-slate-700">
+                      Nhập tay tỷ số nếu cần
+                    </summary>
+                    <form action={settleMatchAction} className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                      <input type="hidden" name="matchId" value={match.id} />
+                      <input name="teamAScore" required type="number" min="0" defaultValue={match.result?.teamAScore ?? ""} placeholder={`Bàn ${match.teamA}`} className={inputClass} />
+                      <input name="teamBScore" required type="number" min="0" defaultValue={match.result?.teamBScore ?? ""} placeholder={`Bàn ${match.teamB}`} className={inputClass} />
+                      <button className="rounded-xl bg-amber-600 px-3 py-2 text-sm font-bold text-white hover:bg-amber-700">
+                        Tính kết quả
+                      </button>
                     </form>
                   </details>
-                )}
-                <form action={settleMatchAction} className="grid grid-cols-[1fr_1fr_auto] gap-2 rounded-xl bg-amber-50 p-3">
-                  <input type="hidden" name="matchId" value={match.id} />
-                  <input name="teamAScore" required type="number" min="0" defaultValue={match.result?.teamAScore ?? ""} placeholder={`Bàn ${match.teamA}`} className={inputClass} />
-                  <input name="teamBScore" required type="number" min="0" defaultValue={match.result?.teamBScore ?? ""} placeholder={`Bàn ${match.teamB}`} className={inputClass} />
-                  <button className="rounded-xl bg-amber-600 px-3 py-2 text-sm font-bold text-white hover:bg-amber-700">
-                    Tính kết quả
-                  </button>
-                </form>
-                {match.externalSource === FOOTBALL_DATA_SOURCE && match.externalFixtureId && (
-                  <form action={settleMatchFromApiAction} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-sky-50 p-3">
-                    <input type="hidden" name="matchId" value={match.id} />
-                    <span className="text-sm font-semibold text-sky-950">
-                      football-data.org fixture #{match.externalFixtureId}
-                    </span>
-                    <button
-                      disabled={!footballDataConfigured}
-                      className="rounded-xl bg-sky-700 px-3 py-2 text-sm font-bold text-white hover:bg-sky-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-                    >
-                      Lấy tỷ số API
-                    </button>
-                  </form>
-                )}
+                </section>
               </div>
             </article>
             );
