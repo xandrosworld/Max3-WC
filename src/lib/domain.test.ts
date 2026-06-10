@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { MatchStatus, TeamSide, VoteChoice } from "@prisma/client";
+import { MatchStatus, RoundType, TeamSide, VoteChoice } from "@prisma/client";
 import {
   calculateWinningChoice,
+  canUseHopeStar,
   getLossAmountForVote,
   getPaymentStatus,
   isPlaceholderTeamName,
@@ -60,6 +61,24 @@ describe("settlement money rule", () => {
     expect(getLossAmountForVote(VoteChoice.TEAM_A, VoteChoice.DRAW, 40_000)).toBe(
       40_000,
     );
+  });
+
+  it("Ngôi sao hy vọng chỉ nhân đôi khi chọn sai", () => {
+    expect(getLossAmountForVote(VoteChoice.DRAW, VoteChoice.DRAW, 40_000, true)).toBe(0);
+    expect(getLossAmountForVote(VoteChoice.TEAM_A, VoteChoice.DRAW, 40_000, true)).toBe(
+      80_000,
+    );
+  });
+});
+
+describe("hope star eligibility", () => {
+  it("không cho dùng ở vòng bảng", () => {
+    expect(canUseHopeStar(RoundType.GROUP)).toBe(false);
+  });
+
+  it("cho dùng từ vòng loại trực tiếp", () => {
+    expect(canUseHopeStar(RoundType.ROUND_OF_32)).toBe(true);
+    expect(canUseHopeStar(RoundType.FINAL)).toBe(true);
   });
 });
 

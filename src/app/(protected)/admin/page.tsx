@@ -19,6 +19,7 @@ import {
   formatCurrency,
   formatHandicap,
   formatVietnamTime,
+  isVoteLocked,
   isPlaceholderTeamName,
   ROUND_LABELS,
   toVietnamDateTimeLocal,
@@ -35,6 +36,17 @@ const buttonClass =
   "rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-800";
 const dangerClass =
   "rounded-xl bg-red-700 px-3 py-2 text-xs font-bold text-white hover:bg-red-800";
+
+type AdminMatchFilter = "all" | "draft" | "open" | "locked" | "needsResult" | "settled";
+
+const adminMatchFilters: Array<{ id: AdminMatchFilter; label: string }> = [
+  { id: "all", label: "Tất cả" },
+  { id: "draft", label: "Chưa mở" },
+  { id: "open", label: "Đang mở" },
+  { id: "locked", label: "Đã khóa" },
+  { id: "needsResult", label: "Cần chốt tỷ số" },
+  { id: "settled", label: "Đã chốt" },
+];
 
 export default async function AdminPage({
   searchParams,
@@ -63,6 +75,11 @@ export default async function AdminPage({
     typeof params.userImportErrors === "string" ? params.userImportErrors : null;
   const userImportFirstError =
     typeof params.userImportFirstError === "string" ? params.userImportFirstError : null;
+  const rawMatchFilter = typeof params.matchFilter === "string" ? params.matchFilter : "all";
+  const matchFilter = adminMatchFilters.some((filter) => filter.id === rawMatchFilter)
+    ? (rawMatchFilter as AdminMatchFilter)
+    : "all";
+  const now = new Date();
   const footballDataConfigured = Boolean(process.env.FOOTBALL_DATA_TOKEN);
   const [matches, users, payments, audits] = await Promise.all([
     prisma.match.findMany({
@@ -82,6 +99,27 @@ export default async function AdminPage({
     }),
   ]);
 
+  const matchRows = matches.map((match) => {
+    const hasPlaceholderTeam =
+      isPlaceholderTeamName(match.teamA) || isPlaceholderTeamName(match.teamB);
+    const locked = isVoteLocked(match, now);
+    const matchHasStarted = now.getTime() >= match.kickoffAt.getTime();
+    const needsResult =
+      matchHasStarted &&
+      !match.result &&
+      match.status !== MatchStatus.CANCELLED &&
+      match.status !== MatchStatus.SETTLED;
+    return { match, hasPlaceholderTeam, locked, matchHasStarted, needsResult };
+  });
+  const displayedMatchRows = matchRows.filter((row) => adminMatchPassesFilter(matchFilter, row));
+  const workStats = {
+    draft: matchRows.filter((row) => row.match.status === MatchStatus.DRAFT && !row.hasPlaceholderTeam).length,
+    open: matchRows.filter((row) => row.match.status === MatchStatus.OPEN && !row.locked).length,
+    soonLocking: matchRows.filter((row) => isLockingSoon(row.match, now)).length,
+    needsResult: matchRows.filter((row) => row.needsResult).length,
+    settled: matchRows.filter((row) => row.match.result || row.match.status === MatchStatus.SETTLED).length,
+  };
+
   return (
     <div className="space-y-10">
       <section className="flex flex-wrap items-end justify-between gap-4">
@@ -97,6 +135,14 @@ export default async function AdminPage({
         >
           Tải bảng Excel
         </a>
+      </section>
+
+      <section className="grid gap-3 md:grid-cols-5">
+        <AdminMetric label="Cần mở kèo" value={workStats.draft} href="/admin?matchFilter=draft" />
+        <AdminMetric label="Đang mở" value={workStats.open} href="/admin?matchFilter=open" />
+        <AdminMetric label="Sắp khóa" value={workStats.soonLocking} href="/admin?matchFilter=open" tone="warn" />
+        <AdminMetric label="Cần chốt tỷ số" value={workStats.needsResult} href="/admin?matchFilter=needsResult" tone="danger" />
+        <AdminMetric label="Đã chốt" value={workStats.settled} href="/admin?matchFilter=settled" />
       </section>
 
       <AdminSection id="matches" title="Quản lý trận đấu" description="Chọn trận, đặt kèo, mở dự đoán và chốt tỷ số sau trận.">
@@ -199,13 +245,27 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
           </form>
         </details>
 
-        <div className="mt-4 space-y-4">
-          {matches.map((match) => {
-            const hasPlaceholderTeam =
-              isPlaceholderTeamName(match.teamA) || isPlaceholderTeamName(match.teamB);
-            const matchHasStarted = new Date().getTime() >= match.kickoffAt.getTime();
-
+        <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+          {adminMatchFilters.map((filter) => {
+            const selected = filter.id === matchFilter;
             return (
+              <a
+                key={filter.id}
+                href={filter.id === "all" ? "/admin" : `/admin?matchFilter=${filter.id}`}
+                className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold ring-1 ${
+                  selected
+                    ? "bg-emerald-900 text-white ring-emerald-900"
+                    : "bg-white text-slate-700 ring-slate-200 hover:bg-emerald-50 hover:text-emerald-900"
+                }`}
+              >
+                {filter.label}
+              </a>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 space-y-4">
+          {displayedMatchRows.map(({ match, hasPlaceholderTeam, matchHasStarted }) => (
             <article key={match.id} className="rounded-2xl border border-slate-200 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -298,7 +358,7 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                         label="Mở cho người chơi"
                         disabled={hasPlaceholderTeam}
                       />
-                      <StatusButton id={match.id} status={MatchStatus.CLOSED} label="Đóng dự đoán" />
+                      <StatusButton id={match.id} status={MatchStatus.CLOSED} label="Đóng lựa chọn" />
                     </div>
                   </section>
                 )}
@@ -314,7 +374,7 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                     <form action={settleMatchFromApiAction} className="mt-3 flex flex-wrap items-center justify-between gap-3">
                       <input type="hidden" name="matchId" value={match.id} />
                       <span className="text-xs font-semibold text-sky-950">
-                        Mã trận {match.externalFixtureId}
+                        Có thể lấy tỷ số tự động
                       </span>
                       <button
                         disabled={!footballDataConfigured || !matchHasStarted}
@@ -345,8 +405,13 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                 </section>
               </div>
             </article>
-            );
-          })}
+          ))}
+          {displayedMatchRows.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-emerald-900/20 bg-white p-8 text-center">
+              <h3 className="font-extrabold text-emerald-950">Không có trận nào ở mục này</h3>
+              <p className="mt-2 text-sm text-slate-500">Đổi bộ lọc hoặc cập nhật lịch nếu bạn cần thêm trận mới.</p>
+            </div>
+          )}
         </div>
       </AdminSection>
 
@@ -502,6 +567,59 @@ function AdminSection({
       {children}
     </section>
   );
+}
+
+function AdminMetric({
+  label,
+  value,
+  href,
+  tone = "neutral",
+}: {
+  label: string;
+  value: number;
+  href: string;
+  tone?: "neutral" | "warn" | "danger";
+}) {
+  const toneClass =
+    tone === "danger"
+      ? "text-red-700"
+      : tone === "warn"
+        ? "text-amber-700"
+        : "text-emerald-800";
+  return (
+    <a
+      href={href}
+      className="rounded-3xl border border-emerald-950/10 bg-white p-4 shadow-sm shadow-emerald-950/5 hover:-translate-y-0.5 hover:shadow-md"
+    >
+      <p className={`text-3xl font-black tabular-nums ${toneClass}`}>{value}</p>
+      <p className="mt-1 text-sm font-bold text-slate-600">{label}</p>
+    </a>
+  );
+}
+
+function adminMatchPassesFilter(
+  filter: AdminMatchFilter,
+  row: {
+    match: { status: MatchStatus; result: unknown };
+    locked: boolean;
+    needsResult: boolean;
+  },
+) {
+  if (filter === "all") return true;
+  if (filter === "draft") return row.match.status === MatchStatus.DRAFT;
+  if (filter === "open") return row.match.status === MatchStatus.OPEN && !row.locked;
+  if (filter === "locked") return row.locked && !row.match.result;
+  if (filter === "needsResult") return row.needsResult;
+  return Boolean(row.match.result) || row.match.status === MatchStatus.SETTLED;
+}
+
+function isLockingSoon(
+  match: { status: MatchStatus; kickoffAt: Date },
+  now: Date,
+) {
+  if (match.status !== MatchStatus.OPEN || isVoteLocked(match, now)) return false;
+  const lockAt = match.kickoffAt.getTime() - 5 * 60_000;
+  return lockAt > now.getTime() && lockAt - now.getTime() <= 6 * 60 * 60_000;
 }
 
 function matchStatusLabel(status: MatchStatus) {

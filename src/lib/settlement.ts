@@ -3,8 +3,8 @@ import {
   MatchStatus,
   Prisma,
 } from "@prisma/client";
-import { calculateWinningChoice, getLossAmountForVote } from "@/lib/domain";
-import { prisma } from "@/lib/prisma";
+import { calculateWinningChoice, getLossAmountForVote } from "./domain";
+import { prisma } from "./prisma";
 
 export async function settleMatch(input: {
   matchId: string;
@@ -99,6 +99,7 @@ export async function settleMatch(input: {
           vote.choice,
           winningChoice,
           match.contributionAmount,
+          vote.hopeStar,
         );
         if (amount > 0) {
           await tx.lossTransaction.create({
@@ -108,7 +109,9 @@ export async function settleMatch(input: {
               amount,
               type: LossTransactionType.LOSS,
               settlementRevision: revision,
-              note: `Thua cửa ${vote.choice}; cửa thắng ${winningChoice}`,
+              note: vote.hopeStar
+                ? `Ngôi sao hy vọng sai; cửa thắng ${winningChoice}`
+                : `Thua cửa ${vote.choice}; cửa thắng ${winningChoice}`,
             },
           });
         }

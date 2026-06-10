@@ -29,6 +29,10 @@ export function getContributionAmount(round: RoundType) {
   return CONTRIBUTION_BY_ROUND[round];
 }
 
+export function canUseHopeStar(round: RoundType) {
+  return round !== RoundType.GROUP;
+}
+
 export function isVoteLocked(
   match: { status: MatchStatus; kickoffAt: Date },
   now = new Date(),
@@ -77,8 +81,9 @@ export function getLossAmountForVote(
   choice: VoteChoice,
   winningChoice: VoteChoice,
   contributionAmount: number,
+  hopeStar = false,
 ) {
-  return choice === winningChoice ? 0 : contributionAmount;
+  return choice === winningChoice ? 0 : contributionAmount * (hopeStar ? 2 : 1);
 }
 
 export function formatHandicap(input: {

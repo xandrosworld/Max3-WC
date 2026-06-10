@@ -18,6 +18,7 @@ import {
   FOOTBALL_DATA_SOURCE,
 } from "@/lib/football-data";
 import {
+  canUseHopeStar,
   getContributionAmount,
   isPlaceholderTeamName,
   isVoteLocked,
@@ -163,17 +164,28 @@ export async function voteAction(formData: FormData) {
   const user = await requireUser();
   const matchId = formString(formData, "matchId");
   const choice = z.nativeEnum(VoteChoice).parse(formString(formData, "choice"));
+  const requestedHopeStar = formString(formData, "hopeStar") === "true";
   const match = await prisma.match.findUnique({ where: { id: matchId } });
   if (!match || match.deletedAt) throw new Error("Không tìm thấy trận");
   if (isVoteLocked(match, new Date())) throw new Error("Trận này đã khóa lựa chọn");
+  if (requestedHopeStar && !canUseHopeStar(match.round)) {
+    throw new Error("Ngôi sao hy vọng chỉ dùng từ vòng loại trực tiếp");
+  }
+
+  const existingVote = await prisma.vote.findUnique({
+    where: { userId_matchId: { userId: user.id, matchId } },
+    select: { id: true },
+  });
+  const hopeStar = requestedHopeStar && canUseHopeStar(match.round);
 
   await prisma.vote.upsert({
     where: { userId_matchId: { userId: user.id, matchId } },
-    update: { choice },
-    create: { userId: user.id, matchId, choice },
+    update: { choice, hopeStar },
+    create: { userId: user.id, matchId, choice, hopeStar },
   });
   revalidatePath("/matches");
   revalidatePath("/leaderboard");
+  redirect(`/matches?saved=${existingVote ? "updated" : "created"}`);
 }
 
 export async function upsertMatchAction(formData: FormData) {

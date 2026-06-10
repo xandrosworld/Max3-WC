@@ -27,16 +27,32 @@ export async function getLeaderboard() {
         vote.match.result &&
         vote.match.result.winningChoice === (vote.choice as VoteChoice),
     ).length;
+    const wrong = user.votes.filter(
+      (vote) =>
+        vote.match.result &&
+        vote.match.result.winningChoice !== (vote.choice as VoteChoice),
+    ).length;
+    const hopeStarUsed = user.votes.filter((vote) => vote.hopeStar).length;
+    const hopeStarWrong = user.votes.filter(
+      (vote) =>
+        vote.hopeStar &&
+        vote.match.result &&
+        vote.match.result.winningChoice !== (vote.choice as VoteChoice),
+    ).length;
     const loss = user.lossTransactions.reduce((sum, row) => sum + row.amount, 0);
     const paid = user.payments.reduce((sum, row) => sum + row.amount, 0);
 
     return {
       id: user.id,
       name: user.name,
+      image: user.image,
       department: user.department,
       voted,
       correct,
+      wrong,
       accuracy: calculateAccuracy(correct, voted),
+      hopeStarUsed,
+      hopeStarWrong,
       loss,
       paid,
       outstanding: loss - paid,

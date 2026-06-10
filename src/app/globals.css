@@ -20,12 +20,6 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-h1,
-h2,
-h3 {
-  letter-spacing: -0.025em;
-}
-
 button,
 a,
 input,
@@ -44,6 +38,11 @@ input,
 select,
 textarea {
   color: #14251b;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(16, 185, 129, 0.45);
+  outline-offset: 2px;
 }
 
 ::selection {

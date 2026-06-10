@@ -14,7 +14,7 @@ export default async function LoginPage() {
           <p className="mb-3 text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
             Dự đoán nội bộ
           </p>
-          <h1 className="max-w-xl text-4xl font-extrabold leading-[1.12] tracking-tight text-emerald-950 sm:text-5xl">
+          <h1 className="max-w-xl text-4xl font-extrabold leading-[1.12] text-emerald-950 sm:text-5xl">
             World Cup 2026
             <span className="block text-emerald-600">Hòa-sau-chấp mới là nghệ thuật.</span>
           </h1>
