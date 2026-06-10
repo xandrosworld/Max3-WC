@@ -25,7 +25,7 @@ export default async function LoginPage() {
           </p>
           <div className="mt-8 max-w-lg overflow-hidden rounded-2xl border border-emerald-950/10 bg-white shadow-xl shadow-emerald-950/10">
             <Image
-              src="/world-cup-hero.svg"
+              src="/messi-ronaldo-vip.png"
               alt="Không khí World Cup 2026"
               width={1200}
               height={720}

@@ -103,7 +103,7 @@ export default async function MatchesPage({
         <div className="grid gap-0 lg:grid-cols-[1.08fr_0.92fr]">
           <div className="relative min-h-[320px] bg-[#07140f]">
             <Image
-              src="/world-cup-hero.svg"
+              src="/messi-ronaldo-vip.png"
               alt="Không khí World Cup 2026 với sân bóng và các ngôi sao"
               width={1200}
               height={720}

@@ -13,7 +13,7 @@ export default async function RegisterPage() {
       <div className="mx-auto flex min-h-[75vh] max-w-xl items-center">
         <section className="w-full overflow-hidden rounded-2xl border border-white/80 bg-white/90 shadow-2xl shadow-emerald-950/10 backdrop-blur">
           <Image
-            src="/world-cup-hero.svg"
+            src="/messi-ronaldo-vip.png"
             alt="Không khí World Cup 2026"
             width={1200}
             height={720}

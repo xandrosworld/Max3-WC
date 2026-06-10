@@ -29,7 +29,7 @@ export default async function LeaderboardPage() {
         <div className="space-y-3">
           <div className="overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/10">
             <Image
-              src="/world-cup-hero.svg"
+              src="/messi-ronaldo-vip.png"
               alt="Không khí World Cup 2026"
               width={1200}
               height={720}
