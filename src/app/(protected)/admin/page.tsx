@@ -527,7 +527,7 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
               name="usersBulk"
               required
               rows={6}
-              placeholder={`Tên đăng nhập,Họ tên,Đơn vị
+              placeholder={`Tài khoản đăng nhập,Nickname hiển thị,Đơn vị
 an.nguyen,An Nguyễn,Sales
 binh.tran,Bình Trần,Marketing`}
               className={`${inputClass} min-h-40 w-full font-mono`}
@@ -549,9 +549,9 @@ binh.tran,Bình Trần,Marketing`}
           </form>
         </details>
         <form action={createUserAction} className="grid gap-3 rounded-2xl bg-emerald-50 p-4 md:grid-cols-4">
-          <input name="username" required placeholder="Tên đăng nhập" className={inputClass} />
-          <input name="name" required placeholder="Họ tên" className={inputClass} />
-          <input name="department" placeholder="Đơn vị/phòng ban" className={inputClass} />
+          <input name="username" required placeholder="Tài khoản đăng nhập" className={inputClass} />
+          <input name="name" required placeholder="Nickname hiển thị" className={inputClass} />
+          <input name="department" placeholder="Đơn vị" className={inputClass} />
           <input name="password" required minLength={8} placeholder="Mật khẩu tạm" className={inputClass} />
           <button className={`${buttonClass} md:col-span-4`}>Tạo tài khoản</button>
         </form>
@@ -562,7 +562,7 @@ binh.tran,Bình Trần,Marketing`}
                 <div>
                   <h3 className="font-extrabold text-emerald-950">{user.name}</h3>
                   <p className="text-xs text-slate-500">
-                    Tên đăng nhập: {user.username} · {userRoleLabel(user.role)} · {user.banned ? "Đã khóa" : "Đang hoạt động"}
+                    Tài khoản đăng nhập: {user.username} · {userRoleLabel(user.role)} · {user.banned ? "Đã khóa" : "Đang hoạt động"}
                   </p>
                 </div>
                 <form action={setUserLockAction}>

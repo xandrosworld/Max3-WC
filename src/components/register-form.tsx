@@ -12,7 +12,7 @@ export function RegisterForm() {
     <form action={formAction} className="space-y-4">
       <label className="block">
         <span className="mb-1.5 block text-sm font-semibold text-emerald-950">
-          Tên đăng nhập
+          Tài khoản đăng nhập
         </span>
         <input
           name="username"
@@ -26,7 +26,7 @@ export function RegisterForm() {
 
       <label className="block">
         <span className="mb-1.5 block text-sm font-semibold text-emerald-950">
-          Họ tên
+          Nickname hiển thị
         </span>
         <input
           name="name"
@@ -40,7 +40,7 @@ export function RegisterForm() {
 
       <label className="block">
         <span className="mb-1.5 block text-sm font-semibold text-emerald-950">
-          Đơn vị/phòng ban
+          Đơn vị
         </span>
         <input
           name="department"

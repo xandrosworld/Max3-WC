@@ -19,6 +19,7 @@ function normalizeKey(value: string) {
   return normalize(value)
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
+    .replace(/đ/g, "d")
     .replace(/[\s-]+/g, "_");
 }
 
@@ -37,6 +38,7 @@ function isHeader(columns: string[]) {
   return (
     first === "username" ||
     first === "ten_dang_nhap" ||
+    first === "tai_khoan_dang_nhap" ||
     (first === "user" && second === "ho_ten")
   );
 }
@@ -56,7 +58,7 @@ export function parseUserImport(input: string): UserImportResult {
 
       try {
         if (columns.length < 2 || columns.length > 3) {
-          throw new Error("cần 2-3 cột: tên đăng nhập, họ tên, đơn vị");
+          throw new Error("cần 2-3 cột: tài khoản đăng nhập, nickname hiển thị, đơn vị");
         }
 
         const username = columns[0].trim();
@@ -64,10 +66,10 @@ export function parseUserImport(input: string): UserImportResult {
         const department = (columns[2] ?? "").trim();
 
         if (username.length < 3 || username.length > 30 || !usernamePattern.test(username)) {
-          throw new Error("tên đăng nhập cần 3-30 ký tự, chỉ gồm chữ, số, dấu chấm hoặc gạch dưới");
+          throw new Error("tài khoản đăng nhập cần 3-30 ký tự, chỉ gồm chữ, số, dấu chấm hoặc gạch dưới");
         }
         if (name.length < 2 || name.length > 100) {
-          throw new Error("họ tên cần 2-100 ký tự");
+          throw new Error("nickname hiển thị cần 2-100 ký tự");
         }
         if (department.length > 100) {
           throw new Error("đơn vị tối đa 100 ký tự");

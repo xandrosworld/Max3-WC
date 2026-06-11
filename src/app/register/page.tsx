@@ -59,9 +59,12 @@ export default async function RegisterPage() {
       <section className="bg-[#f7faf8] px-5 py-10 sm:px-10 lg:flex lg:min-h-[100dvh] lg:items-center lg:px-14">
         <div className="mx-auto w-full max-w-md">
           <p className="text-sm font-bold text-emerald-700">Tài khoản mới</p>
-          <h2 className="mt-2 text-2xl font-extrabold text-[#082d24] sm:text-3xl">Tạo hồ sơ dự đoán</h2>
+          <h2 className="mt-2 text-2xl font-extrabold text-[#082d24] sm:text-3xl">
+            Tạo tài khoản dự đoán
+          </h2>
           <p className="mb-7 mt-3 text-sm leading-6 text-slate-600">
-            Chọn tên đăng nhập riêng. Sau đó bạn có thể đổi ảnh đại diện và mật khẩu trong hồ sơ.
+            Chọn tài khoản đăng nhập và nickname mọi người sẽ nhìn thấy. Bạn có thể đổi ảnh
+            đại diện và mật khẩu sau khi đăng nhập.
           </p>
           <RegisterForm />
           <p className="mt-6 text-center text-sm text-slate-600">

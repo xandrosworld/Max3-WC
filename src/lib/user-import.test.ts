@@ -26,6 +26,22 @@ bad user,Sai Username,Ops
       { username: "ok.user", name: "Người Hợp lệ", department: "Ops" },
     ]);
     expect(result.errors[0]).toContain("Dòng 3");
-    expect(result.errors[0]).toContain("tên đăng nhập");
+    expect(result.errors[0]).toContain("tài khoản đăng nhập");
+  });
+
+  it("accepts the user-facing Vietnamese header", () => {
+    const result = parseUserImport(`
+Tài khoản đăng nhập,Nickname hiển thị,Đơn vị
+admin.demo,Admin Demo,Ban tổ chức
+`);
+
+    expect(result.errors).toEqual([]);
+    expect(result.rows).toEqual([
+      {
+        username: "admin.demo",
+        name: "Admin Demo",
+        department: "Ban tổ chức",
+      },
+    ]);
   });
 });

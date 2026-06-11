@@ -119,7 +119,9 @@ export function ProfileForm({
       )}
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-semibold text-emerald-950">Họ tên</span>
+        <span className="mb-1.5 block text-sm font-semibold text-emerald-950">
+          Nickname hiển thị
+        </span>
         <input
           name="name"
           required
@@ -131,7 +133,7 @@ export function ProfileForm({
       </label>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-semibold text-emerald-950">Đơn vị/phòng ban</span>
+        <span className="mb-1.5 block text-sm font-semibold text-emerald-950">Đơn vị</span>
         <input
           name="department"
           maxLength={100}
