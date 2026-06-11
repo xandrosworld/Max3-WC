@@ -208,12 +208,11 @@ export default async function AdminPage({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="font-bold text-amber-950">
-                  Lấy mức chấp gợi ý cho các trận chưa mở
+                  Tự điền mức chấp tham khảo
                 </h3>
                 <p className="mt-1 text-sm leading-6 text-amber-950/80">
-                  Hệ thống lấy mức chấp tham khảo, làm tròn thành lựa chọn dễ chơi rồi điền vào
-                  các trận chưa mở. Trận đã mở, đã có người chọn hoặc đã có kết quả sẽ
-                  được giữ nguyên.
+                  Dùng sau khi đã cập nhật lịch. Hệ thống chỉ điền cho trận chưa mở dự đoán
+                  và chưa ai chọn; trận đã mở, đã khóa hoặc đã có kết quả sẽ được giữ nguyên.
                 </p>
               </div>
               <form action={syncOddsSuggestionsAction}>
@@ -221,12 +220,12 @@ export default async function AdminPage({
                   disabled={!oddsApiConfigured}
                   className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-bold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-slate-400"
                 >
-                  Lấy mức chấp gợi ý
+                  Tự điền mức chấp
                 </button>
               </form>
             </div>
             <p className="mt-2 text-xs font-semibold text-amber-900">
-              Mỗi lần bấm thường tốn khoảng 2 credit. Hãy dùng trước khi mở dự đoán.
+              Chỉ cần bấm khi muốn tham khảo mức chấp mới. Mỗi lần bấm thường tốn khoảng 2 credit.
             </p>
             {!oddsApiConfigured && (
               <p className="mt-3 rounded-xl bg-white px-3 py-2 text-sm text-amber-900">
@@ -239,12 +238,25 @@ export default async function AdminPage({
               </p>
             )}
             {oddsApplied && (
-              <p className="mt-3 rounded-xl bg-white px-3 py-2 text-sm text-amber-950">
-                Đã đọc {oddsEvents ?? 0} trận từ nguồn tham khảo, khớp {oddsMatched ?? 0}
-                trận trong hệ thống, điền mới {oddsApplied} trận
-                {oddsUnchanged ? `, giữ nguyên ${oddsUnchanged} trận đã đúng mức chấp` : ""}
-                {oddsCredits ? `. Lần bấm này dùng ${oddsCredits} credit.` : "."}
-              </p>
+              <div className="mt-3 rounded-xl bg-white px-3 py-3 text-sm leading-6 text-amber-950">
+                {Number(oddsApplied) > 0 ? (
+                  <p className="font-semibold">
+                    Đã tự điền mức chấp cho {oddsApplied} trận.
+                  </p>
+                ) : (
+                  <p className="font-semibold">
+                    Không có trận nào cần cập nhật thêm.
+                  </p>
+                )}
+                <p>
+                  Đã kiểm tra {oddsEvents ?? 0} trận từ nguồn tham khảo và tìm thấy{" "}
+                  {oddsMatched ?? 0} trận trùng với lịch hiện có.
+                  {oddsUnchanged && Number(oddsUnchanged) > 0
+                    ? ` ${oddsUnchanged} trận đã có mức chấp phù hợp nên được giữ nguyên.`
+                    : ""}
+                  {oddsCredits ? ` Lần bấm này dùng ${oddsCredits} credit.` : ""}
+                </p>
+              </div>
             )}
           </div>
         </div>
