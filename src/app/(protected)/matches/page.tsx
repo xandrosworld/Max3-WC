@@ -270,17 +270,7 @@ export default async function MatchesPage({
                   const availableChoices = hasDrawChoice(match.handicap)
                     ? [VoteChoice.TEAM_A, VoteChoice.DRAW, VoteChoice.TEAM_B]
                     : [VoteChoice.TEAM_A, VoteChoice.TEAM_B];
-                  const counts = {
-                    [VoteChoice.TEAM_A]: match.votes.filter(
-                      (vote) => vote.choice === VoteChoice.TEAM_A,
-                    ).length,
-                    [VoteChoice.DRAW]: match.votes.filter(
-                      (vote) => vote.choice === VoteChoice.DRAW,
-                    ).length,
-                    [VoteChoice.TEAM_B]: match.votes.filter(
-                      (vote) => vote.choice === VoteChoice.TEAM_B,
-                    ).length,
-                  };
+                  const participantCount = match.votes.length;
 
                   return (
                     <article key={match.id} className="group">
@@ -360,6 +350,11 @@ export default async function MatchesPage({
                                   <span className="rounded-lg bg-white px-2.5 py-1.5 text-slate-600 ring-1 ring-slate-200">
                                     Điểm quỹ {formatCurrency(match.contributionAmount)}
                                   </span>
+                                  <span className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-emerald-800 ring-1 ring-emerald-100">
+                                    {participantCount > 0
+                                      ? `${participantCount} người đã tham gia`
+                                      : "Chưa có người tham gia"}
+                                  </span>
                                 </div>
                                 <p className="flex items-center gap-1.5 text-xs font-bold text-emerald-700">
                                   <Clock3 size={15} aria-hidden="true" />
@@ -386,12 +381,9 @@ export default async function MatchesPage({
                                           defaultChecked={selected}
                                           className="peer sr-only"
                                         />
-                                        <span className="flex min-h-20 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 transition peer-checked:border-emerald-600 peer-checked:bg-emerald-50 peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-200">
+                                        <span className="flex min-h-20 items-center rounded-xl border border-slate-200 bg-white px-3 py-3 transition peer-checked:border-emerald-600 peer-checked:bg-emerald-50 peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-200">
                                           <span className="text-sm font-extrabold text-[#082d24]">
                                             {choiceLabel(choice, match.teamA, match.teamB)}
-                                          </span>
-                                          <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-xs font-bold tabular-nums text-slate-500 peer-checked:bg-white">
-                                            {counts[choice]}
                                           </span>
                                         </span>
                                       </label>
