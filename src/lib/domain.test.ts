@@ -25,6 +25,102 @@ describe("contribution by round", () => {
 });
 
 describe("European Handicap V6", () => {
+  it.each([
+    {
+      label: "A chấp 1, thắng cách biệt 2 bàn thì A thắng kèo",
+      teamAScore: 2,
+      teamBScore: 0,
+      handicap: 1,
+      expected: VoteChoice.TEAM_A,
+    },
+    {
+      label: "A chấp 1, thắng cách biệt đúng 1 bàn thì hòa kèo",
+      teamAScore: 2,
+      teamBScore: 1,
+      handicap: 1,
+      expected: VoteChoice.DRAW,
+    },
+    {
+      label: "A chấp 1, hòa thực tế thì B thắng kèo",
+      teamAScore: 1,
+      teamBScore: 1,
+      handicap: 1,
+      expected: VoteChoice.TEAM_B,
+    },
+    {
+      label: "A chấp 0,5, thắng thực tế thì A thắng kèo",
+      teamAScore: 1,
+      teamBScore: 0,
+      handicap: 0.5,
+      expected: VoteChoice.TEAM_A,
+    },
+    {
+      label: "A chấp 0,5, hòa thực tế thì B thắng kèo",
+      teamAScore: 0,
+      teamBScore: 0,
+      handicap: 0.5,
+      expected: VoteChoice.TEAM_B,
+    },
+    {
+      label: "A chấp 1,5, thắng cách biệt 2 bàn thì A thắng kèo",
+      teamAScore: 2,
+      teamBScore: 0,
+      handicap: 1.5,
+      expected: VoteChoice.TEAM_A,
+    },
+    {
+      label: "A chấp 1,5, thắng cách biệt 1 bàn thì B thắng kèo",
+      teamAScore: 2,
+      teamBScore: 1,
+      handicap: 1.5,
+      expected: VoteChoice.TEAM_B,
+    },
+    {
+      label: "A chấp 2, thắng cách biệt 3 bàn thì A thắng kèo",
+      teamAScore: 3,
+      teamBScore: 0,
+      handicap: 2,
+      expected: VoteChoice.TEAM_A,
+    },
+    {
+      label: "A chấp 2, thắng cách biệt đúng 2 bàn thì hòa kèo",
+      teamAScore: 2,
+      teamBScore: 0,
+      handicap: 2,
+      expected: VoteChoice.DRAW,
+    },
+    {
+      label: "đồng banh, A thắng thực tế thì A thắng kèo",
+      teamAScore: 1,
+      teamBScore: 0,
+      handicap: 0,
+      expected: VoteChoice.TEAM_A,
+    },
+    {
+      label: "đồng banh, hòa thực tế thì hòa kèo",
+      teamAScore: 1,
+      teamBScore: 1,
+      handicap: 0,
+      expected: VoteChoice.DRAW,
+    },
+    {
+      label: "đồng banh, B thắng thực tế thì B thắng kèo",
+      teamAScore: 0,
+      teamBScore: 1,
+      handicap: 0,
+      expected: VoteChoice.TEAM_B,
+    },
+  ])("$label", ({ teamAScore, teamBScore, handicap, expected }) => {
+    expect(
+      calculateWinningChoice({
+        teamAScore,
+        teamBScore,
+        handicap,
+        handicappedTeam: handicap === 0 ? null : TeamSide.TEAM_A,
+      }),
+    ).toBe(expected);
+  });
+
   it("Brazil -2 hòa-sau-chấp khi thắng Serbia 2-0", () => {
     expect(
       calculateWinningChoice({
