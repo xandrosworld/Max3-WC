@@ -84,14 +84,14 @@ describe("football-data.org World Cup mapping", () => {
     expect(result.fixtures[1]).toMatchObject({
       externalFixtureId: "537430",
       round: RoundType.THIRD_PLACE,
-      contributionAmount: 50_000,
+      contributionAmount: 100_000,
     });
     expect(result.fixtures[2]).toMatchObject({
       externalFixtureId: "537390",
       teamA: "Chưa xác định A",
       teamB: "Chưa xác định B",
       round: RoundType.FINAL,
-      contributionAmount: 100_000,
+      contributionAmount: 150_000,
     });
   });
 });

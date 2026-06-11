@@ -3,6 +3,7 @@ import { MatchStatus, RoundType, TeamSide, VoteChoice } from "@prisma/client";
 import {
   calculateWinningChoice,
   canUseHopeStar,
+  getContributionAmount,
   getLossAmountForVote,
   getPaymentStatus,
   hasDrawChoice,
@@ -10,6 +11,18 @@ import {
   isPlaceholderTeamName,
   isVoteLocked,
 } from "./domain";
+
+describe("contribution by round", () => {
+  it("áp dụng đúng mức góp theo thể lệ", () => {
+    expect(getContributionAmount(RoundType.GROUP)).toBe(20_000);
+    expect(getContributionAmount(RoundType.ROUND_OF_32)).toBe(40_000);
+    expect(getContributionAmount(RoundType.ROUND_OF_16)).toBe(40_000);
+    expect(getContributionAmount(RoundType.QUARTER_FINAL)).toBe(60_000);
+    expect(getContributionAmount(RoundType.SEMI_FINAL)).toBe(100_000);
+    expect(getContributionAmount(RoundType.THIRD_PLACE)).toBe(100_000);
+    expect(getContributionAmount(RoundType.FINAL)).toBe(150_000);
+  });
+});
 
 describe("European Handicap V6", () => {
   it("Brazil -2 hòa-sau-chấp khi thắng Serbia 2-0", () => {
