@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Music } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 type Track = {
   name: string;
@@ -24,6 +25,7 @@ function shuffleTracks(tracks: Track[]) {
 }
 
 export function BackgroundMusic() {
+  const pathname = usePathname();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const tracksRef = useRef<Track[]>([]);
   const queueRef = useRef<Track[]>([]);
@@ -202,6 +204,14 @@ export function BackgroundMusic() {
 
   if (!visible) return null;
 
+  const isAuthPage =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/change-password";
+  const positionClass = isAuthPage
+    ? "right-4 top-24 sm:bottom-6 sm:right-6 sm:top-auto"
+    : "bottom-24 right-4 sm:bottom-6 sm:right-6";
+
   return (
     <>
       <style>{`
@@ -224,7 +234,7 @@ export function BackgroundMusic() {
         onClick={toggle}
         aria-label={playing ? "Tắt nhạc nền" : "Bật nhạc nền"}
         title={playing ? "Tắt nhạc nền" : "Bật nhạc nền"}
-        className={`fixed bottom-24 right-4 z-50 flex items-center justify-center rounded-full border-2 backdrop-blur-xl transition-all duration-300 hover:scale-105 sm:bottom-6 sm:right-6 ${
+        className={`fixed z-50 flex items-center justify-center rounded-full border-2 backdrop-blur-xl transition-all duration-300 hover:scale-105 ${positionClass} ${
           playing
             ? "h-12 w-12 border-emerald-300/70 bg-emerald-950/95 text-emerald-200"
             : "h-12 w-12 border-amber-300/70 bg-gradient-to-br from-emerald-950 to-slate-950 text-amber-200"
