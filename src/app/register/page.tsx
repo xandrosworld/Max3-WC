@@ -17,13 +17,22 @@ export default async function RegisterPage() {
           fill
           priority
           sizes="(max-width: 1024px) 100vw, 60vw"
-          className="object-cover object-center"
+          className="scale-105 object-cover object-center opacity-65 blur-[1px] lg:scale-100 lg:opacity-100 lg:blur-0"
+        />
+        <Image
+          src="/messi-ronaldo-vip.png"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          aria-hidden="true"
+          className="object-contain object-top lg:hidden"
         />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,12,18,0.12)_25%,rgba(3,12,18,0.9)_100%)] lg:bg-[linear-gradient(90deg,rgba(3,12,18,0.08)_45%,rgba(3,12,18,0.75)_100%),linear-gradient(180deg,rgba(3,12,18,0.06)_40%,rgba(3,12,18,0.9)_100%)]" />
         <div className="relative z-10 flex min-h-[420px] flex-col justify-between px-5 py-5 text-white sm:min-h-[520px] sm:px-8 sm:py-8 lg:min-h-[100dvh] lg:px-10 lg:py-10">
           <Link
             href="/login"
-            className="inline-flex w-fit items-center rounded-xl bg-white/95 px-2.5 py-1.5 shadow-lg shadow-black/15 sm:px-3 sm:py-2"
+            className="inline-flex w-fit items-center rounded-lg bg-white/95 px-2 py-1 shadow-lg shadow-black/15 sm:rounded-xl sm:px-3 sm:py-2"
             aria-label="WC 2026 Portal"
           >
             <Image
@@ -32,7 +41,7 @@ export default async function RegisterPage() {
               width={180}
               height={45}
               priority
-              className="h-6 w-auto sm:h-8"
+              className="h-4 w-auto sm:h-8"
             />
           </Link>
           <div className="max-w-xl pb-2">

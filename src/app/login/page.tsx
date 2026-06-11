@@ -33,7 +33,16 @@ export default async function LoginPage() {
           fill
           priority
           sizes="(max-width: 1024px) 100vw, 62vw"
-          className="object-cover object-center"
+          className="scale-105 object-cover object-center opacity-65 blur-[1px] lg:scale-100 lg:opacity-100 lg:blur-0"
+        />
+        <Image
+          src="/messi-ronaldo-vip.png"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          aria-hidden="true"
+          className="object-contain object-top lg:hidden"
         />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,12,18,0.12)_25%,rgba(3,12,18,0.92)_100%)] lg:bg-[linear-gradient(90deg,rgba(3,12,18,0.12)_40%,rgba(3,12,18,0.72)_100%),linear-gradient(180deg,rgba(3,12,18,0.08)_35%,rgba(3,12,18,0.92)_100%)]" />
 
@@ -41,7 +50,7 @@ export default async function LoginPage() {
           <div className="flex items-start justify-between gap-3">
             <Link
               href="/login"
-              className="inline-flex items-center rounded-xl bg-white/95 px-2.5 py-1.5 shadow-lg shadow-black/15 sm:px-3 sm:py-2"
+              className="inline-flex items-center rounded-lg bg-white/95 px-2 py-1 shadow-lg shadow-black/15 sm:rounded-xl sm:px-3 sm:py-2"
               aria-label="WC 2026 Portal"
             >
               <Image
@@ -50,7 +59,7 @@ export default async function LoginPage() {
                 width={180}
                 height={45}
                 priority
-                className="h-6 w-auto sm:h-8"
+                className="h-4 w-auto sm:h-8"
               />
             </Link>
             <span className="hidden text-xs font-bold uppercase tracking-[0.16em] text-white/70 sm:block">
