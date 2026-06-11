@@ -17,6 +17,7 @@ import {
   choiceLabel,
   formatCurrency,
   formatHandicap,
+  hasDrawChoice,
   isVoteLocked,
   LOCK_MINUTES,
   ROUND_LABELS,
@@ -266,6 +267,9 @@ export default async function MatchesPage({
                   const isScheduled = match.status === MatchStatus.DRAFT;
                   const canPick = match.status === MatchStatus.OPEN && !locked;
                   const hopeStarAllowed = canUseHopeStar(match.round);
+                  const availableChoices = hasDrawChoice(match.handicap)
+                    ? [VoteChoice.TEAM_A, VoteChoice.DRAW, VoteChoice.TEAM_B]
+                    : [VoteChoice.TEAM_A, VoteChoice.TEAM_B];
                   const counts = {
                     [VoteChoice.TEAM_A]: match.votes.filter(
                       (vote) => vote.choice === VoteChoice.TEAM_A,
@@ -363,9 +367,14 @@ export default async function MatchesPage({
                                 </p>
                               </div>
 
-                              <div className="grid gap-2 sm:grid-cols-3">
-                                {[VoteChoice.TEAM_A, VoteChoice.DRAW, VoteChoice.TEAM_B].map(
-                                  (choice) => {
+                              <div
+                                className={`grid gap-2 ${
+                                  availableChoices.length === 2
+                                    ? "sm:grid-cols-2"
+                                    : "sm:grid-cols-3"
+                                }`}
+                              >
+                                {availableChoices.map((choice) => {
                                     const selected = myVote?.choice === choice;
                                     return (
                                       <label key={choice} className="block">
@@ -387,9 +396,14 @@ export default async function MatchesPage({
                                         </span>
                                       </label>
                                     );
-                                  },
-                                )}
+                                  })}
                               </div>
+
+                              {!hasDrawChoice(match.handicap) && (
+                                <p className="text-xs font-semibold text-slate-600">
+                                  Kèo nửa trái không có cửa Hòa-sau-chấp.
+                                </p>
+                              )}
 
                               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                 <label

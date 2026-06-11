@@ -90,14 +90,15 @@ describe("The Odds API suggestions", () => {
     );
 
     expect(suggestions.get("match-2")).toMatchObject({
-      handicap: 0,
-      handicappedTeam: null,
+      handicap: 0.5,
+      handicappedTeam: TeamSide.TEAM_A,
       sourceLine: 0.5,
     });
   });
 
-  it("keeps small half-ball lines as level-ball for easier play", () => {
-    expect(simplifyHandicap(0.5)).toBe(0);
+  it("keeps exact half-ball lines and simplifies quarter lines", () => {
+    expect(simplifyHandicap(0.5)).toBe(0.5);
+    expect(simplifyHandicap(1.5)).toBe(1.5);
     expect(simplifyHandicap(1.25)).toBe(1);
     expect(simplifyHandicap(1.75)).toBe(2);
   });

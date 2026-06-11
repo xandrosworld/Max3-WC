@@ -310,7 +310,7 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                 <option key={round} value={round}>{ROUND_LABELS[round]}</option>
               ))}
             </select>
-            <input name="handicap" required type="number" min="0" step="1" defaultValue="0" placeholder="Mức chấp" className={inputClass} />
+            <input name="handicap" required type="number" min="0" max="20" step="0.5" defaultValue="0" placeholder="Mức chấp" className={inputClass} />
             <select name="handicappedTeam" className={inputClass}>
               <option value="">Không đội nào (0)</option>
               <option value={TeamSide.TEAM_A}>Đội A bị chấp</option>
@@ -383,55 +383,72 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                     <p className="text-xs font-extrabold uppercase tracking-wide text-emerald-800">
                       1. Đặt mức chấp trước trận
                     </p>
-                    <form action={upsertMatchAction} className="mt-3 grid gap-2">
-                      <input type="hidden" name="saveKind" value="handicap" />
-                      <input type="hidden" name="matchFilter" value={matchFilter} />
-                      <input type="hidden" name="id" value={match.id} />
-                      <input type="hidden" name="teamA" value={match.teamA} />
-                      <input type="hidden" name="teamB" value={match.teamB} />
-                      <input type="hidden" name="kickoffLocal" value={toVietnamDateTimeLocal(match.kickoffAt)} />
-                      <input type="hidden" name="round" value={match.round} />
-                      <label className="grid gap-1 text-xs font-bold text-slate-600">
-                        Mức chấp
-                        <input name="handicap" required type="number" min="0" step="1" defaultValue={match.handicap} className={inputClass} />
-                      </label>
-                      <label className="grid gap-1 text-xs font-bold text-slate-600">
-                        Đội bị chấp
-                        <select name="handicappedTeam" defaultValue={match.handicappedTeam ?? ""} className={inputClass}>
-                          <option value="">Không đội nào (0)</option>
-                          <option value={TeamSide.TEAM_A}>{match.teamA} bị chấp</option>
-                          <option value={TeamSide.TEAM_B}>{match.teamB} bị chấp</option>
-                        </select>
-                      </label>
-                      <button className={buttonClass}>
-                        {match.status === MatchStatus.DRAFT
-                          ? "Lưu và mở dự đoán"
-                          : "Lưu mức chấp"}
-                      </button>
-                    </form>
-                    <details className="mt-3 text-xs text-slate-600">
-                      <summary className="cursor-pointer font-bold text-slate-700">
-                        Sửa đội/giờ/vòng nếu dữ liệu sai
-                      </summary>
-                      <form action={upsertMatchAction} className="mt-3 grid gap-2 sm:grid-cols-2">
-                        <input type="hidden" name="saveKind" value="details" />
-                        <input type="hidden" name="matchFilter" value={matchFilter} />
-                        <input type="hidden" name="id" value={match.id} />
-                        <input name="teamA" required defaultValue={match.teamA} className={inputClass} />
-                        <input name="teamB" required defaultValue={match.teamB} className={inputClass} />
-                        <input name="kickoffLocal" required type="datetime-local" defaultValue={toVietnamDateTimeLocal(match.kickoffAt)} className={inputClass} />
-                        <select name="round" defaultValue={match.round} className={inputClass}>
-                          {Object.values(RoundType).map((round) => <option key={round} value={round}>{ROUND_LABELS[round]}</option>)}
-                        </select>
-                        <input name="handicap" required type="number" min="0" step="1" defaultValue={match.handicap} className={inputClass} />
-                        <select name="handicappedTeam" defaultValue={match.handicappedTeam ?? ""} className={inputClass}>
-                          <option value="">Không đội nào (0)</option>
-                          <option value={TeamSide.TEAM_A}>Đội A bị chấp</option>
-                          <option value={TeamSide.TEAM_B}>Đội B bị chấp</option>
-                        </select>
-                        <button className={`${buttonClass} sm:col-span-2`}>Lưu sửa đổi</button>
-                      </form>
-                    </details>
+                    {match._count.votes > 0 ? (
+                      <div className="mt-3 rounded-xl border border-emerald-200 bg-white px-3 py-3">
+                        <p className="font-extrabold text-emerald-950">
+                          Mức chấp đã chốt: {formatHandicap(match)}
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-slate-600">
+                          Đã có {match._count.votes} người chọn nên không thể đổi mức chấp,
+                          đội hoặc giờ đá của trận này.
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <form action={upsertMatchAction} className="mt-3 grid gap-2">
+                          <input type="hidden" name="saveKind" value="handicap" />
+                          <input type="hidden" name="matchFilter" value={matchFilter} />
+                          <input type="hidden" name="id" value={match.id} />
+                          <input type="hidden" name="teamA" value={match.teamA} />
+                          <input type="hidden" name="teamB" value={match.teamB} />
+                          <input type="hidden" name="kickoffLocal" value={toVietnamDateTimeLocal(match.kickoffAt)} />
+                          <input type="hidden" name="round" value={match.round} />
+                          <label className="grid gap-1 text-xs font-bold text-slate-600">
+                            Mức chấp
+                            <input name="handicap" required type="number" min="0" max="20" step="0.5" defaultValue={match.handicap} className={inputClass} />
+                          </label>
+                          <label className="grid gap-1 text-xs font-bold text-slate-600">
+                            Đội bị chấp
+                            <select name="handicappedTeam" defaultValue={match.handicappedTeam ?? ""} className={inputClass}>
+                              <option value="">Không đội nào (0)</option>
+                              <option value={TeamSide.TEAM_A}>{match.teamA} bị chấp</option>
+                              <option value={TeamSide.TEAM_B}>{match.teamB} bị chấp</option>
+                            </select>
+                          </label>
+                          <button className={buttonClass}>
+                            {match.status === MatchStatus.DRAFT
+                              ? "Lưu và mở dự đoán"
+                              : "Lưu mức chấp"}
+                          </button>
+                        </form>
+                        <p className="mt-2 text-xs leading-5 text-slate-600">
+                          Có thể nhập 0,5; 1; 1,5... Kèo nửa trái chỉ có hai cửa đội A hoặc đội B.
+                        </p>
+                        <details className="mt-3 text-xs text-slate-600">
+                          <summary className="cursor-pointer font-bold text-slate-700">
+                            Sửa đội/giờ/vòng nếu dữ liệu sai
+                          </summary>
+                          <form action={upsertMatchAction} className="mt-3 grid gap-2 sm:grid-cols-2">
+                            <input type="hidden" name="saveKind" value="details" />
+                            <input type="hidden" name="matchFilter" value={matchFilter} />
+                            <input type="hidden" name="id" value={match.id} />
+                            <input name="teamA" required defaultValue={match.teamA} className={inputClass} />
+                            <input name="teamB" required defaultValue={match.teamB} className={inputClass} />
+                            <input name="kickoffLocal" required type="datetime-local" defaultValue={toVietnamDateTimeLocal(match.kickoffAt)} className={inputClass} />
+                            <select name="round" defaultValue={match.round} className={inputClass}>
+                              {Object.values(RoundType).map((round) => <option key={round} value={round}>{ROUND_LABELS[round]}</option>)}
+                            </select>
+                            <input name="handicap" required type="number" min="0" max="20" step="0.5" defaultValue={match.handicap} className={inputClass} />
+                            <select name="handicappedTeam" defaultValue={match.handicappedTeam ?? ""} className={inputClass}>
+                              <option value="">Không đội nào (0)</option>
+                              <option value={TeamSide.TEAM_A}>Đội A bị chấp</option>
+                              <option value={TeamSide.TEAM_B}>Đội B bị chấp</option>
+                            </select>
+                            <button className={`${buttonClass} sm:col-span-2`}>Lưu sửa đổi</button>
+                          </form>
+                        </details>
+                      </>
+                    )}
                   </section>
                 )}
 

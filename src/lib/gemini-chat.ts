@@ -7,6 +7,7 @@ import {
   formatCurrency,
   formatHandicap,
   formatVietnamTime,
+  hasDrawChoice,
   ROUND_LABELS,
 } from "./domain";
 
@@ -33,13 +34,16 @@ export function buildGeminiPrompt(question: string, context: ChatContext) {
         },
         { TEAM_A: 0, DRAW: 0, TEAM_B: 0 },
       );
+      const voteSummary = hasDrawChoice(match.handicap)
+        ? `${match.teamA} ${voteCounts.TEAM_A}, Hòa-sau-chấp ${voteCounts.DRAW}, ${match.teamB} ${voteCounts.TEAM_B}`
+        : `${match.teamA} ${voteCounts.TEAM_A}, ${match.teamB} ${voteCounts.TEAM_B}`;
       return [
         `${match.teamA} vs ${match.teamB}`,
         `Giờ đá: ${formatVietnamTime(match.kickoffAt)}`,
         `Vòng: ${ROUND_LABELS[match.round]}`,
         `Mức chấp: ${formatHandicap(match)}`,
         `Điểm quỹ: ${formatCurrency(match.contributionAmount)}`,
-        `Lượt chọn: ${match.teamA} ${voteCounts.TEAM_A}, Hòa-sau-chấp ${voteCounts.DRAW}, ${match.teamB} ${voteCounts.TEAM_B}`,
+        `Lượt chọn: ${voteSummary}`,
       ].join(" | ");
     });
 
@@ -62,7 +66,7 @@ export function buildGeminiPrompt(question: string, context: ChatContext) {
     "Trả lời bằng tiếng Việt, thân thiện, ngắn gọn, dễ hiểu cho người không rành kỹ thuật.",
     "Chỉ dùng dữ liệu được cung cấp bên dưới. Không bịa tỷ số thật, không bịa tin tức, không nói có dữ liệu thương mại bên ngoài hay tỷ lệ thương mại.",
     "Nếu người dùng hỏi dự đoán, hãy nói rõ đó là tham khảo vui, không phải lời khuyên ăn thua.",
-    "Luật chơi: mỗi trận chọn đội A, Hòa-sau-chấp hoặc đội B. Đúng thì điểm quỹ không phát sinh. Sai thì ghi nhận điểm quỹ theo mức của vòng. Ngôi sao hy vọng chỉ từ vòng loại trực tiếp; nếu sai thì nhân đôi điểm quỹ trận đó. Không chọn thì không tự phạt.",
+    "Luật chơi: kèo chấp số nguyên có ba cửa đội A, Hòa-sau-chấp hoặc đội B; kèo nửa trái như 0,5 hoặc 1,5 chỉ có hai cửa đội A hoặc đội B. Đúng thì điểm quỹ không phát sinh. Sai thì ghi nhận điểm quỹ theo mức của vòng. Ngôi sao hy vọng chỉ từ vòng loại trực tiếp; nếu sai thì nhân đôi điểm quỹ trận đó. Không chọn thì không tự phạt.",
     "",
     `Thời điểm hiện tại: ${formatVietnamTime(context.now)}.`,
     "",

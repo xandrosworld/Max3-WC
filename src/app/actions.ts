@@ -20,6 +20,8 @@ import {
 import {
   canUseHopeStar,
   getContributionAmount,
+  hasDrawChoice,
+  isValidHandicap,
   isPlaceholderTeamName,
   isVoteLocked,
 } from "@/lib/domain";
@@ -52,7 +54,9 @@ const matchSchema = z.object({
   teamB: z.string().trim().min(2).max(80),
   kickoffLocal: z.string().min(10),
   round: z.nativeEnum(RoundType),
-  handicap: z.coerce.number().int().min(0).max(20),
+  handicap: z.coerce.number().refine(isValidHandicap, {
+    message: "Mức chấp phải theo nấc 0,5 từ 0 đến 20",
+  }),
   handicappedTeam: z.nativeEnum(TeamSide).nullable(),
 });
 
@@ -211,6 +215,9 @@ export async function voteAction(formData: FormData) {
   const match = await prisma.match.findUnique({ where: { id: matchId } });
   if (!match || match.deletedAt) throw new Error("Không tìm thấy trận");
   if (isVoteLocked(match, new Date())) throw new Error("Trận này đã khóa lựa chọn");
+  if (choice === VoteChoice.DRAW && !hasDrawChoice(match.handicap)) {
+    throw new Error("Kèo nửa trái chỉ có hai cửa đội A hoặc đội B");
+  }
   if (requestedHopeStar && !canUseHopeStar(match.round)) {
     throw new Error("Ngôi sao hy vọng chỉ dùng từ vòng loại trực tiếp");
   }

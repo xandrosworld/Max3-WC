@@ -38,4 +38,13 @@ describe("buildWorldCupChatReply", () => {
     expect(reply).toContain("Mexico vs South Africa");
     expect(reply).toContain("tham khảo");
   });
+
+  it("không gợi ý cửa hòa cho kèo nửa trái", () => {
+    const reply = buildWorldCupChatReply("Dự đoán Mexico thế nào?", {
+      ...context,
+      matches: [{ ...context.matches[0], handicap: 0.5 }],
+    });
+
+    expect(reply).not.toContain("Hòa-sau-chấp 0");
+  });
 });

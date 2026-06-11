@@ -7,7 +7,7 @@ describe("match bulk import", () => {
     const result = parseMatchImport(`
 Đội A,Đội B,Giờ Việt Nam,Vòng,Chấp,Đội bị chấp,Trạng thái
 Mexico,South Africa,2026-06-12 02:00,GROUP,0,,DRAFT
-Brazil,Serbia,15/06/2026 02:00,Vòng bảng,2,TEAM_A,OPEN
+Brazil,Serbia,15/06/2026 02:00,Vòng bảng,0.5,TEAM_A,OPEN
 `);
 
     expect(result.errors).toEqual([]);
@@ -23,7 +23,7 @@ Brazil,Serbia,15/06/2026 02:00,Vòng bảng,2,TEAM_A,OPEN
     });
     expect(result.rows[0].kickoffAt.toISOString()).toBe("2026-06-11T19:00:00.000Z");
     expect(result.rows[1]).toMatchObject({
-      handicap: 2,
+      handicap: 0.5,
       handicappedTeam: TeamSide.TEAM_A,
       status: MatchStatus.OPEN,
     });

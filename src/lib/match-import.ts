@@ -1,5 +1,5 @@
 import { MatchStatus, RoundType, TeamSide } from "@prisma/client";
-import { getContributionAmount } from "./domain";
+import { getContributionAmount, isValidHandicap } from "./domain";
 
 export type ImportedMatch = {
   teamA: string;
@@ -180,8 +180,8 @@ export function parseMatchImport(input: string): MatchImportResult {
 
         const round = parseRound(roundInput);
         const handicap = Number(columns[4] || 0);
-        if (!Number.isInteger(handicap) || handicap < 0 || handicap > 20) {
-          throw new Error("mức chấp phải là số nguyên từ 0 đến 20");
+        if (!isValidHandicap(handicap)) {
+          throw new Error("mức chấp phải theo nấc 0,5 từ 0 đến 20");
         }
         const handicappedTeam = handicap === 0 ? null : parseSide(columns[5] ?? "");
         if (handicap > 0 && !handicappedTeam) throw new Error("mức chấp dương cần đội bị chấp");

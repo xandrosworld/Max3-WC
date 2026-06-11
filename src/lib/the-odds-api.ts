@@ -153,7 +153,8 @@ export function simplifyHandicap(sourceLine: number) {
   if (!Number.isFinite(sourceLine) || sourceLine < 0) {
     throw new Error("Mức chấp gợi ý không hợp lệ.");
   }
-  if (sourceLine < 0.75) return 0;
+  if (Number.isInteger(sourceLine * 2)) return Math.min(20, sourceLine);
+  if (sourceLine < 0.25) return 0;
   return Math.min(20, Math.round(sourceLine));
 }
 

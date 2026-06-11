@@ -5,6 +5,8 @@ import {
   canUseHopeStar,
   getLossAmountForVote,
   getPaymentStatus,
+  hasDrawChoice,
+  isValidHandicap,
   isPlaceholderTeamName,
   isVoteLocked,
 } from "./domain";
@@ -41,6 +43,34 @@ describe("European Handicap V6", () => {
         handicappedTeam: null,
       }),
     ).toBe(VoteChoice.DRAW);
+  });
+
+  it("kèo chấp 0,5 chỉ có cửa thắng hoặc thua", () => {
+    expect(
+      calculateWinningChoice({
+        teamAScore: 1,
+        teamBScore: 1,
+        handicap: 0.5,
+        handicappedTeam: TeamSide.TEAM_A,
+      }),
+    ).toBe(VoteChoice.TEAM_B);
+
+    expect(
+      calculateWinningChoice({
+        teamAScore: 2,
+        teamBScore: 1,
+        handicap: 0.5,
+        handicappedTeam: TeamSide.TEAM_A,
+      }),
+    ).toBe(VoteChoice.TEAM_A);
+  });
+
+  it("chỉ nhận mức chấp theo nấc 0,5", () => {
+    expect(isValidHandicap(0.5)).toBe(true);
+    expect(isValidHandicap(1.5)).toBe(true);
+    expect(isValidHandicap(1.25)).toBe(false);
+    expect(hasDrawChoice(1)).toBe(true);
+    expect(hasDrawChoice(0.5)).toBe(false);
   });
 
   it("từ chối handicap dương nếu thiếu đội bị chấp", () => {

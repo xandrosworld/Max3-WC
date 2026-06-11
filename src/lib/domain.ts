@@ -35,6 +35,19 @@ export function canUseHopeStar(round: RoundType) {
   return round !== RoundType.GROUP;
 }
 
+export function isValidHandicap(handicap: number) {
+  return (
+    Number.isFinite(handicap) &&
+    handicap >= 0 &&
+    handicap <= 20 &&
+    Number.isInteger(handicap * 2)
+  );
+}
+
+export function hasDrawChoice(handicap: number) {
+  return Number.isInteger(handicap);
+}
+
 export function isVoteLocked(
   match: { status: MatchStatus; kickoffAt: Date },
   now = new Date(),
@@ -57,8 +70,8 @@ export function calculateWinningChoice(input: {
   ) {
     throw new Error("Tỷ số 90 phút không hợp lệ");
   }
-  if (!Number.isInteger(input.handicap) || input.handicap < 0) {
-    throw new Error("Mức chấp phải là số nguyên không âm");
+  if (!isValidHandicap(input.handicap)) {
+    throw new Error("Mức chấp phải theo nấc 0,5 từ 0 đến 20");
   }
   if (input.handicap > 0 && !input.handicappedTeam) {
     throw new Error("Phải chọn đội bị chấp");
@@ -97,7 +110,9 @@ export function formatHandicap(input: {
   if (input.handicap === 0) return "Không chấp (0)";
   const team =
     input.handicappedTeam === TeamSide.TEAM_A ? input.teamA : input.teamB;
-  return `${team} -${input.handicap}`;
+  return `${team} -${new Intl.NumberFormat("vi-VN", {
+    maximumFractionDigits: 1,
+  }).format(input.handicap)}`;
 }
 
 export function formatCurrency(amount: number) {

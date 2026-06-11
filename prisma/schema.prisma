@@ -129,7 +129,7 @@ model Match {
   kickoffAt          DateTime    @db.Timestamptz(3)
   round              RoundType
   contributionAmount Int
-  handicap           Int
+  handicap           Float
   handicappedTeam    TeamSide?
   status             MatchStatus @default(DRAFT)
   externalSource     String?

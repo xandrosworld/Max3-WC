@@ -4,6 +4,7 @@ import {
   formatCurrency,
   formatHandicap,
   formatVietnamTime,
+  hasDrawChoice,
   ROUND_LABELS,
 } from "./domain";
 
@@ -46,7 +47,8 @@ export function buildWorldCupChatReply(question: string, context: ChatContext) {
   if (includesAny(normalized, ["luat", "cach choi", "choi sao", "chap", "hoa sau chap", "ngoi sao", "hy vong"])) {
     return [
       "Luật chơi hiện tại rất gọn:",
-      "- Mỗi trận chọn một trong ba cửa: đội A, Hòa-sau-chấp, hoặc đội B.",
+      "- Kèo chấp số nguyên có ba cửa: đội A, Hòa-sau-chấp hoặc đội B.",
+      "- Kèo nửa trái như 0,5 hoặc 1,5 chỉ có hai cửa đội A hoặc đội B.",
       "- Admin đặt mức chấp trước trận. Tỷ số tính theo 90 phút chính thức.",
       "- Chọn đúng thì điểm quỹ không phát sinh. Chọn sai thì ghi nhận điểm quỹ theo mức của vòng.",
       "- Ngôi sao hy vọng chỉ dùng từ vòng loại trực tiếp: nếu sai thì điểm quỹ trận đó nhân đôi.",
@@ -93,18 +95,27 @@ export function buildWorldCupChatReply(question: string, context: ChatContext) {
 
 function buildPrediction(match: ChatMatch) {
   const voteCounts = countVotes(match.votes);
-  const choices = [VoteChoice.TEAM_A, VoteChoice.DRAW, VoteChoice.TEAM_B] as const;
+  const choices = hasDrawChoice(match.handicap)
+    ? [VoteChoice.TEAM_A, VoteChoice.DRAW, VoteChoice.TEAM_B]
+    : [VoteChoice.TEAM_A, VoteChoice.TEAM_B];
   const mostPicked = choices.reduce((best, choice) =>
     voteCounts[choice] > voteCounts[best] ? choice : best,
   );
-  const fallbackChoice = deterministicChoice(match.teamA, match.teamB);
+  const fallbackChoice = deterministicChoice(
+    match.teamA,
+    match.teamB,
+    hasDrawChoice(match.handicap),
+  );
   const suggestedChoice =
     voteCounts[mostPicked] > 0 ? mostPicked : fallbackChoice;
+  const voteSummary = hasDrawChoice(match.handicap)
+    ? `${match.teamA} ${voteCounts.TEAM_A}, Hòa-sau-chấp ${voteCounts.DRAW}, ${match.teamB} ${voteCounts.TEAM_B}`
+    : `${match.teamA} ${voteCounts.TEAM_A}, ${match.teamB} ${voteCounts.TEAM_B}`;
 
   return [
     `Dự đoán vui cho ${match.teamA} vs ${match.teamB}: tôi nghiêng nhẹ về cửa ${choiceLabel(suggestedChoice, match.teamA, match.teamB)}.`,
     `Mức chấp hiện tại: ${formatHandicap(match)} · điểm quỹ ${formatCurrency(match.contributionAmount)}.`,
-    `Số người đã chọn: ${match.teamA} ${voteCounts.TEAM_A}, Hòa-sau-chấp ${voteCounts.DRAW}, ${match.teamB} ${voteCounts.TEAM_B}.`,
+    `Số người đã chọn: ${voteSummary}.`,
     "Đây chỉ là tham khảo vui dựa trên dữ liệu trong portal, không phải lời khuyên tài chính hay ăn thua.",
   ].join("\n");
 }
@@ -119,9 +130,9 @@ function countVotes(votes: ChatMatch["votes"]) {
   );
 }
 
-function deterministicChoice(teamA: string, teamB: string) {
+function deterministicChoice(teamA: string, teamB: string, allowDraw: boolean) {
   const value = hash(`${teamA}|${teamB}`);
-  if (value % 5 === 0) return VoteChoice.DRAW;
+  if (allowDraw && value % 5 === 0) return VoteChoice.DRAW;
   return value % 2 === 0 ? VoteChoice.TEAM_A : VoteChoice.TEAM_B;
 }
 
