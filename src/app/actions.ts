@@ -234,6 +234,20 @@ export async function voteAction(formData: FormData) {
 export async function upsertMatchAction(formData: FormData) {
   const admin = await requireAdmin();
   const rawHandicapped = formString(formData, "handicappedTeam");
+  const rawSaveKind = formString(formData, "saveKind");
+  const saveKind =
+    rawSaveKind === "handicap" || rawSaveKind === "details" || rawSaveKind === "created"
+      ? rawSaveKind
+      : "details";
+  const rawMatchFilter = formString(formData, "matchFilter");
+  const matchFilter =
+    rawMatchFilter === "draft" ||
+    rawMatchFilter === "open" ||
+    rawMatchFilter === "locked" ||
+    rawMatchFilter === "needsResult" ||
+    rawMatchFilter === "settled"
+      ? rawMatchFilter
+      : "";
   const data = matchSchema.parse({
     id: formString(formData, "id") || undefined,
     teamA: formString(formData, "teamA"),
@@ -260,6 +274,9 @@ export async function upsertMatchAction(formData: FormData) {
     handicappedTeam: data.handicap === 0 ? null : data.handicappedTeam,
   };
 
+  let savedId = data.id;
+  let savedKind = data.id ? saveKind : "created";
+
   if (data.id) {
     const existing = await prisma.match.findUnique({
       where: { id: data.id },
@@ -283,10 +300,24 @@ export async function upsertMatchAction(formData: FormData) {
     await audit(admin.id, "MATCH_UPDATED", "Match", data.id);
   } else {
     const match = await prisma.match.create({ data: payload });
+    savedId = match.id;
+    savedKind = "created";
     await audit(admin.id, "MATCH_CREATED", "Match", match.id);
   }
   revalidatePath("/admin");
   revalidatePath("/matches");
+
+  if (!savedId) throw new Error("Không xác định được trận đã lưu");
+  const params = new URLSearchParams({
+    matchSavedId: savedId,
+    matchSavedKind: savedKind,
+  });
+  if (savedKind === "created") {
+    params.set("matchFilter", "draft");
+  } else if (matchFilter) {
+    params.set("matchFilter", matchFilter);
+  }
+  redirect(`/admin?${params.toString()}`);
 }
 
 function matchImportKey(input: { teamA: string; teamB: string; kickoffAt: Date }) {

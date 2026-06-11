@@ -58,6 +58,13 @@ export default async function AdminPage({
   const params = (await searchParams) ?? {};
   const importedMatches = typeof params.importedMatches === "string" ? params.importedMatches : null;
   const skippedMatches = typeof params.skippedMatches === "string" ? params.skippedMatches : null;
+  const matchSavedId = typeof params.matchSavedId === "string" ? params.matchSavedId : null;
+  const matchSavedKind =
+    params.matchSavedKind === "handicap" ||
+    params.matchSavedKind === "details" ||
+    params.matchSavedKind === "created"
+      ? params.matchSavedKind
+      : null;
   const fixtureCreated = typeof params.fixtureCreated === "string" ? params.fixtureCreated : null;
   const fixtureUpdated = typeof params.fixtureUpdated === "string" ? params.fixtureUpdated : null;
   const fixtureProtected =
@@ -292,6 +299,8 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
             Bỏ qua mục này: chỉ tạo một trận thủ công khi cần
           </summary>
           <form action={upsertMatchAction} className="mt-3 grid gap-3 md:grid-cols-4">
+            <input type="hidden" name="saveKind" value="created" />
+            <input type="hidden" name="matchFilter" value={matchFilter} />
             <input name="teamA" required placeholder="Đội A" className={inputClass} />
             <input name="teamB" required placeholder="Đội B" className={inputClass} />
             <input name="kickoffLocal" required type="datetime-local" className={inputClass} />
@@ -347,6 +356,11 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                       Chờ nguồn dữ liệu cập nhật đội trước khi mở dự đoán.
                     </p>
                   )}
+                  {matchSavedId === match.id && (
+                    <p className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-900">
+                      {getMatchSavedMessage(matchSavedKind, match)}
+                    </p>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {match.status !== MatchStatus.SETTLED && !match.result && (
@@ -365,6 +379,8 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                       1. Đặt mức chấp trước trận
                     </p>
                     <form action={upsertMatchAction} className="mt-3 grid gap-2">
+                      <input type="hidden" name="saveKind" value="handicap" />
+                      <input type="hidden" name="matchFilter" value={matchFilter} />
                       <input type="hidden" name="id" value={match.id} />
                       <input type="hidden" name="teamA" value={match.teamA} />
                       <input type="hidden" name="teamB" value={match.teamB} />
@@ -389,6 +405,8 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                         Sửa đội/giờ/vòng nếu dữ liệu sai
                       </summary>
                       <form action={upsertMatchAction} className="mt-3 grid gap-2 sm:grid-cols-2">
+                        <input type="hidden" name="saveKind" value="details" />
+                        <input type="hidden" name="matchFilter" value={matchFilter} />
                         <input type="hidden" name="id" value={match.id} />
                         <input name="teamA" required defaultValue={match.teamA} className={inputClass} />
                         <input name="teamB" required defaultValue={match.teamB} className={inputClass} />
@@ -693,6 +711,25 @@ function matchStatusLabel(status: MatchStatus) {
   if (status === MatchStatus.CLOSED) return "Đã đóng dự đoán";
   if (status === MatchStatus.SETTLED) return "Đã tính kết quả";
   return "Đã hủy";
+}
+
+function getMatchSavedMessage(
+  kind: "handicap" | "details" | "created" | null,
+  match: {
+    teamA: string;
+    teamB: string;
+    handicap: number;
+    handicappedTeam: TeamSide | null;
+    kickoffAt: Date;
+  },
+) {
+  if (kind === "created") {
+    return `Đã tạo trận ${match.teamA} vs ${match.teamB}.`;
+  }
+  if (kind === "details") {
+    return `Đã lưu thông tin trận: ${match.teamA} vs ${match.teamB}, ${formatVietnamTime(match.kickoffAt)}.`;
+  }
+  return `Đã lưu mức chấp: ${formatHandicap(match)}.`;
 }
 
 function userRoleLabel(role: string) {
