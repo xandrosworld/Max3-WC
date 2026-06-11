@@ -61,6 +61,7 @@ export default async function AdminPage({
   const matchSavedId = typeof params.matchSavedId === "string" ? params.matchSavedId : null;
   const matchSavedKind =
     params.matchSavedKind === "handicap" ||
+    params.matchSavedKind === "handicap-opened" ||
     params.matchSavedKind === "details" ||
     params.matchSavedKind === "created"
       ? params.matchSavedKind
@@ -340,7 +341,11 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
 
         <div className="mt-4 space-y-4">
           {displayedMatchRows.map(({ match, hasPlaceholderTeam, matchHasStarted }) => (
-            <article key={match.id} className="rounded-2xl border border-slate-200 p-4">
+            <article
+              key={match.id}
+              id={`match-${match.id}`}
+              className="scroll-mt-24 rounded-2xl border border-slate-200 p-4"
+            >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h3 className="font-extrabold text-emerald-950">{match.teamA} vs {match.teamB}</h3>
@@ -398,7 +403,11 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                           <option value={TeamSide.TEAM_B}>{match.teamB} bị chấp</option>
                         </select>
                       </label>
-                      <button className={buttonClass}>Lưu mức chấp</button>
+                      <button className={buttonClass}>
+                        {match.status === MatchStatus.DRAFT
+                          ? "Lưu và mở dự đoán"
+                          : "Lưu mức chấp"}
+                      </button>
                     </form>
                     <details className="mt-3 text-xs text-slate-600">
                       <summary className="cursor-pointer font-bold text-slate-700">
@@ -432,7 +441,8 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                       2. Mở/đóng dự đoán
                     </p>
                     <p className="mt-2 text-xs leading-5 text-slate-600">
-                      Mở dự đoán thì trận này mới hiện cho người chơi. Đóng dự đoán thì người chơi không đổi lựa chọn được nữa.
+                      Khi lưu mức chấp lần đầu, trận sẽ tự mở cho người chơi. Dùng các nút
+                      dưới đây nếu cần đóng hoặc mở lại dự đoán.
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <StatusButton
@@ -714,7 +724,7 @@ function matchStatusLabel(status: MatchStatus) {
 }
 
 function getMatchSavedMessage(
-  kind: "handicap" | "details" | "created" | null,
+  kind: "handicap" | "handicap-opened" | "details" | "created" | null,
   match: {
     teamA: string;
     teamB: string;
@@ -728,6 +738,9 @@ function getMatchSavedMessage(
   }
   if (kind === "details") {
     return `Đã lưu thông tin trận: ${match.teamA} vs ${match.teamB}, ${formatVietnamTime(match.kickoffAt)}.`;
+  }
+  if (kind === "handicap-opened") {
+    return `Đã lưu mức chấp ${formatHandicap(match)} và mở dự đoán cho người chơi.`;
   }
   return `Đã lưu mức chấp: ${formatHandicap(match)}.`;
 }

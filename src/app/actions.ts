@@ -275,7 +275,8 @@ export async function upsertMatchAction(formData: FormData) {
   };
 
   let savedId = data.id;
-  let savedKind = data.id ? saveKind : "created";
+  let savedKind: "handicap" | "handicap-opened" | "details" | "created" =
+    data.id ? saveKind : "created";
 
   if (data.id) {
     const existing = await prisma.match.findUnique({
@@ -296,8 +297,39 @@ export async function upsertMatchAction(formData: FormData) {
         existing.handicappedTeam !== payload.handicappedTeam;
       if (changed) throw new Error("Không thể sửa trận đã có người chọn");
     }
-    await prisma.match.update({ where: { id: data.id }, data: payload });
+    const openAfterSavingHandicap =
+      saveKind === "handicap" && existing.status === MatchStatus.DRAFT;
+    if (openAfterSavingHandicap) {
+      if (
+        isVoteLocked(
+          {
+            status: MatchStatus.OPEN,
+            kickoffAt: payload.kickoffAt,
+          },
+          new Date(),
+        )
+      ) {
+        throw new Error("Không thể mở dự đoán vì đã tới giờ khóa");
+      }
+      if (isPlaceholderTeamName(payload.teamA) || isPlaceholderTeamName(payload.teamB)) {
+        throw new Error("Không thể mở dự đoán khi đội vẫn chưa xác định");
+      }
+    }
+
+    await prisma.match.update({
+      where: { id: data.id },
+      data: {
+        ...payload,
+        ...(openAfterSavingHandicap ? { status: MatchStatus.OPEN } : {}),
+      },
+    });
     await audit(admin.id, "MATCH_UPDATED", "Match", data.id);
+    if (openAfterSavingHandicap) {
+      savedKind = "handicap-opened";
+      await audit(admin.id, "MATCH_OPEN", "Match", data.id, {
+        source: "SAVE_HANDICAP",
+      });
+    }
   } else {
     const match = await prisma.match.create({ data: payload });
     savedId = match.id;
@@ -314,10 +346,12 @@ export async function upsertMatchAction(formData: FormData) {
   });
   if (savedKind === "created") {
     params.set("matchFilter", "draft");
+  } else if (savedKind === "handicap-opened" && matchFilter === "draft") {
+    params.set("matchFilter", "open");
   } else if (matchFilter) {
     params.set("matchFilter", matchFilter);
   }
-  redirect(`/admin?${params.toString()}`);
+  redirect(`/admin?${params.toString()}#match-${savedId}`);
 }
 
 function matchImportKey(input: { teamA: string; teamB: string; kickoffAt: Date }) {
