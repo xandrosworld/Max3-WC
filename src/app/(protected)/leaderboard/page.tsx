@@ -142,6 +142,10 @@ function LeaderboardMobileCard({ row }: { row: LeaderboardRow }) {
             <p className="truncate text-xs font-semibold text-slate-500">
               {row.department || "Chưa có đơn vị"}
             </p>
+            <p className="mt-0.5 truncate text-[11px] font-bold text-slate-400">
+              {row.accuracy.toFixed(0)}% chính xác
+              {row.hopeStarUsed > 0 ? ` · ${row.hopeStarUsed} sao` : ""}
+            </p>
           </div>
         </div>
         <div className="shrink-0 text-right">
@@ -159,10 +163,6 @@ function LeaderboardMobileCard({ row }: { row: LeaderboardRow }) {
         <MobileStat label="Đúng" value={String(row.correct)} tone="good" />
         <MobileStat label="Sai" value={String(row.wrong)} tone="bad" />
         <MobileStat label="Quên" value={String(row.missed)} tone="warn" />
-        <MobileStat label="Chuẩn" value={`${row.accuracy.toFixed(0)}%`} />
-        {row.hopeStarUsed > 0 && (
-          <MobileStat label="Sao" value={String(row.hopeStarUsed)} tone="star" />
-        )}
       </div>
     </article>
   );
@@ -175,18 +175,17 @@ function MobileStat({
 }: {
   label: string;
   value: string;
-  tone?: "neutral" | "good" | "bad" | "warn" | "star";
+  tone?: "neutral" | "good" | "bad" | "warn";
 }) {
   const toneClass = {
     neutral: "bg-slate-50 text-slate-700 ring-slate-100",
     good: "bg-emerald-50 text-emerald-700 ring-emerald-100",
     bad: "bg-red-50 text-red-700 ring-red-100",
     warn: "bg-amber-50 text-amber-700 ring-amber-100",
-    star: "bg-violet-50 text-violet-700 ring-violet-100",
   }[tone];
 
   return (
-    <div className={`inline-flex min-h-8 items-center gap-1.5 rounded-xl px-2.5 text-xs font-bold ring-1 ${toneClass}`}>
+    <div className={`inline-flex min-h-7 items-center gap-1.5 rounded-xl px-2 text-[11px] font-bold ring-1 ${toneClass}`}>
       <span className="font-black tabular-nums">{value}</span>
       <span className="text-slate-500">{label}</span>
     </div>
