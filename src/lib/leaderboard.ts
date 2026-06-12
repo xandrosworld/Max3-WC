@@ -85,11 +85,5 @@ export async function getLeaderboard() {
 
   rows.sort((a, b) => b.loss - a.loss || b.correct - a.correct || a.name.localeCompare(b.name, "vi"));
 
-  let rank = 0;
-  let previousLoss: number | null = null;
-  return rows.map((row, index) => {
-    if (row.loss !== previousLoss) rank = index + 1;
-    previousLoss = row.loss;
-    return { ...row, rank };
-  });
+  return rows.map((row, index) => ({ ...row, rank: index + 1 }));
 }
