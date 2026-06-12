@@ -196,7 +196,7 @@ function PredictionKingCard({
   ][index];
 
   return (
-    <article className={`relative overflow-hidden rounded-2xl border p-4 shadow-lg ${styles.wrap}`}>
+    <article className={`relative overflow-hidden rounded-2xl border p-4 pr-16 shadow-lg sm:pr-4 ${styles.wrap}`}>
       <div className="absolute right-3 top-3 opacity-20">
         {index === 0 ? (
           <Crown size={44} aria-hidden="true" />
