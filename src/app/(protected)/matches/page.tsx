@@ -284,9 +284,9 @@ export default async function MatchesPage({
                           </p>
                         </div>
 
-                        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] grid-rows-[auto_auto] items-center gap-x-2 gap-y-2 sm:grid-rows-1 sm:gap-4">
-                          <div className="col-span-3 flex min-w-0 items-center justify-start gap-2 sm:col-span-1 sm:justify-end">
-                            <span className="min-w-0 whitespace-normal break-words text-left text-sm font-extrabold leading-5 text-slate-950 sm:text-right sm:text-base">
+                        <div className="grid min-w-0 grid-cols-1 items-center gap-1.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-4">
+                          <div className="flex min-w-0 items-center justify-start gap-2 sm:justify-end">
+                            <span className="min-w-0 whitespace-normal break-words text-left text-sm font-extrabold leading-5 text-slate-950 sm:order-none sm:text-right sm:text-base">
                               {match.teamA}
                             </span>
                             <TeamMark
@@ -296,7 +296,7 @@ export default async function MatchesPage({
                             />
                           </div>
 
-                          <div className="col-span-3 min-w-10 text-center sm:col-span-1">
+                          <div className="min-w-10 text-center">
                             {match.result ? (
                               <span className="text-lg font-black tabular-nums text-slate-950">
                                 {match.result.teamAScore}-{match.result.teamBScore}
@@ -306,7 +306,7 @@ export default async function MatchesPage({
                             )}
                           </div>
 
-                          <div className="col-span-3 flex min-w-0 items-center gap-2 sm:col-span-1">
+                          <div className="flex min-w-0 items-center gap-2">
                             <TeamMark
                               name={match.teamB}
                               code={match.teamBCode}
