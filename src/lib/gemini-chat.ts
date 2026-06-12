@@ -58,7 +58,7 @@ export function buildGeminiPrompt(question: string, context: ChatContext) {
     );
 
   const leaderboard = context.leaderboard.slice(0, 10).map((row, index) =>
-    `${index + 1}. ${row.name}: điểm quỹ ${formatCurrency(row.loss)}, đúng ${row.correct}, sai ${row.wrong}, dùng Ngôi sao ${row.hopeStarUsed} lần`,
+    `${index + 1}. ${row.name}: phải nộp ${formatCurrency(row.loss)}, đúng ${row.correct}, sai ${row.wrong}, quên chọn ${row.missed}, dùng Ngôi sao ${row.hopeStarUsed} lần`,
   );
 
   return [
@@ -66,7 +66,7 @@ export function buildGeminiPrompt(question: string, context: ChatContext) {
     "Trả lời bằng tiếng Việt, thân thiện, ngắn gọn, dễ hiểu cho người không rành kỹ thuật.",
     "Chỉ dùng dữ liệu được cung cấp bên dưới. Không bịa tỷ số thật, không bịa tin tức, không nói có dữ liệu thương mại bên ngoài hay tỷ lệ thương mại.",
     "Nếu người dùng hỏi dự đoán, hãy nói rõ đó là tham khảo vui, không phải lời khuyên ăn thua.",
-    "Luật chơi: kèo chấp số nguyên có ba cửa đội A, Hòa-sau-chấp hoặc đội B; kèo nửa trái như 0,5 hoặc 1,5 chỉ có hai cửa đội A hoặc đội B. Đúng thì điểm quỹ không phát sinh. Sai thì ghi nhận điểm quỹ theo mức của vòng. Ngôi sao hy vọng chỉ từ vòng loại trực tiếp; nếu sai thì nhân đôi điểm quỹ trận đó. Không chọn thì không tự phạt.",
+    "Luật chơi: kèo chấp số nguyên có ba cửa đội A, Hòa-sau-chấp hoặc đội B; kèo nửa trái như 0,5 hoặc 1,5 chỉ có hai cửa đội A hoặc đội B. Đúng thì không phải nộp. Sai hoặc không chọn trước giờ khóa thì phải nộp theo mức của vòng. Ngôi sao hy vọng chỉ từ vòng loại trực tiếp; nếu sai thì nhân đôi điểm quỹ trận đó.",
     "",
     `Thời điểm hiện tại: ${formatVietnamTime(context.now)}.`,
     "",

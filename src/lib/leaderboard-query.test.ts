@@ -4,6 +4,9 @@ const prismaMock = vi.hoisted(() => ({
   user: {
     findMany: vi.fn(),
   },
+  match: {
+    findMany: vi.fn(),
+  },
 }));
 
 vi.mock("./prisma", () => ({ prisma: prismaMock }));
@@ -17,6 +20,7 @@ describe("getLeaderboard", () => {
 
   it("không đưa quản trị viên vào bảng xếp hạng", async () => {
     prismaMock.user.findMany.mockResolvedValue([]);
+    prismaMock.match.findMany.mockResolvedValue([]);
 
     await getLeaderboard();
 
@@ -25,5 +29,6 @@ describe("getLeaderboard", () => {
         where: { role: "user" },
       }),
     );
+    expect(prismaMock.match.findMany).toHaveBeenCalled();
   });
 });

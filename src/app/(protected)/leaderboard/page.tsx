@@ -9,7 +9,7 @@ export default async function LeaderboardPage() {
   await requireUser();
   const rows = await getLeaderboard();
   const totalLoss = rows.reduce((sum, row) => sum + row.loss, 0);
-  const totalPaid = rows.reduce((sum, row) => sum + row.paid, 0);
+  const totalMissed = rows.reduce((sum, row) => sum + row.missed, 0);
   const hopeStarUsed = rows.reduce((sum, row) => sum + row.hopeStarUsed, 0);
 
   return (
@@ -20,10 +20,10 @@ export default async function LeaderboardPage() {
             Bảng xếp hạng
           </p>
           <h1 className="mt-2 text-3xl font-black leading-tight text-emerald-950 md:text-4xl">
-            Bảng phong độ dự đoán
+            Ai đang phải nộp nhiều nhất?
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-            Theo dõi lựa chọn, độ chính xác, Ngôi sao hy vọng và điểm quỹ nội bộ. Đây là trò dự đoán vui, không phải nền tảng cá cược.
+            Theo dõi lựa chọn, độ chính xác và số tiền phải nộp sau các trận đã chốt. Quên chọn cũng tính là thua theo mức của vòng.
           </p>
         </div>
         <div className="space-y-3">
@@ -37,30 +37,28 @@ export default async function LeaderboardPage() {
             />
           </div>
           <div className="grid grid-cols-3 gap-2 rounded-3xl border border-emerald-950/10 bg-white p-3 shadow-sm shadow-emerald-950/5">
-            <Summary label="Tổng điểm quỹ" value={formatCurrency(totalLoss)} />
-            <Summary label="Đã hoàn tất" value={formatCurrency(totalPaid)} />
+            <Summary label="Tổng phải nộp" value={formatCurrency(totalLoss)} />
+            <Summary label="Quên chọn" value={String(totalMissed)} />
             <Summary label="Ngôi sao" value={String(hopeStarUsed)} />
           </div>
         </div>
       </section>
 
       <div className="overflow-x-auto rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/5">
-        <table className="w-full min-w-[1220px] text-sm">
+        <table className="w-full min-w-[1040px] text-sm">
           <thead className="bg-emerald-950 text-left text-white">
             <tr>
               {[
                 "Hạng",
                 "Người chơi",
                 "Đã chọn",
+                "Quên chọn",
                 "Đúng",
                 "Sai",
                 "Độ chính xác",
                 "Ngôi sao",
                 "Ngôi sao sai",
-                "Điểm quỹ",
-                "Đã hoàn tất",
-                "Còn thiếu",
-                "Trạng thái",
+                "Phải nộp",
               ].map((title) => (
                 <th key={title} className="px-4 py-3 font-bold">
                   {title}
@@ -82,21 +80,13 @@ export default async function LeaderboardPage() {
                   </div>
                 </td>
                 <td className="px-4 py-3 tabular-nums">{row.voted}</td>
+                <td className="px-4 py-3 tabular-nums text-amber-700">{row.missed}</td>
                 <td className="px-4 py-3 tabular-nums text-emerald-700">{row.correct}</td>
                 <td className="px-4 py-3 tabular-nums text-red-700">{row.wrong}</td>
                 <td className="px-4 py-3 tabular-nums">{row.accuracy.toFixed(1)}%</td>
                 <td className="px-4 py-3 tabular-nums">{row.hopeStarUsed}</td>
                 <td className="px-4 py-3 tabular-nums text-amber-700">{row.hopeStarWrong}</td>
                 <td className="px-4 py-3 font-black text-red-700">{formatCurrency(row.loss)}</td>
-                <td className="px-4 py-3 font-semibold text-emerald-700">{formatCurrency(row.paid)}</td>
-                <td className={`px-4 py-3 font-bold ${row.outstanding > 0 ? "text-amber-700" : "text-emerald-700"}`}>
-                  {formatCurrency(row.outstanding)}
-                </td>
-                <td className="px-4 py-3">
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
-                    {row.paymentStatus}
-                  </span>
-                </td>
               </tr>
             ))}
           </tbody>

@@ -6,6 +6,9 @@ const txMock = vi.hoisted(() => ({
     findUnique: vi.fn(),
     update: vi.fn(),
   },
+  user: {
+    findMany: vi.fn(),
+  },
   lossTransaction: {
     createMany: vi.fn(),
   },
@@ -48,6 +51,7 @@ describe("settleMatch hope star", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     txMock.match.update.mockResolvedValue({});
+    txMock.user.findMany.mockResolvedValue([]);
     txMock.lossTransaction.createMany.mockResolvedValue({});
     txMock.resultRevision.create.mockResolvedValue({});
     txMock.matchResult.upsert.mockResolvedValue({ id: "result-1" });
@@ -134,6 +138,41 @@ describe("settleMatch hope star", () => {
           amount: 80_000,
           type: LossTransactionType.LOSS,
           settlementRevision: 2,
+        }),
+      ],
+    });
+  });
+
+  it("tự tính thua cho người quên chọn trước giờ khóa", async () => {
+    txMock.user.findMany.mockResolvedValue([{ id: "missing" }, { id: "normal" }]);
+    txMock.match.findUnique.mockResolvedValue(
+      baseMatch({
+        votes: [{ userId: "normal", choice: VoteChoice.TEAM_B, hopeStar: false }],
+      }),
+    );
+
+    await settleMatch({
+      matchId: "match-1",
+      teamAScore: 0,
+      teamBScore: 1,
+      adminId: "admin-1",
+    });
+
+    expect(txMock.user.findMany).toHaveBeenCalledWith({
+      where: {
+        role: "user",
+        banned: false,
+        createdAt: { lte: new Date("2026-06-01T11:55:00.000Z") },
+      },
+      select: { id: true },
+    });
+    expect(txMock.lossTransaction.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          userId: "missing",
+          amount: 40_000,
+          type: LossTransactionType.LOSS,
+          note: "Không chọn; cửa đúng TEAM_B",
         }),
       ],
     });

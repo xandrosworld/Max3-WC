@@ -6,7 +6,7 @@ import type { ChatContext } from "./ai-chat";
 const context: ChatContext = {
   now: new Date("2026-06-10T05:00:00.000Z"),
   leaderboard: [
-    { name: "An Nguyễn", loss: 80_000, correct: 1, wrong: 2, hopeStarUsed: 1 },
+    { name: "An Nguyễn", loss: 80_000, correct: 1, wrong: 2, missed: 1, hopeStarUsed: 1 },
   ],
   matches: [
     {

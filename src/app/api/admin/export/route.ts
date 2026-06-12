@@ -24,22 +24,18 @@ export async function GET() {
     { header: "Họ tên", key: "name", width: 28 },
     { header: "Đơn vị", key: "department", width: 22 },
     { header: "Số trận đã chọn", key: "voted", width: 18 },
+    { header: "Quên chọn", key: "missed", width: 16 },
     { header: "Số trận đúng", key: "correct", width: 16 },
     { header: "Số trận sai", key: "wrong", width: 16 },
     { header: "Độ chính xác (%)", key: "accuracy", width: 16 },
     { header: "Ngôi sao đã dùng", key: "hopeStarUsed", width: 18 },
     { header: "Ngôi sao sai", key: "hopeStarWrong", width: 16 },
-    { header: "Điểm quỹ", key: "loss", width: 20 },
-    { header: "Đã nộp", key: "paid", width: 18 },
-    { header: "Còn thiếu", key: "outstanding", width: 18 },
-    { header: "Trạng thái", key: "paymentStatus", width: 18 },
+    { header: "Phải nộp", key: "loss", width: 20 },
   ];
   leaderboard.forEach((row) => sheet.addRow({ ...row, accuracy: Number(row.accuracy.toFixed(2)) }));
   sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
   sheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF064E3B" } };
-  ["J", "K", "L"].forEach((column) => {
-    sheet.getColumn(column).numFmt = '#,##0" đ"';
-  });
+  sheet.getColumn("K").numFmt = '#,##0" đ"';
 
   const paymentSheet = workbook.addWorksheet("Quỹ nội bộ");
   paymentSheet.columns = [

@@ -46,6 +46,7 @@ export async function POST(request: Request) {
       loss: row.loss,
       correct: row.correct,
       wrong: row.wrong,
+      missed: row.missed,
       hopeStarUsed: row.hopeStarUsed,
     })),
     now: new Date(),

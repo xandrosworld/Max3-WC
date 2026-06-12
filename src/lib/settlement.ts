@@ -3,7 +3,7 @@ import {
   MatchStatus,
   Prisma,
 } from "@prisma/client";
-import { calculateWinningChoice, getLossAmountForVote } from "./domain";
+import { calculateWinningChoice, getLossAmountForVote, LOCK_MINUTES } from "./domain";
 import { prisma } from "./prisma";
 
 export async function settleMatch(input: {
@@ -96,7 +96,18 @@ export async function settleMatch(input: {
         },
       });
 
-      const losses = match.votes.flatMap((vote) => {
+      const lockAt = new Date(match.kickoffAt.getTime() - LOCK_MINUTES * 60_000);
+      const eligibleUsers = await tx.user.findMany({
+        where: {
+          role: "user",
+          banned: false,
+          createdAt: { lte: lockAt },
+        },
+        select: { id: true },
+      });
+      const votedUserIds = new Set(match.votes.map((vote) => vote.userId));
+
+      const voteLosses = match.votes.flatMap((vote) => {
         const amount = getLossAmountForVote(
           vote.choice,
           winningChoice,
@@ -115,6 +126,18 @@ export async function settleMatch(input: {
             : `Sai cửa ${vote.choice}; cửa đúng ${winningChoice}`,
         };
       });
+      const missingVoteLosses = eligibleUsers.flatMap((user) => {
+        if (votedUserIds.has(user.id)) return [];
+        return {
+          userId: user.id,
+          matchId: match.id,
+          amount: match.contributionAmount,
+          type: LossTransactionType.LOSS,
+          settlementRevision: revision,
+          note: `Không chọn; cửa đúng ${winningChoice}`,
+        };
+      });
+      const losses = [...voteLosses, ...missingVoteLosses];
 
       if (losses.length > 0) {
         await tx.lossTransaction.createMany({ data: losses });

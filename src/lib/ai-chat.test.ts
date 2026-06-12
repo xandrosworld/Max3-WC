@@ -5,7 +5,7 @@ import { buildWorldCupChatReply, type ChatContext } from "./ai-chat";
 const context: ChatContext = {
   now: new Date("2026-06-10T05:00:00.000Z"),
   leaderboard: [
-    { name: "An Nguyễn", loss: 80_000, correct: 1, wrong: 2, hopeStarUsed: 1 },
+    { name: "An Nguyễn", loss: 80_000, correct: 1, wrong: 2, missed: 1, hopeStarUsed: 1 },
   ],
   matches: [
     {
@@ -30,7 +30,7 @@ describe("buildWorldCupChatReply", () => {
   it("giải thích luật chơi hiện tại", () => {
     const reply = buildWorldCupChatReply("luật ngôi sao hy vọng là gì", context);
     expect(reply).toContain("Ngôi sao hy vọng");
-    expect(reply).toContain("Không chọn");
+    expect(reply).toContain("Không chọn trước giờ khóa");
   });
 
   it("dự đoán vui dựa trên trận trong portal", () => {

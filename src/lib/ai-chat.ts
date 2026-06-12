@@ -30,6 +30,7 @@ export type ChatLeaderboardRow = {
   loss: number;
   correct: number;
   wrong: number;
+  missed: number;
   hopeStarUsed: number;
 };
 
@@ -52,7 +53,7 @@ export function buildWorldCupChatReply(question: string, context: ChatContext) {
       "- Admin đặt mức chấp trước trận. Tỷ số tính theo 90 phút chính thức.",
       "- Chọn đúng thì điểm quỹ không phát sinh. Chọn sai thì ghi nhận điểm quỹ theo mức của vòng.",
       "- Ngôi sao hy vọng chỉ dùng từ vòng loại trực tiếp: nếu sai thì điểm quỹ trận đó nhân đôi.",
-      "- Không chọn thì hệ thống hiện tại không tự phạt.",
+      "- Không chọn trước giờ khóa thì tính như thua và phải nộp theo mức của vòng.",
       "- Đây là dự đoán vui nội bộ, không phải nền tảng cá cược.",
     ].join("\n");
   }
@@ -73,7 +74,7 @@ export function buildWorldCupChatReply(question: string, context: ChatContext) {
     return [
       "Top điểm quỹ nội bộ hiện tại:",
       ...context.leaderboard.slice(0, 5).map((row, index) =>
-        `${index + 1}. ${row.name}: ${formatCurrency(row.loss)} · đúng ${row.correct}, sai ${row.wrong}, dùng Ngôi sao ${row.hopeStarUsed} lần.`,
+        `${index + 1}. ${row.name}: phải nộp ${formatCurrency(row.loss)} · đúng ${row.correct}, sai ${row.wrong}, quên chọn ${row.missed}, dùng Ngôi sao ${row.hopeStarUsed} lần.`,
       ),
     ].join("\n");
   }
