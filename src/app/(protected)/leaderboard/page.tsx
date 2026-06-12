@@ -128,10 +128,10 @@ type LeaderboardRow = Awaited<ReturnType<typeof getLeaderboard>>[number];
 
 function LeaderboardMobileCard({ row }: { row: LeaderboardRow }) {
   return (
-    <article className="rounded-2xl border border-emerald-950/10 bg-white p-4 shadow-sm shadow-emerald-950/5">
-      <div className="flex items-start justify-between gap-3">
+    <article className="rounded-2xl border border-emerald-950/10 bg-white p-3 shadow-sm shadow-emerald-950/5">
+      <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-950 text-sm font-black text-white">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-950 text-sm font-black text-white">
             #{row.rank}
           </div>
           <Avatar image={row.image} name={row.name} />
@@ -145,22 +145,24 @@ function LeaderboardMobileCard({ row }: { row: LeaderboardRow }) {
           </div>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
-            Phải nộp
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+            Nộp
           </p>
-          <p className="mt-1 text-sm font-black tabular-nums text-red-700">
+          <p className="mt-0.5 text-sm font-black tabular-nums text-red-700">
             {formatCurrency(row.loss)}
           </p>
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        <MobileStat label="Chọn" value={String(row.voted)} />
         <MobileStat label="Đúng" value={String(row.correct)} tone="good" />
         <MobileStat label="Sai" value={String(row.wrong)} tone="bad" />
         <MobileStat label="Quên" value={String(row.missed)} tone="warn" />
-        <MobileStat label="Đã chọn" value={String(row.voted)} />
-        <MobileStat label="Chính xác" value={`${row.accuracy.toFixed(0)}%`} />
-        <MobileStat label="Ngôi sao" value={String(row.hopeStarUsed)} />
+        <MobileStat label="Chuẩn" value={`${row.accuracy.toFixed(0)}%`} />
+        {row.hopeStarUsed > 0 && (
+          <MobileStat label="Sao" value={String(row.hopeStarUsed)} tone="star" />
+        )}
       </div>
     </article>
   );
@@ -173,19 +175,20 @@ function MobileStat({
 }: {
   label: string;
   value: string;
-  tone?: "neutral" | "good" | "bad" | "warn";
+  tone?: "neutral" | "good" | "bad" | "warn" | "star";
 }) {
   const toneClass = {
-    neutral: "text-emerald-950",
-    good: "text-emerald-700",
-    bad: "text-red-700",
-    warn: "text-amber-700",
+    neutral: "bg-slate-50 text-slate-700 ring-slate-100",
+    good: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    bad: "bg-red-50 text-red-700 ring-red-100",
+    warn: "bg-amber-50 text-amber-700 ring-amber-100",
+    star: "bg-violet-50 text-violet-700 ring-violet-100",
   }[tone];
 
   return (
-    <div className="rounded-xl bg-slate-50 px-2 py-2 text-center ring-1 ring-slate-100">
-      <p className={`text-base font-black tabular-nums ${toneClass}`}>{value}</p>
-      <p className="mt-0.5 text-[11px] font-bold text-slate-500">{label}</p>
+    <div className={`inline-flex min-h-8 items-center gap-1.5 rounded-xl px-2.5 text-xs font-bold ring-1 ${toneClass}`}>
+      <span className="font-black tabular-nums">{value}</span>
+      <span className="text-slate-500">{label}</span>
     </div>
   );
 }
