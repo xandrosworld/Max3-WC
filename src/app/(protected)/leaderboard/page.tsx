@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Crown, Medal, Target, Trophy } from "lucide-react";
+import { Award, Crown, Flame, Sparkles, Target, Trophy } from "lucide-react";
 import { formatCurrency } from "@/lib/domain";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { requireUser } from "@/lib/session";
@@ -193,7 +193,7 @@ function MobileStat({
 function PredictionKings({ rows }: { rows: LeaderboardRow[] }) {
   if (rows.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50/60 px-4 py-5">
+      <div className="rounded-3xl border border-dashed border-amber-200 bg-amber-50/60 px-4 py-5">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-amber-600 shadow-sm">
             <Trophy size={22} aria-hidden="true" />
@@ -212,8 +212,30 @@ function PredictionKings({ rows }: { rows: LeaderboardRow[] }) {
   }
 
   return (
-    <section aria-labelledby="prediction-kings-title" className="space-y-3">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <section
+      aria-labelledby="prediction-kings-title"
+      className="relative overflow-hidden rounded-[1.75rem] border border-emerald-950/10 bg-[linear-gradient(135deg,#ffffff_0%,#f7fff8_48%,#fff7df_100%)] p-3 shadow-xl shadow-emerald-950/8 sm:p-4"
+    >
+      <style>{`
+        @keyframes kingShine {
+          0% { transform: translateX(-130%) rotate(12deg); opacity: 0; }
+          22% { opacity: 0.82; }
+          48% { opacity: 0; }
+          100% { transform: translateX(130%) rotate(12deg); opacity: 0; }
+        }
+        @keyframes kingFloat {
+          0%, 100% { transform: translateY(0) rotate(-3deg); }
+          50% { transform: translateY(-5px) rotate(3deg); }
+        }
+        @keyframes crownPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.28); }
+          50% { box-shadow: 0 0 0 9px rgba(245,158,11,0); }
+        }
+      `}</style>
+      <div className="pointer-events-none absolute -right-12 -top-16 h-36 w-36 rounded-full bg-amber-200/40 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-emerald-200/45 blur-3xl" />
+
+      <div className="relative mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.14em] text-amber-700">
             <Crown size={18} aria-hidden="true" />
@@ -223,12 +245,12 @@ function PredictionKings({ rows }: { rows: LeaderboardRow[] }) {
             Top 3 đoán trúng nhiều nhất
           </h2>
         </div>
-        <p className="text-xs font-bold text-slate-500">
+        <p className="max-w-[17rem] text-xs font-bold leading-5 text-slate-500 sm:text-right">
           Xếp theo số trận đúng, rồi đến độ chính xác.
         </p>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="relative grid gap-3 md:grid-cols-3">
         {rows.map((row, index) => (
           <PredictionKingCard key={row.id} row={row} index={index} />
         ))}
@@ -246,54 +268,94 @@ function PredictionKingCard({
 }) {
   const styles = [
     {
-      wrap: "border-amber-200 bg-amber-50 shadow-amber-900/10",
-      badge: "bg-amber-400 text-amber-950",
-      accent: "text-amber-700",
+      wrap:
+        "border-amber-300 bg-[linear-gradient(135deg,#fff8cf_0%,#ffffff_44%,#fff0a6_100%)] shadow-amber-900/18 md:-translate-y-1",
+      badge: "bg-amber-400 text-amber-950 ring-amber-200",
+      iconWrap: "bg-amber-100 text-amber-600 ring-amber-200",
+      accent: "bg-amber-500 text-amber-950",
+      glow: "bg-amber-300/35",
+      Icon: Crown,
+      LabelIcon: Sparkles,
       label: "Vua sân cỏ",
+      subtitle: "Đứng đầu đường đua dự đoán",
+      shine: true,
     },
     {
-      wrap: "border-slate-200 bg-white shadow-slate-900/10",
-      badge: "bg-slate-200 text-slate-800",
-      accent: "text-slate-600",
+      wrap:
+        "border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_48%,#e8eef6_100%)] shadow-slate-900/10",
+      badge: "bg-slate-200 text-slate-900 ring-slate-100",
+      iconWrap: "bg-slate-100 text-slate-500 ring-slate-200",
+      accent: "bg-slate-900 text-white",
+      glow: "bg-slate-300/40",
+      Icon: Award,
+      LabelIcon: Target,
       label: "Bám sát",
+      subtitle: "Áp sát ngôi đầu",
+      shine: false,
     },
     {
-      wrap: "border-orange-200 bg-orange-50 shadow-orange-900/10",
-      badge: "bg-orange-300 text-orange-950",
-      accent: "text-orange-700",
+      wrap:
+        "border-orange-200 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_48%,#ffedd5_100%)] shadow-orange-900/10",
+      badge: "bg-orange-300 text-orange-950 ring-orange-100",
+      iconWrap: "bg-orange-100 text-orange-600 ring-orange-200",
+      accent: "bg-orange-500 text-white",
+      glow: "bg-orange-300/35",
+      Icon: Flame,
+      LabelIcon: Flame,
       label: "Phong độ cao",
+      subtitle: "Giữ nhịp bám đuổi",
+      shine: false,
     },
   ][index];
+  const Icon = styles.Icon;
+  const LabelIcon = styles.LabelIcon;
+  const rankLabel = `#${index + 1}`;
 
   return (
-    <article className={`relative overflow-hidden rounded-2xl border p-4 pr-16 shadow-lg sm:pr-4 ${styles.wrap}`}>
-      <div className="absolute right-3 top-3 opacity-20">
-        {index === 0 ? (
-          <Crown size={44} aria-hidden="true" />
-        ) : (
-          <Medal size={42} aria-hidden="true" />
-        )}
+    <article
+      className={`relative overflow-hidden rounded-[1.6rem] border p-4 shadow-lg transition duration-300 hover:-translate-y-1 ${styles.wrap}`}
+    >
+      <div className={`pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full blur-2xl ${styles.glow}`} />
+      {styles.shine && (
+        <div
+          className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-transparent via-white/80 to-transparent"
+          style={{ animation: "kingShine 3.2s ease-in-out infinite" }}
+        />
+      )}
+
+      <div
+        className={`absolute right-3 top-3 flex h-12 w-12 items-center justify-center rounded-2xl ring-1 ${styles.iconWrap}`}
+        style={index === 0 ? { animation: "kingFloat 3s ease-in-out infinite" } : undefined}
+      >
+        <Icon size={26} strokeWidth={2.4} aria-hidden="true" />
       </div>
-      <div className="relative flex items-center gap-3">
-        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-black ${styles.badge}`}>
-          #{index + 1}
+
+      <div className="relative flex min-w-0 items-start gap-3 pr-12">
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-black ring-4 ${styles.badge}`}
+          style={index === 0 ? { animation: "crownPulse 2.4s ease-in-out infinite" } : undefined}
+        >
+          {rankLabel}
         </div>
-        <Avatar image={row.image} name={row.name} />
+        <Avatar image={row.image} name={row.name} size={index === 0 ? "lg" : "md"} />
         <div className="min-w-0">
-          <p className="truncate font-black text-emerald-950">{row.name}</p>
+          <p className="truncate text-base font-black text-emerald-950">{row.name}</p>
           <p className="truncate text-xs font-semibold text-slate-500">
             {row.department || "Chưa có đơn vị"}
+          </p>
+          <p className="mt-1 truncate text-[11px] font-bold text-slate-500">
+            {styles.subtitle}
           </p>
         </div>
       </div>
 
       <div className="relative mt-4 grid grid-cols-3 gap-2 text-center">
-        <MiniStat label="Đúng" value={String(row.correct)} strong />
-        <MiniStat label="Chính xác" value={`${row.accuracy.toFixed(0)}%`} />
-        <MiniStat label="Quên" value={String(row.missed)} />
+        <MiniStat label="Đúng" value={String(row.correct)} tone="good" />
+        <MiniStat label="Chính xác" value={`${row.accuracy.toFixed(0)}%`} tone={index === 0 ? "gold" : "neutral"} />
+        <MiniStat label="Quên" value={String(row.missed)} tone="muted" />
       </div>
-      <div className={`relative mt-3 flex items-center gap-2 pl-12 text-xs font-black uppercase tracking-[0.12em] sm:pl-0 ${styles.accent}`}>
-        <Target size={15} aria-hidden="true" />
+      <div className={`relative mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.13em] shadow-sm ${styles.accent}`}>
+        <LabelIcon size={14} aria-hidden="true" />
         {styles.label}
       </div>
     </article>
@@ -303,15 +365,22 @@ function PredictionKingCard({
 function MiniStat({
   label,
   value,
-  strong = false,
+  tone = "neutral",
 }: {
   label: string;
   value: string;
-  strong?: boolean;
+  tone?: "neutral" | "good" | "gold" | "muted";
 }) {
+  const toneClass = {
+    neutral: "text-emerald-950",
+    good: "text-emerald-700",
+    gold: "text-amber-700",
+    muted: "text-slate-700",
+  }[tone];
+
   return (
-    <div className="rounded-xl bg-white/80 px-2 py-2 ring-1 ring-black/5">
-      <p className={`text-base font-black tabular-nums ${strong ? "text-emerald-700" : "text-emerald-950"}`}>
+    <div className="rounded-2xl bg-white/82 px-2 py-2 ring-1 ring-black/5 shadow-sm shadow-white/40">
+      <p className={`text-base font-black tabular-nums ${toneClass}`}>
         {value}
       </p>
       <p className="mt-0.5 text-[11px] font-bold text-slate-500">{label}</p>
@@ -328,17 +397,33 @@ function Summary({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Avatar({ image, name }: { image: string | null; name: string }) {
+function Avatar({
+  image,
+  name,
+  size = "md",
+}: {
+  image: string | null;
+  name: string;
+  size?: "md" | "lg";
+}) {
   const initial = name.trim().charAt(0).toUpperCase() || "U";
+  const sizeClass =
+    size === "lg"
+      ? "h-12 w-12 rounded-2xl"
+      : "h-10 w-10 rounded-2xl";
   if (image) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={image} alt={`Ảnh đại diện của ${name}`} className="h-10 w-10 rounded-2xl object-cover ring-1 ring-emerald-200" />
+      <img
+        src={image}
+        alt={`Ảnh đại diện của ${name}`}
+        className={`${sizeClass} object-cover ring-1 ring-emerald-200`}
+      />
     );
   }
 
   return (
-    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-sm font-black text-emerald-900">
+    <div className={`flex ${sizeClass} items-center justify-center bg-emerald-100 text-sm font-black text-emerald-900`}>
       {initial}
     </div>
   );
