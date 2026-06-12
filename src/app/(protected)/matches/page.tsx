@@ -284,7 +284,7 @@ export default async function MatchesPage({
                           </p>
                         </div>
 
-                        <div className="grid min-w-0 grid-cols-1 items-center gap-1.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-4">
+                        <div className="grid min-w-0 grid-cols-1 items-center gap-1.5 pr-12 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-4 sm:pr-0">
                           <div className="flex min-w-0 items-center justify-start gap-2 sm:justify-end">
                             <span className="min-w-0 whitespace-normal break-words text-left text-sm font-extrabold leading-5 text-slate-950 sm:order-none sm:text-right sm:text-base">
                               {match.teamA}
