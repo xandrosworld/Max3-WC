@@ -210,7 +210,7 @@ export function BackgroundMusic() {
     pathname === "/change-password";
   const positionClass = isAuthPage
     ? "right-5 top-5 sm:bottom-6 sm:right-6 sm:top-auto"
-    : "bottom-24 right-4 sm:bottom-6 sm:right-6";
+    : "bottom-4 right-4 sm:bottom-6 sm:right-6";
 
   return (
     <>
