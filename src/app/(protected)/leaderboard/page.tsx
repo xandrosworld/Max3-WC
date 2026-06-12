@@ -343,7 +343,7 @@ function PredictionKingCard({
           <p className="truncate text-xs font-semibold text-slate-500">
             {row.department || "Chưa có đơn vị"}
           </p>
-          <p className="mt-1 truncate text-[11px] font-bold text-slate-500">
+          <p className="mt-1 hidden truncate text-[11px] font-bold text-slate-500 sm:block">
             {styles.subtitle}
           </p>
         </div>
