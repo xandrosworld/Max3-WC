@@ -284,37 +284,64 @@ export default async function MatchesPage({
                           </p>
                         </div>
 
-                        <div className="grid min-w-0 grid-cols-1 items-center gap-1.5 pr-12 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-4 sm:pr-0">
-                          <div className="flex min-w-0 items-center justify-start gap-2 sm:justify-end">
-                            <span className="min-w-0 whitespace-normal break-words text-left text-sm font-extrabold leading-5 text-slate-950 sm:order-none sm:text-right sm:text-base">
-                              {match.teamA}
-                            </span>
-                            <TeamMark
+                        <div className="min-w-0">
+                          <div className="space-y-2 sm:hidden">
+                            <MobileMatchTeamLine
                               name={match.teamA}
                               code={match.teamACode}
                               crest={match.teamACrest}
                             />
-                          </div>
-
-                          <div className="min-w-10 text-center">
-                            {match.result ? (
-                              <span className="text-lg font-black tabular-nums text-slate-950">
-                                {match.result.teamAScore}-{match.result.teamBScore}
-                              </span>
-                            ) : (
-                              <span className="text-xs font-black text-slate-400">VS</span>
-                            )}
-                          </div>
-
-                          <div className="flex min-w-0 items-center gap-2">
-                            <TeamMark
+                            <div className="flex items-center gap-2 pl-11">
+                              {match.result ? (
+                                <span className="rounded-full bg-slate-950 px-3 py-1 text-sm font-black tabular-nums text-white shadow-sm">
+                                  {match.result.teamAScore}-{match.result.teamBScore}
+                                </span>
+                              ) : (
+                                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-black text-slate-500">
+                                  VS
+                                </span>
+                              )}
+                              <span className="h-px min-w-4 flex-1 bg-slate-200" />
+                            </div>
+                            <MobileMatchTeamLine
                               name={match.teamB}
                               code={match.teamBCode}
                               crest={match.teamBCrest}
                             />
-                            <span className="min-w-0 whitespace-normal break-words text-sm font-extrabold leading-5 text-slate-950 sm:text-base">
-                              {match.teamB}
-                            </span>
+                          </div>
+
+                          <div className="hidden min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 sm:grid">
+                            <div className="flex min-w-0 items-center justify-end gap-2">
+                              <span className="min-w-0 whitespace-normal break-words text-left text-sm font-extrabold leading-5 text-slate-950 sm:order-none sm:text-right sm:text-base">
+                                {match.teamA}
+                              </span>
+                              <TeamMark
+                                name={match.teamA}
+                                code={match.teamACode}
+                                crest={match.teamACrest}
+                              />
+                            </div>
+
+                            <div className="min-w-10 text-center">
+                              {match.result ? (
+                                <span className="text-lg font-black tabular-nums text-slate-950">
+                                  {match.result.teamAScore}-{match.result.teamBScore}
+                                </span>
+                              ) : (
+                                <span className="text-xs font-black text-slate-400">VS</span>
+                              )}
+                            </div>
+
+                            <div className="flex min-w-0 items-center gap-2">
+                              <TeamMark
+                                name={match.teamB}
+                                code={match.teamBCode}
+                                crest={match.teamBCrest}
+                              />
+                              <span className="min-w-0 whitespace-normal break-words text-sm font-extrabold leading-5 text-slate-950 sm:text-base">
+                                {match.teamB}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
@@ -571,6 +598,25 @@ function FilterLink({
     >
       {filter.label}
     </a>
+  );
+}
+
+function MobileMatchTeamLine({
+  name,
+  code,
+  crest,
+}: {
+  name: string;
+  code: string | null;
+  crest: string | null;
+}) {
+  return (
+    <div className="grid min-w-0 grid-cols-[36px_minmax(0,1fr)] items-center gap-2">
+      <TeamMark name={name} code={code} crest={crest} size="sm" />
+      <span className="min-w-0 whitespace-normal break-words text-sm font-extrabold leading-5 text-slate-950">
+        {name}
+      </span>
+    </div>
   );
 }
 
