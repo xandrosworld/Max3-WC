@@ -222,7 +222,7 @@ function PredictionKingCard({
         <MiniStat label="Chính xác" value={`${row.accuracy.toFixed(0)}%`} />
         <MiniStat label="Quên" value={String(row.missed)} />
       </div>
-      <div className={`relative mt-3 flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] ${styles.accent}`}>
+      <div className={`relative mt-3 flex items-center gap-2 pl-12 text-xs font-black uppercase tracking-[0.12em] sm:pl-0 ${styles.accent}`}>
         <Target size={15} aria-hidden="true" />
         {styles.label}
       </div>
