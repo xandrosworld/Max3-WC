@@ -59,7 +59,13 @@ export default async function LeaderboardPage() {
         </div>
       </section>
 
-      <div className="overflow-x-auto rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/5">
+      <div className="space-y-3 md:hidden">
+        {rows.map((row) => (
+          <LeaderboardMobileCard key={row.id} row={row} />
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/5 md:block">
         <table className="w-full min-w-[1040px] text-sm">
           <thead className="bg-emerald-950 text-left text-white">
             <tr>
@@ -119,6 +125,70 @@ export default async function LeaderboardPage() {
 }
 
 type LeaderboardRow = Awaited<ReturnType<typeof getLeaderboard>>[number];
+
+function LeaderboardMobileCard({ row }: { row: LeaderboardRow }) {
+  return (
+    <article className="rounded-2xl border border-emerald-950/10 bg-white p-4 shadow-sm shadow-emerald-950/5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-950 text-sm font-black text-white">
+            #{row.rank}
+          </div>
+          <Avatar image={row.image} name={row.name} />
+          <div className="min-w-0">
+            <p className="truncate text-base font-black text-emerald-950">
+              {row.name}
+            </p>
+            <p className="truncate text-xs font-semibold text-slate-500">
+              {row.department || "Chưa có đơn vị"}
+            </p>
+          </div>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
+            Phải nộp
+          </p>
+          <p className="mt-1 text-sm font-black tabular-nums text-red-700">
+            {formatCurrency(row.loss)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <MobileStat label="Đúng" value={String(row.correct)} tone="good" />
+        <MobileStat label="Sai" value={String(row.wrong)} tone="bad" />
+        <MobileStat label="Quên" value={String(row.missed)} tone="warn" />
+        <MobileStat label="Đã chọn" value={String(row.voted)} />
+        <MobileStat label="Chính xác" value={`${row.accuracy.toFixed(0)}%`} />
+        <MobileStat label="Ngôi sao" value={String(row.hopeStarUsed)} />
+      </div>
+    </article>
+  );
+}
+
+function MobileStat({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  tone?: "neutral" | "good" | "bad" | "warn";
+}) {
+  const toneClass = {
+    neutral: "text-emerald-950",
+    good: "text-emerald-700",
+    bad: "text-red-700",
+    warn: "text-amber-700",
+  }[tone];
+
+  return (
+    <div className="rounded-xl bg-slate-50 px-2 py-2 text-center ring-1 ring-slate-100">
+      <p className={`text-base font-black tabular-nums ${toneClass}`}>{value}</p>
+      <p className="mt-0.5 text-[11px] font-bold text-slate-500">{label}</p>
+    </div>
+  );
+}
 
 function PredictionKings({ rows }: { rows: LeaderboardRow[] }) {
   if (rows.length === 0) {
