@@ -91,7 +91,7 @@ describe("football-data.org World Cup mapping", () => {
       teamA: "Chưa xác định A",
       teamB: "Chưa xác định B",
       round: RoundType.FINAL,
-      contributionAmount: 150_000,
+      contributionAmount: 200_000,
     });
   });
 });

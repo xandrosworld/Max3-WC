@@ -20,7 +20,7 @@ describe("contribution by round", () => {
     expect(getContributionAmount(RoundType.QUARTER_FINAL)).toBe(60_000);
     expect(getContributionAmount(RoundType.SEMI_FINAL)).toBe(100_000);
     expect(getContributionAmount(RoundType.THIRD_PLACE)).toBe(100_000);
-    expect(getContributionAmount(RoundType.FINAL)).toBe(150_000);
+    expect(getContributionAmount(RoundType.FINAL)).toBe(200_000);
   });
 });
 

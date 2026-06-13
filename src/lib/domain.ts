@@ -24,7 +24,7 @@ export const CONTRIBUTION_BY_ROUND: Record<RoundType, number> = {
   QUARTER_FINAL: 60_000,
   SEMI_FINAL: 100_000,
   THIRD_PLACE: 100_000,
-  FINAL: 150_000,
+  FINAL: 200_000,
 };
 
 export function getContributionAmount(round: RoundType) {
