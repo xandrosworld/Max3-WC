@@ -41,16 +41,16 @@ type MatchFilter =
 const primaryFilters: Array<{ id: MatchFilter; label: string }> = [
   { id: "open", label: "Đang mở" },
   { id: "scheduled", label: "Sắp mở" },
-  { id: "picked", label: "Đã chọn" },
-  { id: "settled", label: "Đã xong" },
   { id: "all", label: "Tất cả" },
 ];
 
 const extraFilters: Array<{ id: MatchFilter; label: string }> = [
   { id: "today", label: "Hôm nay" },
   { id: "tomorrow", label: "Ngày mai" },
+  { id: "picked", label: "Đã chọn" },
   { id: "missing", label: "Chưa chọn" },
   { id: "locked", label: "Đã khóa" },
+  { id: "settled", label: "Đã xong" },
 ];
 
 const allFilters = [...primaryFilters, ...extraFilters];
@@ -70,6 +70,7 @@ export default async function MatchesPage({
   const saved = typeof params.saved === "string" ? params.saved : null;
   const savedMatchId = typeof params.match === "string" ? params.match : null;
   const now = new Date();
+  const activeExtraFilter = extraFilters.find((filter) => filter.id === activeFilter);
 
   const matches = await prisma.match.findMany({
     where: {
@@ -173,7 +174,7 @@ export default async function MatchesPage({
             <div className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950">
               <CalendarDays className="mt-0.5 shrink-0 text-sky-700" size={19} aria-hidden="true" />
               <p className="leading-6">
-                Màn chính ưu tiên các trận <b>Đang mở</b>. Trận đã xong nằm riêng trong tab <b>Đã xong</b> để dễ xem lại.
+                Màn chính ưu tiên các trận <b>Đang mở</b>. Các mục xem lại nằm trong <b>Bộ lọc</b>.
               </p>
             </div>
 
@@ -213,7 +214,11 @@ export default async function MatchesPage({
                 <details className="relative shrink-0">
                   <summary className="flex min-h-11 list-none items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 hover:bg-slate-50">
                     <SlidersHorizontal size={17} aria-hidden="true" />
-                    <span className="hidden sm:inline">Bộ lọc</span>
+                    {activeExtraFilter ? (
+                      <span>{activeExtraFilter.label}</span>
+                    ) : (
+                      <span className="hidden sm:inline">Bộ lọc</span>
+                    )}
                     <ChevronDown size={15} aria-hidden="true" />
                   </summary>
                   <div className="absolute right-0 z-20 mt-2 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-950/10">
