@@ -64,6 +64,24 @@ function formString(formData: FormData, key: string) {
   return String(formData.get(key) ?? "");
 }
 
+const voteReturnFilters = new Set([
+  "all",
+  "today",
+  "tomorrow",
+  "scheduled",
+  "open",
+  "picked",
+  "missing",
+  "locked",
+  "settled",
+]);
+
+function normalizeVoteReturnFilter(value: string) {
+  if (!voteReturnFilters.has(value)) return "open";
+  if (value === "missing") return "open";
+  return value;
+}
+
 function vietnamLocalToUtc(value: string) {
   const normalized = value.length === 16 ? `${value}:00` : value;
   const result = new Date(`${normalized}+07:00`);
@@ -212,6 +230,8 @@ export async function voteAction(formData: FormData) {
   const matchId = formString(formData, "matchId");
   const choice = z.nativeEnum(VoteChoice).parse(formString(formData, "choice"));
   const requestedHopeStar = formString(formData, "hopeStar") === "true";
+  const returnFilter = normalizeVoteReturnFilter(formString(formData, "returnFilter"));
+  const returnQ = formString(formData, "returnQ").trim().slice(0, 80);
   const match = await prisma.match.findUnique({ where: { id: matchId } });
   if (!match || match.deletedAt) throw new Error("Không tìm thấy trận");
   if (isVoteLocked(match, new Date())) throw new Error("Trận này đã khóa lựa chọn");
@@ -235,7 +255,14 @@ export async function voteAction(formData: FormData) {
   });
   revalidatePath("/matches");
   revalidatePath("/leaderboard");
-  redirect(`/matches?saved=${existingVote ? "updated" : "created"}`);
+
+  const params = new URLSearchParams({
+    saved: existingVote ? "updated" : "created",
+    match: matchId,
+  });
+  if (returnFilter !== "open") params.set("filter", returnFilter);
+  if (returnQ) params.set("q", returnQ);
+  redirect(`/matches?${params.toString()}#match-${matchId}`);
 }
 
 export async function upsertMatchAction(formData: FormData) {

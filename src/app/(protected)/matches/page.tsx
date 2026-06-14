@@ -39,18 +39,18 @@ type MatchFilter =
   | "settled";
 
 const primaryFilters: Array<{ id: MatchFilter; label: string }> = [
-  { id: "all", label: "Tất cả" },
-  { id: "today", label: "Hôm nay" },
   { id: "open", label: "Đang mở" },
+  { id: "scheduled", label: "Sắp mở" },
   { id: "picked", label: "Đã chọn" },
+  { id: "settled", label: "Đã xong" },
+  { id: "all", label: "Tất cả" },
 ];
 
 const extraFilters: Array<{ id: MatchFilter; label: string }> = [
+  { id: "today", label: "Hôm nay" },
   { id: "tomorrow", label: "Ngày mai" },
-  { id: "scheduled", label: "Sắp mở" },
   { id: "missing", label: "Chưa chọn" },
   { id: "locked", label: "Đã khóa" },
-  { id: "settled", label: "Có kết quả" },
 ];
 
 const allFilters = [...primaryFilters, ...extraFilters];
@@ -62,12 +62,13 @@ export default async function MatchesPage({
 }) {
   const user = await requireUser();
   const params = (await searchParams) ?? {};
-  const rawFilter = typeof params.filter === "string" ? params.filter : "all";
+  const rawFilter = typeof params.filter === "string" ? params.filter : "open";
   const activeFilter = allFilters.some((filter) => filter.id === rawFilter)
     ? (rawFilter as MatchFilter)
-    : "all";
+    : "open";
   const searchTerm = typeof params.q === "string" ? params.q.trim().slice(0, 80) : "";
   const saved = typeof params.saved === "string" ? params.saved : null;
+  const savedMatchId = typeof params.match === "string" ? params.match : null;
   const now = new Date();
 
   const matches = await prisma.match.findMany({
@@ -172,7 +173,7 @@ export default async function MatchesPage({
             <div className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950">
               <CalendarDays className="mt-0.5 shrink-0 text-sky-700" size={19} aria-hidden="true" />
               <p className="leading-6">
-                Lịch luôn hiển thị đầy đủ. Trận có nhãn <b>Đang mở</b> mới nhận dự đoán.
+                Màn chính ưu tiên các trận <b>Đang mở</b>. Trận đã xong nằm riêng trong tab <b>Đã xong</b> để dễ xem lại.
               </p>
             </div>
 
@@ -193,7 +194,7 @@ export default async function MatchesPage({
 
               <div className="flex gap-2">
                 <form action="/matches" className="relative min-w-0 flex-1 sm:min-w-64">
-                  {activeFilter !== "all" && (
+                  {activeFilter !== "open" && (
                     <input type="hidden" name="filter" value={activeFilter} />
                   )}
                   <Search
@@ -271,9 +272,16 @@ export default async function MatchesPage({
                     ? [VoteChoice.TEAM_A, VoteChoice.DRAW, VoteChoice.TEAM_B]
                     : [VoteChoice.TEAM_A, VoteChoice.TEAM_B];
                   const participantCount = match.votes.length;
+                  const justSaved = Boolean(saved && savedMatchId === match.id);
 
                   return (
-                    <article key={match.id} className="group">
+                    <article
+                      id={`match-${match.id}`}
+                      key={match.id}
+                      className={`group scroll-mt-28 ${
+                        justSaved ? "bg-emerald-50/40" : ""
+                      }`}
+                    >
                       <div className="grid min-h-24 grid-cols-[60px_minmax(0,1fr)] items-center gap-3 px-3 py-4 sm:grid-cols-[76px_minmax(0,1fr)] sm:px-4 md:grid-cols-[76px_minmax(0,1fr)_155px]">
                         <div className="border-r border-slate-100 pr-3 text-center">
                           <p className="text-lg font-black tabular-nums text-[#082d24]">
@@ -361,6 +369,14 @@ export default async function MatchesPage({
 
                       {!isScheduled && (
                         <div className="border-t border-slate-100 bg-slate-50/70 px-4 py-4 sm:px-5">
+                          {justSaved && (
+                            <div className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-900">
+                              <CheckCircle2 size={18} aria-hidden="true" />
+                              {saved === "updated"
+                                ? "Đã cập nhật lựa chọn của bạn."
+                                : "Đã lưu lựa chọn của bạn."}
+                            </div>
+                          )}
                           {match.result ? (
                             <SettledMatchSummary
                               match={match}
@@ -369,6 +385,10 @@ export default async function MatchesPage({
                           ) : canPick ? (
                             <form action={voteAction} className="space-y-4">
                               <input type="hidden" name="matchId" value={match.id} />
+                              <input type="hidden" name="returnFilter" value={activeFilter} />
+                              {searchTerm && (
+                                <input type="hidden" name="returnQ" value={searchTerm} />
+                              )}
                               <div className="flex flex-wrap items-center justify-between gap-2">
                                 <div className="flex flex-wrap gap-2 text-xs font-bold">
                                   <span className="rounded-lg bg-amber-50 px-2.5 py-1.5 text-amber-900 ring-1 ring-amber-100">
@@ -478,7 +498,7 @@ export default async function MatchesPage({
                 Đổi bộ lọc hoặc tìm bằng tên đội tuyển khác.
               </p>
               <a
-                href="/matches"
+                href="/matches?filter=all"
                 className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-emerald-700 px-5 text-sm font-bold text-white hover:bg-emerald-800"
               >
                 Xem toàn bộ lịch
@@ -745,7 +765,7 @@ function groupMatchesByDay<
 
 function filterHref(filter: MatchFilter, searchTerm: string) {
   const params = new URLSearchParams();
-  if (filter !== "all") params.set("filter", filter);
+  if (filter !== "open") params.set("filter", filter);
   if (searchTerm) params.set("q", searchTerm);
   const query = params.toString();
   return query ? `/matches?${query}` : "/matches";
@@ -780,7 +800,7 @@ function timeStatusLabel(
   locked: boolean,
   now: Date,
 ) {
-  if (match.result || match.status === MatchStatus.SETTLED) return "Có kết quả";
+  if (match.result || match.status === MatchStatus.SETTLED) return "Đã xong";
   if (match.status === MatchStatus.DRAFT) return "Sắp mở dự đoán";
   if (locked) return "Đã khóa";
 
