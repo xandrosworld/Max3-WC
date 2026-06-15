@@ -118,7 +118,7 @@ export default async function MatchesPage({
   });
 
   const groupedRows = groupMatchesByDay(filteredRows);
-  const myRows = rows.filter((row) => row.myVote).slice(-4).reverse();
+  const myRows = rows.filter((row) => row.myVote).slice(-6).reverse();
   const missingOpenRows = rows
     .filter(
       ({ match, locked, myVote }) =>
@@ -581,20 +581,14 @@ export default async function MatchesPage({
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-emerald-950/5">
             <div>
               <h2 className="font-extrabold text-[#082d24]">Lựa chọn của tôi</h2>
-              <p className="mt-1 text-xs text-slate-500">Các lựa chọn gần đây</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Tóm tắt trận, giờ đá, lựa chọn và kết quả nếu đã có.
+              </p>
             </div>
             <div className="mt-3 divide-y divide-slate-100">
               {myRows.length > 0 ? (
                 myRows.map(({ match, myVote }) => (
-                  <div key={match.id} className="py-3 first:pt-1">
-                    <p className="text-sm font-extrabold text-slate-900">
-                      {match.teamA} <span className="text-slate-400">vs</span> {match.teamB}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-600">
-                      Bạn chọn:{" "}
-                      <b>{choiceLabel(myVote!.choice, match.teamA, match.teamB)}</b>
-                    </p>
-                  </div>
+                  <MyVoteSummary key={match.id} match={match} myVote={myVote!} />
                 ))
               ) : (
                 <p className="py-5 text-center text-sm leading-6 text-slate-500">
@@ -614,6 +608,71 @@ export default async function MatchesPage({
         </aside>
       </div>
     </div>
+  );
+}
+
+function MyVoteSummary({
+  match,
+  myVote,
+}: {
+  match: {
+    id: string;
+    teamA: string;
+    teamB: string;
+    kickoffAt: Date;
+    result: {
+      teamAScore: number;
+      teamBScore: number;
+      winningChoice: VoteChoice;
+    } | null;
+  };
+  myVote: { choice: VoteChoice; hopeStar: boolean };
+}) {
+  const correct = match.result?.winningChoice === myVote.choice;
+
+  return (
+    <a
+      href={`/matches?filter=picked#match-${match.id}`}
+      className="block py-3 first:pt-1 hover:text-emerald-800"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-extrabold text-slate-900">
+            {match.teamA} <span className="text-slate-400">vs</span> {match.teamB}
+          </p>
+          <p className="mt-1 text-xs font-semibold text-slate-500">
+            {formatVietnamDayShort(match.kickoffAt)} · {formatVietnamTimeOnly(match.kickoffAt)}
+          </p>
+        </div>
+        {match.result ? (
+          <span className="shrink-0 rounded-lg bg-slate-950 px-2 py-1 text-xs font-black tabular-nums text-white">
+            {match.result.teamAScore}-{match.result.teamBScore}
+          </span>
+        ) : (
+          <span className="shrink-0 rounded-lg bg-sky-50 px-2 py-1 text-[11px] font-black text-sky-700 ring-1 ring-sky-100">
+            Chưa đá
+          </span>
+        )}
+      </div>
+
+      <p className="mt-2 text-xs leading-5 text-slate-600">
+        Bạn chọn:{" "}
+        <b>{choiceLabel(myVote.choice, match.teamA, match.teamB)}</b>
+        {myVote.hopeStar ? " · Ngôi sao" : ""}
+      </p>
+      {match.result && (
+        <p
+          className={`mt-1 inline-flex rounded-lg px-2 py-1 text-[11px] font-black ${
+            correct
+              ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
+              : "bg-red-50 text-red-700 ring-1 ring-red-100"
+          }`}
+        >
+          {correct ? "Đúng" : "Sai"} · Cửa đúng:{" "}
+          {choiceLabel(match.result.winningChoice, match.teamA, match.teamB)}
+        </p>
+      )}
+    </a>
   );
 }
 

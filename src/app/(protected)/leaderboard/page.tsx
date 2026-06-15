@@ -10,8 +10,17 @@ type LeaderboardRow = Awaited<ReturnType<typeof getLeaderboard>>[number];
 type RankedRow = LeaderboardRow & { displayRank: number };
 type BoardMode = "prediction" | "contribution";
 
-export default async function LeaderboardPage() {
+export default async function LeaderboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   await requireUser();
+  const params = (await searchParams) ?? {};
+  const activeBoard =
+    typeof params.board === "string" && params.board === "contribution"
+      ? "contribution"
+      : "prediction";
   const rows = await getLeaderboard();
   const predictionRows = rows.map((row, index) => ({
     ...row,
@@ -31,6 +40,23 @@ export default async function LeaderboardPage() {
   const totalContribution = rows.reduce((sum, row) => sum + row.loss, 0);
   const totalCorrect = rows.reduce((sum, row) => sum + row.correct, 0);
   const totalMissed = rows.reduce((sum, row) => sum + row.missed, 0);
+  const activeSection =
+    activeBoard === "prediction"
+      ? {
+          kicker: "Vua dự đoán",
+          title: "Top đoán đúng nhiều nhất",
+          description:
+            "Xếp theo số trận đúng, sau đó đến độ chính xác và số lần quên chọn.",
+          rows: predictionRows,
+          mode: "prediction" as const,
+        }
+      : {
+          kicker: "Top đóng góp",
+          title: "Top đóng góp nhiều nhất",
+          description: "Xếp theo tổng Belly đóng góp sau các trận đã chốt.",
+          rows: contributionRows,
+          mode: "contribution" as const,
+        };
 
   return (
     <div className="space-y-6">
@@ -97,20 +123,29 @@ export default async function LeaderboardPage() {
         </div>
       </section>
 
-      <LeaderboardSection
-        kicker="Vua dự đoán"
-        title="Top đoán đúng nhiều nhất"
-        description="Xếp theo số trận đúng, sau đó đến độ chính xác và số lần quên chọn."
-        rows={predictionRows}
-        mode="prediction"
-      />
+      <div className="sticky top-[88px] z-10 rounded-2xl border border-emerald-950/10 bg-white/95 p-2 shadow-lg shadow-emerald-950/5 backdrop-blur">
+        <div className="grid grid-cols-2 gap-2">
+          <BoardTab
+            href="/leaderboard"
+            selected={activeBoard === "prediction"}
+            title="Top đoán đúng nhiều nhất"
+            helper={`${totalCorrect} lượt đúng`}
+          />
+          <BoardTab
+            href="/leaderboard?board=contribution"
+            selected={activeBoard === "contribution"}
+            title="Top đóng góp nhiều nhất"
+            helper={formatCurrency(totalContribution)}
+          />
+        </div>
+      </div>
 
       <LeaderboardSection
-        kicker="Top đóng góp"
-        title="Top đóng góp nhiều nhất"
-        description="Xếp theo tổng Belly đóng góp sau các trận đã chốt."
-        rows={contributionRows}
-        mode="contribution"
+        kicker={activeSection.kicker}
+        title={activeSection.title}
+        description={activeSection.description}
+        rows={activeSection.rows}
+        mode={activeSection.mode}
       />
 
       {rows.length === 0 && (
@@ -124,6 +159,41 @@ export default async function LeaderboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function BoardTab({
+  href,
+  selected,
+  title,
+  helper,
+}: {
+  href: string;
+  selected: boolean;
+  title: string;
+  helper: string;
+}) {
+  return (
+    <a
+      href={href}
+      aria-current={selected ? "page" : undefined}
+      className={`rounded-xl px-3 py-3 text-center transition active:scale-[0.99] sm:px-4 ${
+        selected
+          ? "bg-emerald-900 text-white shadow-lg shadow-emerald-950/15"
+          : "bg-slate-50 text-emerald-950 ring-1 ring-slate-200 hover:bg-emerald-50"
+      }`}
+    >
+      <span className="block text-sm font-black leading-tight sm:text-base">
+        {title}
+      </span>
+      <span
+        className={`mt-1 block text-[11px] font-bold sm:text-xs ${
+          selected ? "text-emerald-100" : "text-slate-500"
+        }`}
+      >
+        {helper}
+      </span>
+    </a>
   );
 }
 
