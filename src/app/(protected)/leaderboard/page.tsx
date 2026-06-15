@@ -472,10 +472,10 @@ export default async function LeaderboardPage({
         }
         .top-winner-gif {
           position: absolute;
-          right: clamp(5.85rem, 25vw, 6.7rem);
-          top: 0.85rem;
+          right: clamp(1.1rem, 4vw, 1.4rem);
+          top: 4.45rem;
           z-index: 8;
-          width: clamp(3.25rem, 14vw, 3.95rem);
+          width: clamp(5.8rem, 31vw, 7.15rem);
           aspect-ratio: 1.77857;
           overflow: hidden;
           border-radius: 14px;
@@ -516,11 +516,44 @@ export default async function LeaderboardPage({
         }
         @media (max-width: 374px) {
           .top-winner-gif {
-            right: 5.2rem;
-            top: 0.9rem;
-            width: 3.15rem;
+            right: 0.95rem;
+            top: 4.55rem;
+            width: 5.85rem;
             opacity: 0.92;
           }
+        }
+        .desktop-winner-gif {
+          position: relative;
+          z-index: 3;
+          width: 84px;
+          aspect-ratio: 1.77857;
+          overflow: hidden;
+          border-radius: 14px;
+          border: 1px solid rgba(139, 92, 246, 0.2);
+          background: rgba(250, 245, 255, 0.78);
+          box-shadow:
+            0 10px 22px rgba(88, 28, 135, 0.1),
+            0 0 0 1px rgba(255, 255, 255, 0.75) inset;
+          color: transparent;
+          font-size: 0;
+          line-height: 0;
+          pointer-events: none;
+        }
+        .desktop-winner-gif .tenor-gif-embed,
+        .desktop-winner-gif iframe {
+          display: block !important;
+          width: 100% !important;
+          height: 100% !important;
+          min-height: 0 !important;
+          border: 0 !important;
+          color: transparent !important;
+          font-size: 0 !important;
+          line-height: 0 !important;
+        }
+        .desktop-winner-gif a {
+          color: transparent;
+          font-size: 0;
+          line-height: 0;
         }
         .accuracy-sweep {
           position: relative;
@@ -749,6 +782,7 @@ function LeaderboardSection({
                         </p>
                         <RankTag rank={row.displayRank} mode={mode} />
                       </div>
+                      {row.displayRank === 1 && <TopWinnerGif variant="desktop" />}
                     </div>
                   </td>
                   <td className="px-4 py-3 font-semibold tabular-nums">{row.voted}</td>
@@ -955,7 +989,7 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
           style={{ animation: "wcPulse 3.2s ease-in-out infinite" }}
         />
       )}
-      {row.displayRank === 1 && <TopWinnerGif />}
+      {row.displayRank === 1 && <TopWinnerGif variant="mobile" />}
       <div className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
         <div className="flex flex-col items-center gap-2">
           <RankBadge rank={row.displayRank} mode={mode} compact />
@@ -981,7 +1015,7 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
         />
       </div>
 
-      <div className="relative mt-2">
+      <div className={`relative ${row.displayRank === 1 ? "mt-12" : "mt-2"}`}>
         <AccuracyBar value={row.accuracy} rank={row.displayRank} mode={mode} />
       </div>
 
@@ -995,9 +1029,9 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
   );
 }
 
-function TopWinnerGif() {
+function TopWinnerGif({ variant }: { variant: "mobile" | "desktop" }) {
   return (
-    <div className="top-winner-gif" aria-hidden="true">
+    <div className={variant === "mobile" ? "top-winner-gif" : "desktop-winner-gif"} aria-hidden="true">
       <div
         className="tenor-gif-embed"
         data-postid="11935086"
