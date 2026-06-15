@@ -79,6 +79,23 @@ export default async function LeaderboardPage({
           6%, 10% { opacity: 1; filter: drop-shadow(0 0 10px currentColor); transform: translateY(-1px) rotate(var(--bolt-rotate)) scale(1.08); }
           14% { opacity: 0.42; transform: translateY(1px) rotate(var(--bolt-rotate)) scale(0.96); }
         }
+        @keyframes wcStorm {
+          0%, 100% { opacity: 0.35; transform: scale(0.98) rotate(0deg); }
+          38% { opacity: 0.9; transform: scale(1.08) rotate(7deg); }
+          64% { opacity: 0.5; transform: scale(1.02) rotate(-5deg); }
+        }
+        @keyframes wcBoltStrong {
+          0%, 100% { opacity: 0.34; filter: drop-shadow(0 0 7px currentColor); transform: translateY(0) rotate(var(--bolt-rotate)) scale(0.95); }
+          9%, 17% { opacity: 1; filter: drop-shadow(0 0 15px currentColor); transform: translateY(-2px) rotate(var(--bolt-rotate)) scale(1.15); }
+          29% { opacity: 0.52; transform: translateY(1px) rotate(var(--bolt-rotate)) scale(0.98); }
+          48% { opacity: 0.88; filter: drop-shadow(0 0 12px currentColor); }
+          70% { opacity: 0.24; }
+        }
+        @keyframes wcBoltWarm {
+          0%, 100% { opacity: 0.18; filter: drop-shadow(0 0 4px currentColor); transform: translateY(0) rotate(var(--bolt-rotate)) scale(0.92); }
+          12%, 18% { opacity: 0.9; filter: drop-shadow(0 0 11px currentColor); transform: translateY(-1px) rotate(var(--bolt-rotate)) scale(1.06); }
+          38% { opacity: 0.36; }
+        }
         @keyframes wcBarSweep {
           0% { transform: translateX(-140%); opacity: 0; }
           35% { opacity: 0.7; }
@@ -163,17 +180,20 @@ export default async function LeaderboardPage({
           animation: wcShine 5.2s ease-in-out infinite;
         }
         .rank-gold {
-          --rank-accent: #f59e0b;
-          --rank-glow: rgba(245, 158, 11, 0.24);
-          --rank-soft: rgba(254, 243, 199, 0.72);
+          --rank-accent: #8b5cf6;
+          --rank-accent-2: #c084fc;
+          --rank-glow: rgba(139, 92, 246, 0.34);
+          --rank-soft: rgba(250, 245, 255, 0.76);
         }
         .rank-silver {
-          --rank-accent: #64748b;
-          --rank-glow: rgba(100, 116, 139, 0.18);
-          --rank-soft: rgba(226, 232, 240, 0.74);
+          --rank-accent: #f97316;
+          --rank-accent-2: #ef4444;
+          --rank-glow: rgba(249, 115, 22, 0.24);
+          --rank-soft: rgba(255, 237, 213, 0.72);
         }
         .rank-bronze {
           --rank-accent: #fb923c;
+          --rank-accent-2: #fbbf24;
           --rank-glow: rgba(251, 146, 60, 0.2);
           --rank-soft: rgba(255, 237, 213, 0.76);
         }
@@ -201,10 +221,25 @@ export default async function LeaderboardPage({
           inset: -2px;
           border-radius: 20px;
           background:
-            conic-gradient(from 20deg, transparent 0 10%, var(--rank-accent) 18%, #ffffff 26%, var(--rank-accent) 34%, transparent 46% 100%);
+            conic-gradient(from 20deg, transparent 0 10%, var(--rank-accent) 18%, #ffffff 26%, var(--rank-accent-2, var(--rank-accent)) 34%, transparent 46% 100%);
           animation: wcRingSpin 3.8s linear infinite;
           opacity: 0.95;
           filter: drop-shadow(0 0 10px var(--rank-glow));
+        }
+        .rank-gold .avatar-ring {
+          inset: -5px;
+          border-radius: 26px;
+          background:
+            conic-gradient(from -40deg, transparent 0 6%, #7c3aed 10%, #ffffff 15%, #c084fc 22%, transparent 30% 43%, #a855f7 50%, #f5d0fe 57%, transparent 66% 100%);
+          animation-duration: 2.15s;
+          filter: drop-shadow(0 0 14px rgba(139, 92, 246, 0.72));
+        }
+        .rank-silver .avatar-ring {
+          inset: -3px;
+          background:
+            conic-gradient(from 30deg, transparent 0 12%, #ef4444 19%, #fff7ed 26%, #f97316 34%, transparent 48% 100%);
+          animation-duration: 3.05s;
+          filter: drop-shadow(0 0 12px rgba(249, 115, 22, 0.55));
         }
         .avatar-glow {
           position: absolute;
@@ -212,6 +247,21 @@ export default async function LeaderboardPage({
           border-radius: 24px;
           background: radial-gradient(circle, var(--rank-glow), transparent 68%);
           animation: wcPulse 3.1s ease-in-out infinite;
+        }
+        .rank-gold .avatar-glow {
+          inset: -15px;
+          border-radius: 30px;
+          background:
+            radial-gradient(circle at 45% 45%, rgba(216, 180, 254, 0.52), transparent 48%),
+            radial-gradient(circle, rgba(91, 33, 182, 0.32), transparent 74%);
+          animation: wcStorm 2.2s ease-in-out infinite;
+        }
+        .rank-silver .avatar-glow {
+          inset: -11px;
+          background:
+            radial-gradient(circle at 50% 50%, rgba(253, 186, 116, 0.42), transparent 48%),
+            radial-gradient(circle, rgba(239, 68, 68, 0.18), transparent 72%);
+          animation-duration: 2.75s;
         }
         .avatar-zap {
           position: absolute;
@@ -229,6 +279,52 @@ export default async function LeaderboardPage({
           bottom: -6px;
           left: -6px;
           animation-delay: 0.7s;
+        }
+        .avatar-zap-c,
+        .avatar-zap-d {
+          display: none;
+        }
+        .rank-gold .avatar-zap {
+          color: #a855f7;
+          animation-name: wcBoltStrong;
+          animation-duration: 1.75s;
+        }
+        .rank-gold .avatar-zap-a {
+          right: -9px;
+          top: -10px;
+        }
+        .rank-gold .avatar-zap-b {
+          bottom: -9px;
+          left: -9px;
+          animation-delay: 0.34s;
+        }
+        .rank-gold .avatar-zap-c {
+          --bolt-rotate: 34deg;
+          display: block;
+          right: -11px;
+          bottom: 5px;
+          animation-delay: 0.68s;
+        }
+        .rank-gold .avatar-zap-d {
+          --bolt-rotate: -38deg;
+          display: block;
+          left: -9px;
+          top: 7px;
+          animation-delay: 1.02s;
+        }
+        .rank-silver .avatar-zap {
+          color: #f97316;
+          animation-name: wcBoltWarm;
+          animation-duration: 2.25s;
+        }
+        .rank-silver .avatar-zap-a {
+          color: #ef4444;
+        }
+        .rank-silver .avatar-zap-b {
+          opacity: 0.78;
+        }
+        .rank-bronze .avatar-zap {
+          animation-duration: 2.9s;
         }
         .avatar-spark {
           position: absolute;
@@ -252,6 +348,49 @@ export default async function LeaderboardPage({
           left: 5px;
           bottom: 1px;
           animation-delay: 0.9s;
+        }
+        .avatar-spark-c,
+        .avatar-spark-d {
+          display: none;
+        }
+        .rank-gold .avatar-spark {
+          width: 6px;
+          height: 6px;
+          box-shadow: 0 0 12px 3px #c084fc;
+          animation-duration: 1.9s;
+        }
+        .rank-gold .avatar-spark-c {
+          --spark-x: 18px;
+          --spark-y: 12px;
+          display: block;
+          right: -4px;
+          bottom: 10px;
+          animation-delay: 0.38s;
+        }
+        .rank-gold .avatar-spark-d {
+          --spark-x: -17px;
+          --spark-y: -12px;
+          display: block;
+          left: -3px;
+          top: 10px;
+          animation-delay: 0.76s;
+        }
+        .rank-silver .avatar-spark {
+          box-shadow: 0 0 9px 2px #fb923c;
+          animation-duration: 2.45s;
+        }
+        .mobile-primary-badge {
+          position: relative;
+          isolation: isolate;
+        }
+        .mobile-primary-badge::before {
+          content: "";
+          position: absolute;
+          inset: -18px;
+          z-index: -1;
+          border-radius: 999px;
+          background: radial-gradient(circle, var(--rank-glow, rgba(16, 185, 129, 0.12)), transparent 68%);
+          opacity: 0.9;
         }
         .accuracy-sweep {
           position: relative;
@@ -516,7 +655,7 @@ function getRankVisual(rank: number, mode: BoardMode) {
       haloClass: "bg-amber-300/45",
       barClass: "from-amber-400 via-yellow-300 to-amber-500",
       avatarClass:
-        "ring-2 ring-amber-300 shadow-[0_0_0_4px_rgba(251,191,36,0.16),0_0_24px_rgba(245,158,11,0.32)]",
+        "ring-2 ring-violet-300 shadow-[0_0_0_4px_rgba(168,85,247,0.18),0_0_28px_rgba(124,58,237,0.42)]",
     };
   }
 
@@ -533,7 +672,7 @@ function getRankVisual(rank: number, mode: BoardMode) {
       haloClass: "bg-slate-300/45",
       barClass: "from-slate-400 via-slate-200 to-slate-500",
       avatarClass:
-        "ring-2 ring-slate-300 shadow-[0_0_0_4px_rgba(148,163,184,0.15),0_0_20px_rgba(100,116,139,0.22)]",
+        "ring-2 ring-orange-300 shadow-[0_0_0_4px_rgba(249,115,22,0.15),0_0_22px_rgba(239,68,68,0.25)]",
     };
   }
 
@@ -612,10 +751,61 @@ function RankTag({
   if (rank > 3) return null;
 
   return (
-    <span className={`mt-1 inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em] ${visual.tagClass}`}>
-      <Icon size={12} strokeWidth={2.5} aria-hidden="true" />
-      <span className="truncate">{visual.tag}</span>
+    <span className={`mt-1.5 inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black uppercase leading-tight tracking-[0.08em] ${visual.tagClass}`}>
+      <Icon className="shrink-0" size={12} strokeWidth={2.5} aria-hidden="true" />
+      <span className="min-w-0 [overflow-wrap:anywhere]">{visual.tag}</span>
     </span>
+  );
+}
+
+function MobilePrimaryBadge({
+  label,
+  value,
+  rank,
+  mode,
+}: {
+  label: string;
+  value: string;
+  rank: number;
+  mode: BoardMode;
+}) {
+  const visual = getRankVisual(rank, mode);
+  const bellyValue = value.endsWith(" Belly")
+    ? value.slice(0, -" Belly".length)
+    : null;
+  const tone =
+    rank === 1
+      ? "border-violet-200 bg-violet-50/90 text-violet-950 shadow-violet-900/10"
+      : rank === 2
+        ? "border-orange-200 bg-orange-50/90 text-orange-950 shadow-orange-900/10"
+        : rank === 3
+          ? "border-amber-200 bg-amber-50/90 text-amber-950 shadow-amber-900/10"
+          : "border-emerald-100 bg-emerald-50 text-emerald-950 shadow-emerald-900/5";
+
+  return (
+    <div
+      className={`mobile-primary-badge flex min-w-[4.8rem] max-w-[6.9rem] shrink-0 flex-col items-center justify-center rounded-2xl border px-2.5 py-2 text-center shadow-sm ${
+        rank <= 3 ? visual.rankClass : ""
+      } ${tone}`}
+    >
+      <span className="text-[9px] font-black uppercase leading-none tracking-[0.2em] text-slate-500">
+        {label}
+      </span>
+      <span
+        className={`mt-1 font-black leading-tight tabular-nums ${
+          bellyValue ? "text-[11px] text-red-700" : "text-xl text-red-700"
+        }`}
+      >
+        {bellyValue ? (
+          <>
+            <span className="block whitespace-nowrap">{bellyValue}</span>
+            <span className="block text-[10px] text-red-700">Belly</span>
+          </>
+        ) : (
+          value
+        )}
+      </span>
+    </div>
   );
 }
 
@@ -633,31 +823,29 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
           style={{ animation: "wcPulse 3.2s ease-in-out infinite" }}
         />
       )}
-      <div className="relative flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-3">
+      <div className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
+        <div className="flex flex-col items-center gap-2">
           <RankBadge rank={row.displayRank} mode={mode} compact />
           <Avatar image={row.image} name={row.name} rank={row.displayRank} mode={mode} />
-          <div className="min-w-0">
-            <p className="truncate text-base font-black text-emerald-950">
+        </div>
+        <div className="min-w-0 pt-0.5">
+            <p className="text-[17px] font-black leading-tight text-emerald-950 [overflow-wrap:anywhere]">
               {row.name}
             </p>
-            <p className="truncate text-xs font-semibold text-slate-500">
+            <p className="mt-0.5 text-xs font-semibold leading-snug text-slate-600 [overflow-wrap:anywhere]">
               {row.department || "Chưa có đơn vị"}
             </p>
-            <p className="mt-0.5 text-[11px] font-bold text-slate-400">
+            <p className="mt-0.5 text-[11px] font-bold leading-snug text-slate-400">
               {row.accuracy.toFixed(0)}% chính xác
             </p>
             <RankTag rank={row.displayRank} mode={mode} />
-          </div>
         </div>
-        <div className="ml-1 w-[7.2rem] shrink-0 text-right">
-          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
-            {primaryLabel}
-          </p>
-          <p className="mt-0.5 break-words text-[13px] font-black leading-tight text-red-700">
-            {primaryValue}
-          </p>
-        </div>
+        <MobilePrimaryBadge
+          label={primaryLabel}
+          value={primaryValue}
+          rank={row.displayRank}
+          mode={mode}
+        />
       </div>
 
       <div className="relative mt-2">
@@ -788,8 +976,20 @@ function Avatar({
           <span className="avatar-ring pointer-events-none" />
           <Zap className="avatar-zap avatar-zap-a pointer-events-none" size={15} strokeWidth={3} aria-hidden="true" />
           <Zap className="avatar-zap avatar-zap-b pointer-events-none" size={12} strokeWidth={3} aria-hidden="true" />
+          {rank === 1 && (
+            <>
+              <Zap className="avatar-zap avatar-zap-c pointer-events-none" size={14} strokeWidth={3.2} aria-hidden="true" />
+              <Zap className="avatar-zap avatar-zap-d pointer-events-none" size={10} strokeWidth={3.2} aria-hidden="true" />
+            </>
+          )}
           <span className="avatar-spark avatar-spark-a pointer-events-none" />
           <span className="avatar-spark avatar-spark-b pointer-events-none" />
+          {rank === 1 && (
+            <>
+              <span className="avatar-spark avatar-spark-c pointer-events-none" />
+              <span className="avatar-spark avatar-spark-d pointer-events-none" />
+            </>
+          )}
         </>
       )}
       {image ? (
