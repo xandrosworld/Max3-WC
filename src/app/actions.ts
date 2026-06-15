@@ -26,6 +26,7 @@ import {
   isVoteLocked,
 } from "@/lib/domain";
 import { parseMatchImport } from "@/lib/match-import";
+import { backfillMissedLossesForUser } from "@/lib/missed-losses";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireUser } from "@/lib/session";
 import { settleMatch } from "@/lib/settlement";
@@ -218,6 +219,7 @@ export async function registerAction(
         emailVerified: true,
       },
     });
+    await backfillMissedLossesForUser(created.user.id);
   } catch (error) {
     return { error: getReadableAuthMessage(error) };
   }
@@ -791,8 +793,10 @@ export async function createUserAction(formData: FormData) {
       emailVerified: true,
     },
   });
+  await backfillMissedLossesForUser(created.user.id);
   await audit(admin.id, "USER_CREATED", "User", created.user.id, { username });
   revalidatePath("/admin");
+  revalidatePath("/leaderboard");
 }
 
 export async function bulkImportUsersAction(formData: FormData) {
@@ -862,6 +866,7 @@ export async function bulkImportUsersAction(formData: FormData) {
           emailVerified: true,
         },
       });
+      await backfillMissedLossesForUser(createdUser.user.id);
       created += 1;
     } catch (error) {
       const message = error instanceof Error ? error.message : "không tạo được tài khoản";
@@ -875,6 +880,7 @@ export async function bulkImportUsersAction(formData: FormData) {
     errors: errors.length,
   });
   revalidatePath("/admin");
+  revalidatePath("/leaderboard");
 
   const params = new URLSearchParams({
     createdUsers: String(created),
@@ -912,6 +918,35 @@ export async function setUserLockAction(formData: FormData) {
   ]);
   await audit(admin.id, banned ? "USER_LOCKED" : "USER_UNLOCKED", "User", id);
   revalidatePath("/admin");
+}
+
+export async function deleteUserAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const id = formString(formData, "id");
+  if (id === admin.id) throw new Error("Không thể xóa chính mình");
+
+  const target = await prisma.user.findUnique({
+    where: { id },
+    select: { id: true, name: true, username: true, role: true },
+  });
+  if (!target) throw new Error("Không tìm thấy người chơi");
+  if (target.role !== "user") throw new Error("Không thể xóa tài khoản quản trị");
+
+  await prisma.$transaction([
+    prisma.session.deleteMany({ where: { userId: id } }),
+    prisma.account.deleteMany({ where: { userId: id } }),
+    prisma.vote.deleteMany({ where: { userId: id } }),
+    prisma.lossTransaction.deleteMany({ where: { userId: id } }),
+    prisma.payment.deleteMany({ where: { userId: id } }),
+    prisma.user.delete({ where: { id } }),
+  ]);
+
+  await audit(admin.id, "USER_DELETED", "User", id, {
+    name: target.name,
+    username: target.username ?? "",
+  });
+  revalidatePath("/admin");
+  revalidatePath("/leaderboard");
 }
 
 export async function resetPasswordAction(formData: FormData) {

@@ -1,5 +1,5 @@
 import { VoteChoice } from "@prisma/client";
-import { calculateAccuracy, getPaymentStatus, LOCK_MINUTES } from "./domain";
+import { calculateAccuracy, getPaymentStatus } from "./domain";
 import { prisma } from "./prisma";
 
 export async function getLeaderboard() {
@@ -27,11 +27,7 @@ export async function getLeaderboard() {
         status: "SETTLED",
         result: { isNot: null },
       },
-      select: {
-        id: true,
-        kickoffAt: true,
-        votes: { select: { userId: true } },
-      },
+      select: { id: true, votes: { select: { userId: true } } },
     }),
   ]);
 
@@ -48,11 +44,7 @@ export async function getLeaderboard() {
         vote.match.result.winningChoice !== (vote.choice as VoteChoice),
     ).length;
     const missed = settledMatches.filter((match) => {
-      const lockAt = match.kickoffAt.getTime() - LOCK_MINUTES * 60_000;
-      return (
-        user.createdAt.getTime() <= lockAt &&
-        !match.votes.some((vote) => vote.userId === user.id)
-      );
+      return !match.votes.some((vote) => vote.userId === user.id);
     }).length;
     const hopeStarUsed = user.votes.filter((vote) => vote.hopeStar).length;
     const hopeStarWrong = user.votes.filter(

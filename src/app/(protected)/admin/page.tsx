@@ -5,6 +5,7 @@ import {
   bulkImportMatchesAction,
   createUserAction,
   deleteMatchAction,
+  deleteUserAction,
   resetPasswordAction,
   setMatchStatusAction,
   setUserLockAction,
@@ -599,6 +600,20 @@ binh.tran,Bình Trần,Marketing`}
                 <input name="newPassword" required minLength={8} placeholder="Mật khẩu mới" className={inputClass} />
                 <button className="rounded-xl bg-slate-700 px-3 py-2 text-xs font-bold text-white">Reset mật khẩu</button>
               </form>
+              {user.role === "user" && (
+                <details className="mt-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2">
+                  <summary className="cursor-pointer text-xs font-black text-red-700">
+                    Xóa người chơi này
+                  </summary>
+                  <p className="mt-2 text-xs leading-5 text-red-700">
+                    Xóa luôn lựa chọn, điểm quỹ và lịch sử nộp của người này. Chỉ dùng khi tạo nhầm tài khoản.
+                  </p>
+                  <form action={deleteUserAction} className="mt-2">
+                    <input type="hidden" name="id" value={user.id} />
+                    <button className={dangerClass}>Xác nhận xóa người chơi</button>
+                  </form>
+                </details>
+              )}
             </article>
           ))}
         </div>

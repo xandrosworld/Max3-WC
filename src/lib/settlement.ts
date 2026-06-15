@@ -3,7 +3,7 @@ import {
   MatchStatus,
   Prisma,
 } from "@prisma/client";
-import { calculateWinningChoice, getLossAmountForVote, LOCK_MINUTES } from "./domain";
+import { calculateWinningChoice, getLossAmountForVote } from "./domain";
 import { prisma } from "./prisma";
 
 export async function settleMatch(input: {
@@ -96,12 +96,10 @@ export async function settleMatch(input: {
         },
       });
 
-      const lockAt = new Date(match.kickoffAt.getTime() - LOCK_MINUTES * 60_000);
       const eligibleUsers = await tx.user.findMany({
         where: {
           role: "user",
           banned: false,
-          createdAt: { lte: lockAt },
         },
         select: { id: true },
       });

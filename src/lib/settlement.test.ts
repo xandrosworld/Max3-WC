@@ -143,7 +143,7 @@ describe("settleMatch hope star", () => {
     });
   });
 
-  it("tự tính thua cho người quên chọn trước giờ khóa", async () => {
+  it("tự tính thua cho người quên chọn khi trận được chốt", async () => {
     txMock.user.findMany.mockResolvedValue([{ id: "missing" }, { id: "normal" }]);
     txMock.match.findUnique.mockResolvedValue(
       baseMatch({
@@ -162,7 +162,6 @@ describe("settleMatch hope star", () => {
       where: {
         role: "user",
         banned: false,
-        createdAt: { lte: new Date("2026-06-01T11:55:00.000Z") },
       },
       select: { id: true },
     });
