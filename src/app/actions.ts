@@ -781,7 +781,19 @@ export async function createUserAction(formData: FormData) {
 
   const created = await auth.api.createUser({
     headers: await headers(),
-    body: { email, password, name, role: "user" },
+    body: {
+      email,
+      password,
+      name,
+      role: "user",
+      data: {
+        username: username.toLowerCase(),
+        displayUsername: username,
+        department,
+        mustChangePassword: true,
+        emailVerified: true,
+      },
+    },
   });
   await prisma.user.update({
     where: { id: created.user.id },
@@ -854,6 +866,13 @@ export async function bulkImportUsersAction(formData: FormData) {
           password,
           name: row.name,
           role: "user",
+          data: {
+            username,
+            displayUsername: row.username,
+            department: row.department,
+            mustChangePassword: true,
+            emailVerified: true,
+          },
         },
       });
       await prisma.user.update({
