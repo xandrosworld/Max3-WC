@@ -93,8 +93,13 @@ export default async function MatchesPage({
     orderBy: { kickoffAt: "asc" },
     include: {
       result: true,
+      lossTransactions: {
+        where: { userId: user.id },
+        select: { amount: true },
+        orderBy: { settlementRevision: "desc" },
+      },
       votes: {
-        select: { userId: true, choice: true, hopeStar: true },
+        select: { userId: true, choice: true, hopeStar: true, updatedAt: true },
       },
     },
   });
@@ -118,7 +123,10 @@ export default async function MatchesPage({
   });
 
   const groupedRows = groupMatchesByDay(filteredRows);
-  const myRows = rows.filter((row) => row.myVote).slice(-6).reverse();
+  const myRows = rows
+    .filter((row) => row.myVote)
+    .sort((a, b) => compareMyVoteRows(a, b, now))
+    .slice(0, 6);
   const missingOpenRows = rows
     .filter(
       ({ match, locked, myVote }) =>
@@ -588,7 +596,7 @@ export default async function MatchesPage({
             <div className="mt-3 divide-y divide-slate-100">
               {myRows.length > 0 ? (
                 myRows.map(({ match, myVote }) => (
-                  <MyVoteSummary key={match.id} match={match} myVote={myVote!} />
+                  <MyVoteSummary key={match.id} match={match} myVote={myVote!} now={now} />
                 ))
               ) : (
                 <p className="py-5 text-center text-sm leading-6 text-slate-500">
@@ -611,9 +619,52 @@ export default async function MatchesPage({
   );
 }
 
+type MyVoteRowForSort = {
+  match: {
+    kickoffAt: Date;
+    result: { settledAt: Date } | null;
+  };
+  myVote: { updatedAt: Date } | null;
+};
+
+function compareMyVoteRows(
+  a: MyVoteRowForSort,
+  b: MyVoteRowForSort,
+  now: Date,
+) {
+  const aGroup = getMyVoteSortGroup(a, now);
+  const bGroup = getMyVoteSortGroup(b, now);
+  if (aGroup !== bGroup) return aGroup - bGroup;
+
+  if (aGroup === 2) {
+    const kickoffDiff = a.match.kickoffAt.getTime() - b.match.kickoffAt.getTime();
+    if (kickoffDiff !== 0) return kickoffDiff;
+  } else {
+    const aTime = getMyVoteSortTime(a);
+    const bTime = getMyVoteSortTime(b);
+    if (aTime !== bTime) return bTime - aTime;
+  }
+
+  return (
+    (b.myVote?.updatedAt.getTime() ?? 0) -
+    (a.myVote?.updatedAt.getTime() ?? 0)
+  );
+}
+
+function getMyVoteSortGroup(row: MyVoteRowForSort, now: Date) {
+  if (row.match.result) return 0;
+  if (row.match.kickoffAt.getTime() <= now.getTime()) return 1;
+  return 2;
+}
+
+function getMyVoteSortTime(row: MyVoteRowForSort) {
+  return row.match.result?.settledAt.getTime() ?? row.match.kickoffAt.getTime();
+}
+
 function MyVoteSummary({
   match,
   myVote,
+  now,
 }: {
   match: {
     id: string;
@@ -624,11 +675,19 @@ function MyVoteSummary({
       teamAScore: number;
       teamBScore: number;
       winningChoice: VoteChoice;
+      settledAt: Date;
     } | null;
+    lossTransactions: Array<{ amount: number }>;
   };
   myVote: { choice: VoteChoice; hopeStar: boolean };
+  now: Date;
 }) {
   const correct = match.result?.winningChoice === myVote.choice;
+  const transactionAmount = match.lossTransactions.reduce(
+    (sum, row) => sum + row.amount,
+    0,
+  );
+  const hasStarted = match.kickoffAt.getTime() <= now.getTime();
 
   return (
     <a
@@ -637,7 +696,7 @@ function MyVoteSummary({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-extrabold text-slate-900">
+          <p className="line-clamp-2 text-sm font-extrabold leading-snug text-slate-900">
             {match.teamA} <span className="text-slate-400">vs</span> {match.teamB}
           </p>
           <p className="mt-1 text-xs font-semibold text-slate-500">
@@ -647,6 +706,10 @@ function MyVoteSummary({
         {match.result ? (
           <span className="shrink-0 rounded-lg bg-slate-950 px-2 py-1 text-xs font-black tabular-nums text-white">
             {match.result.teamAScore}-{match.result.teamBScore}
+          </span>
+        ) : hasStarted ? (
+          <span className="shrink-0 rounded-lg bg-amber-50 px-2 py-1 text-[11px] font-black text-amber-700 ring-1 ring-amber-100">
+            Chờ kết quả
           </span>
         ) : (
           <span className="shrink-0 rounded-lg bg-sky-50 px-2 py-1 text-[11px] font-black text-sky-700 ring-1 ring-sky-100">
@@ -661,19 +724,40 @@ function MyVoteSummary({
         {myVote.hopeStar ? " · Ngôi sao" : ""}
       </p>
       {match.result && (
-        <p
-          className={`mt-1 inline-flex rounded-lg px-2 py-1 text-[11px] font-black ${
-            correct
-              ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
-              : "bg-red-50 text-red-700 ring-1 ring-red-100"
-          }`}
-        >
-          {correct ? "Đúng" : "Sai"} · Cửa đúng:{" "}
-          {choiceLabel(match.result.winningChoice, match.teamA, match.teamB)}
-        </p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <span
+            className={`inline-flex rounded-lg px-2 py-1 text-[11px] font-black ${
+              correct
+                ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
+                : "bg-red-50 text-red-700 ring-1 ring-red-100"
+            }`}
+          >
+            {correct ? "Bạn dự đoán đúng" : "Bạn dự đoán sai"}
+          </span>
+          <span
+            className={`inline-flex rounded-lg px-2 py-1 text-[11px] font-black ${
+              transactionAmount > 0
+                ? "bg-red-50 text-red-700 ring-1 ring-red-100"
+                : transactionAmount < 0
+                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
+                  : "bg-slate-50 text-slate-600 ring-1 ring-slate-100"
+            }`}
+          >
+            {formatMyVoteContribution(transactionAmount, Boolean(correct))}
+          </span>
+          <span className="inline-flex rounded-lg bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-600 ring-1 ring-slate-100">
+            Cửa đúng: {choiceLabel(match.result.winningChoice, match.teamA, match.teamB)}
+          </span>
+        </div>
       )}
     </a>
   );
+}
+
+function formatMyVoteContribution(amount: number, correct: boolean) {
+  if (amount > 0) return `Đóng góp +${formatCurrency(amount)}`;
+  if (amount < 0) return `Giảm đóng góp ${formatCurrency(Math.abs(amount))}`;
+  return correct ? "Không đóng góp" : "Không tăng thêm";
 }
 
 function BannerStat({
