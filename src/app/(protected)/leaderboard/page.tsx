@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Script from "next/script";
 import { Award, Crown, Flame, Medal, Sparkles, Trophy, Zap } from "lucide-react";
 import { formatCurrency } from "@/lib/domain";
 import { getLeaderboard } from "@/lib/leaderboard";
@@ -469,6 +470,51 @@ export default async function LeaderboardPage({
           background: radial-gradient(circle, var(--rank-glow, rgba(16, 185, 129, 0.12)), transparent 68%);
           opacity: 0.9;
         }
+        .top-winner-gif {
+          position: absolute;
+          right: clamp(5.85rem, 25vw, 6.7rem);
+          top: 0.85rem;
+          z-index: 8;
+          width: clamp(3.25rem, 14vw, 3.95rem);
+          aspect-ratio: 1.77857;
+          overflow: hidden;
+          border-radius: 14px;
+          border: 1px solid rgba(139, 92, 246, 0.22);
+          background:
+            radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92), rgba(237, 233, 254, 0.7));
+          box-shadow:
+            0 12px 24px rgba(88, 28, 135, 0.12),
+            0 0 0 1px rgba(255, 255, 255, 0.72) inset;
+          pointer-events: none;
+        }
+        .top-winner-gif::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          box-shadow: 0 0 18px rgba(168, 85, 247, 0.22) inset;
+          pointer-events: none;
+        }
+        .top-winner-gif .tenor-gif-embed,
+        .top-winner-gif iframe {
+          width: 100% !important;
+          height: 100% !important;
+          min-height: 0 !important;
+          border: 0 !important;
+        }
+        .top-winner-gif a {
+          color: transparent;
+          font-size: 0;
+          line-height: 0;
+        }
+        @media (max-width: 374px) {
+          .top-winner-gif {
+            right: 5.2rem;
+            top: 0.9rem;
+            width: 3.15rem;
+            opacity: 0.92;
+          }
+        }
         .accuracy-sweep {
           position: relative;
           overflow: hidden;
@@ -498,6 +544,7 @@ export default async function LeaderboardPage({
           }
         }
       `}</style>
+      <Script src="https://tenor.com/embed.js" strategy="lazyOnload" />
 
       <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-end">
         <div>
@@ -901,6 +948,7 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
           style={{ animation: "wcPulse 3.2s ease-in-out infinite" }}
         />
       )}
+      {row.displayRank === 1 && <TopWinnerGif />}
       <div className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
         <div className="flex flex-col items-center gap-2">
           <RankBadge rank={row.displayRank} mode={mode} compact />
@@ -937,6 +985,25 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
         <MobileStat label="Quên" value={String(row.missed)} tone="warn" />
       </div>
     </article>
+  );
+}
+
+function TopWinnerGif() {
+  return (
+    <div className="top-winner-gif" aria-hidden="true">
+      <div
+        className="tenor-gif-embed"
+        data-postid="11935086"
+        data-share-method="host"
+        data-aspect-ratio="1.77857"
+        data-width="100%"
+      >
+        <a href="https://tenor.com/view/football-world-cup-soccer-fans-gif-11935086" tabIndex={-1}>
+          Football World Cup Soccer Fans GIF
+        </a>
+        from <a href="https://tenor.com/search/football-gifs" tabIndex={-1}>Football GIFs</a>
+      </div>
+    </div>
   );
 }
 
