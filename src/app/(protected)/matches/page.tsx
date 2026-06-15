@@ -174,7 +174,7 @@ export default async function MatchesPage({
         </div>
       )}
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_310px]">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_310px]">
         <div className="min-w-0 space-y-5">
           <section className="space-y-4">
             <div className="flex items-start gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950">
@@ -518,7 +518,7 @@ export default async function MatchesPage({
           )}
         </div>
 
-        <aside className="space-y-4 xl:sticky xl:top-24">
+        <aside className="space-y-4 lg:sticky lg:top-24">
           <section className="rounded-2xl border border-emerald-900/10 bg-white p-4 shadow-sm shadow-emerald-950/5">
             <div>
               <h2 className="font-extrabold text-[#082d24]">Tự theo khi quên</h2>
@@ -554,7 +554,7 @@ export default async function MatchesPage({
                 {missingOpenRows.length}
               </span>
             </div>
-            <div className="mt-3 divide-y divide-slate-100">
+            <div className="mt-3 divide-y divide-slate-100 lg:max-h-[430px] lg:overflow-y-auto lg:pr-1">
               {missingOpenRows.length > 0 ? (
                 missingOpenRows.map(({ match }) => (
                   <a
