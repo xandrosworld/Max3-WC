@@ -123,6 +123,15 @@ export default async function LeaderboardPage({
           0%, 100% { transform: translateY(0) scale(1); }
           50% { transform: translateY(-1px) scale(1.04); }
         }
+        @keyframes wcTagShine {
+          0% { transform: translateX(-145%); opacity: 0; }
+          28% { opacity: 0.75; }
+          100% { transform: translateX(220%); opacity: 0; }
+        }
+        @keyframes wcTagPulse {
+          0%, 100% { transform: translateY(0); filter: saturate(1); }
+          50% { transform: translateY(-1px); filter: saturate(1.18); }
+        }
         @keyframes wcShine {
           0% { transform: translateX(-120%); opacity: 0; }
           35% { opacity: 0.32; }
@@ -226,6 +235,72 @@ export default async function LeaderboardPage({
           background: linear-gradient(100deg, transparent, rgba(255,255,255,0.78), transparent);
           transform: translateX(-120%);
           animation: wcShine 4.1s ease-in-out infinite;
+        }
+        .rank-tag-elite {
+          position: relative;
+          isolation: isolate;
+          overflow: hidden;
+          border: 1px solid rgba(255, 255, 255, 0.58);
+          box-shadow:
+            0 10px 24px var(--rank-glow),
+            0 0 0 1px rgba(255, 255, 255, 0.34) inset;
+          text-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
+          animation: wcTagPulse 3.8s ease-in-out infinite;
+        }
+        .rank-tag-elite::before {
+          content: "";
+          position: absolute;
+          inset: 1px;
+          z-index: -1;
+          border-radius: 999px;
+          background: linear-gradient(180deg, rgba(255,255,255,0.32), transparent 56%);
+          pointer-events: none;
+        }
+        .rank-tag-elite::after {
+          content: "";
+          position: absolute;
+          top: -35%;
+          bottom: -35%;
+          left: -42%;
+          z-index: 0;
+          width: 32%;
+          background: linear-gradient(100deg, transparent, rgba(255,255,255,0.78), transparent);
+          animation: wcTagShine 4.6s ease-in-out infinite;
+          pointer-events: none;
+        }
+        .rank-tag-elite > * {
+          position: relative;
+          z-index: 1;
+        }
+        .rank-tag-elite svg {
+          filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.22));
+        }
+        .rank-tag-elite.rank-gold {
+          background: linear-gradient(135deg, #4c1d95 0%, #8b5cf6 38%, #f59e0b 100%) !important;
+          color: #fff7ed !important;
+          border-color: rgba(251, 191, 36, 0.72);
+          box-shadow:
+            0 12px 26px rgba(124, 58, 237, 0.24),
+            0 0 18px rgba(251, 191, 36, 0.28),
+            0 0 0 1px rgba(255, 255, 255, 0.4) inset;
+        }
+        .rank-tag-elite.rank-silver {
+          background: linear-gradient(135deg, #111827 0%, #334155 48%, #f97316 100%) !important;
+          color: #ffffff !important;
+          border-color: rgba(253, 186, 116, 0.62);
+          box-shadow:
+            0 12px 24px rgba(15, 23, 42, 0.18),
+            0 0 16px rgba(249, 115, 22, 0.22),
+            0 0 0 1px rgba(255, 255, 255, 0.36) inset;
+        }
+        .rank-tag-elite.rank-bronze {
+          background: linear-gradient(135deg, #9a3412 0%, #f97316 48%, #fbbf24 100%) !important;
+          color: #fff7ed !important;
+          border-color: rgba(251, 146, 60, 0.66);
+          box-shadow:
+            0 12px 24px rgba(194, 65, 12, 0.18),
+            0 0 14px rgba(251, 146, 60, 0.24),
+            0 0 0 1px rgba(255, 255, 255, 0.34) inset;
         }
         .avatar-shell {
           --rank-accent: #10b981;
@@ -903,7 +978,7 @@ function RankTag({
   if (rank > 3) return null;
 
   return (
-    <span className={`mt-1.5 inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black uppercase leading-tight tracking-[0.08em] ${visual.tagClass}`}>
+    <span className={`rank-tag-elite ${visual.rankClass} mt-1.5 inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black uppercase leading-tight tracking-normal ${visual.tagClass}`}>
       <Icon className="shrink-0" size={12} strokeWidth={2.5} aria-hidden="true" />
       <span className="min-w-0 [overflow-wrap:anywhere]">{visual.tag}</span>
     </span>
