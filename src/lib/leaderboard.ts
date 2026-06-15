@@ -75,7 +75,16 @@ export async function getLeaderboard() {
     };
   });
 
-  rows.sort((a, b) => b.loss - a.loss || b.correct - a.correct || a.name.localeCompare(b.name, "vi"));
+  rows.sort(
+    (a, b) =>
+      b.correct - a.correct ||
+      b.accuracy - a.accuracy ||
+      a.missed - b.missed ||
+      a.wrong - b.wrong ||
+      a.loss - b.loss ||
+      b.voted - a.voted ||
+      a.name.localeCompare(b.name, "vi"),
+  );
 
   return rows.map((row, index) => ({ ...row, rank: index + 1 }));
 }

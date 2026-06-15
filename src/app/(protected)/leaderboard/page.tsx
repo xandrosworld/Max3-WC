@@ -10,19 +10,9 @@ export default async function LeaderboardPage() {
   await requireUser();
   const rows = await getLeaderboard();
   const totalLoss = rows.reduce((sum, row) => sum + row.loss, 0);
+  const totalCorrect = rows.reduce((sum, row) => sum + row.correct, 0);
   const totalMissed = rows.reduce((sum, row) => sum + row.missed, 0);
-  const hopeStarUsed = rows.reduce((sum, row) => sum + row.hopeStarUsed, 0);
-  const predictionKings = [...rows]
-    .filter((row) => row.correct + row.wrong + row.missed > 0)
-    .sort(
-      (a, b) =>
-        b.correct - a.correct ||
-        b.accuracy - a.accuracy ||
-        a.missed - b.missed ||
-        a.loss - b.loss ||
-        a.name.localeCompare(b.name, "vi"),
-    )
-    .slice(0, 3);
+  const predictionKings = rows.filter((row) => row.correct > 0).slice(0, 3);
 
   return (
     <div className="space-y-6">
@@ -33,10 +23,10 @@ export default async function LeaderboardPage() {
             Bảng xếp hạng
           </p>
           <h1 className="mt-2 text-3xl font-black leading-tight text-emerald-950 md:text-4xl">
-            Ai đang phải nộp nhiều nhất?
+            Ai đoán đúng nhiều nhất?
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-            Theo dõi lựa chọn, độ chính xác và số tiền phải nộp sau các trận đã chốt. Quên chọn cũng tính là thua theo mức của vòng.
+            Xếp hạng theo số trận đúng. Nếu bằng nhau, hệ thống xét độ chính xác, số lần quên chọn, số trận sai và điểm quỹ phải nộp.
           </p>
           </div>
           <PredictionKings rows={predictionKings} />
@@ -52,9 +42,9 @@ export default async function LeaderboardPage() {
             />
           </div>
           <div className="grid grid-cols-3 gap-2 rounded-3xl border border-emerald-950/10 bg-white p-3 shadow-sm shadow-emerald-950/5">
-            <Summary label="Tổng phải nộp" value={formatCurrency(totalLoss)} />
+            <Summary label="Tổng lượt đúng" value={String(totalCorrect)} />
             <Summary label="Quên chọn" value={String(totalMissed)} />
-            <Summary label="Ngôi sao" value={String(hopeStarUsed)} />
+            <Summary label="Tổng phải nộp" value={formatCurrency(totalLoss)} />
           </div>
         </div>
       </section>
@@ -248,7 +238,7 @@ function PredictionKings({ rows }: { rows: LeaderboardRow[] }) {
           </h2>
         </div>
         <p className="max-w-[17rem] text-xs font-bold leading-5 text-slate-500 sm:text-right">
-          Xếp theo số trận đúng, rồi đến độ chính xác.
+          Xếp theo số trận đúng, rồi đến độ chính xác và số lần quên chọn.
         </p>
       </div>
 
