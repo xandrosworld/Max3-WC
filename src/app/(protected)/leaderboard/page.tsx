@@ -16,6 +16,52 @@ export default async function LeaderboardPage() {
 
   return (
     <div className="space-y-6">
+      <style>{`
+        @keyframes leaderboardSweep {
+          0% { transform: translateX(-120%); opacity: 0; }
+          18% { opacity: 0.72; }
+          42% { opacity: 0; }
+          100% { transform: translateX(140%); opacity: 0; }
+        }
+        @keyframes rankHalo {
+          0%, 100% { transform: scale(1); opacity: 0.62; }
+          50% { transform: scale(1.12); opacity: 0.18; }
+        }
+        @keyframes eliteLift {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-2px); }
+        }
+        .leaderboard-row-gold > td {
+          background: linear-gradient(90deg, rgba(255,247,205,0.92) 0%, rgba(255,255,255,0.98) 43%, rgba(255,251,235,0.92) 100%);
+        }
+        .leaderboard-row-silver > td {
+          background: linear-gradient(90deg, rgba(248,250,252,0.98) 0%, rgba(255,255,255,0.98) 43%, rgba(226,232,240,0.64) 100%);
+        }
+        .leaderboard-row-bronze > td {
+          background: linear-gradient(90deg, rgba(255,237,213,0.86) 0%, rgba(255,255,255,0.98) 43%, rgba(255,247,237,0.9) 100%);
+        }
+        .leaderboard-row-gold > td:first-child {
+          box-shadow: inset 4px 0 0 #f59e0b;
+        }
+        .leaderboard-row-silver > td:first-child {
+          box-shadow: inset 4px 0 0 #94a3b8;
+        }
+        .leaderboard-row-bronze > td:first-child {
+          box-shadow: inset 4px 0 0 #fb923c;
+        }
+        .leaderboard-row-gold:hover > td,
+        .leaderboard-row-silver:hover > td,
+        .leaderboard-row-bronze:hover > td {
+          filter: saturate(1.06);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .leaderboard-sweep,
+          .rank-halo,
+          .elite-lift {
+            animation: none !important;
+          }
+        }
+      `}</style>
       <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-end">
         <div className="space-y-5">
           <div>
@@ -78,28 +124,46 @@ export default async function LeaderboardPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, index) => (
-              <tr key={row.id} className={`border-t border-slate-100 ${index % 2 ? "bg-slate-50/70" : ""}`}>
-                <td className="px-4 py-3 text-lg font-black text-emerald-700">#{row.rank}</td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar image={row.image} name={row.name} />
-                    <div>
-                      <p className="font-extrabold text-emerald-950">{row.name}</p>
-                      <p className="text-xs text-slate-500">{row.department || "Chưa có đơn vị"}</p>
+            {rows.map((row, index) => {
+              const visual = getRankVisual(row.rank);
+
+              return (
+                <tr
+                  key={row.id}
+                  className={`border-t border-slate-100 transition duration-300 ${visual.tableRowClass || (index % 2 ? "bg-slate-50/70" : "bg-white")}`}
+                >
+                  <td className="relative overflow-hidden px-4 py-3">
+                    {visual.elite && (
+                      <span
+                        className="leaderboard-sweep pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-transparent via-white/80 to-transparent"
+                        style={{ animation: "leaderboardSweep 5.8s ease-in-out infinite" }}
+                      />
+                    )}
+                    <RankBadge rank={row.rank} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar image={row.image} name={row.name} rank={row.rank} />
+                      <div className="min-w-0">
+                        <p className="truncate font-extrabold text-emerald-950">{row.name}</p>
+                        <p className="truncate text-xs text-slate-500">{row.department || "Chưa có đơn vị"}</p>
+                        <RankTag rank={row.rank} />
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-4 py-3 tabular-nums">{row.voted}</td>
-                <td className="px-4 py-3 tabular-nums text-amber-700">{row.missed}</td>
-                <td className="px-4 py-3 tabular-nums text-emerald-700">{row.correct}</td>
-                <td className="px-4 py-3 tabular-nums text-red-700">{row.wrong}</td>
-                <td className="px-4 py-3 tabular-nums">{row.accuracy.toFixed(1)}%</td>
-                <td className="px-4 py-3 tabular-nums">{row.hopeStarUsed}</td>
-                <td className="px-4 py-3 tabular-nums text-amber-700">{row.hopeStarWrong}</td>
-                <td className="px-4 py-3 font-black text-red-700">{formatCurrency(row.loss)}</td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-4 py-3 font-semibold tabular-nums">{row.voted}</td>
+                  <td className="px-4 py-3 font-semibold tabular-nums text-amber-700">{row.missed}</td>
+                  <td className="px-4 py-3 font-black tabular-nums text-emerald-700">{row.correct}</td>
+                  <td className="px-4 py-3 font-semibold tabular-nums text-red-700">{row.wrong}</td>
+                  <td className="px-4 py-3">
+                    <AccuracyCell value={row.accuracy} rank={row.rank} />
+                  </td>
+                  <td className="px-4 py-3 font-semibold tabular-nums">{row.hopeStarUsed}</td>
+                  <td className="px-4 py-3 font-semibold tabular-nums text-amber-700">{row.hopeStarWrong}</td>
+                  <td className="px-4 py-3 font-black tabular-nums text-red-700">{formatCurrency(row.loss)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -116,15 +180,158 @@ export default async function LeaderboardPage() {
 
 type LeaderboardRow = Awaited<ReturnType<typeof getLeaderboard>>[number];
 
-function LeaderboardMobileCard({ row }: { row: LeaderboardRow }) {
+function getRankVisual(rank: number) {
+  if (rank === 1) {
+    return {
+      elite: true,
+      Icon: Crown,
+      tableRowClass: "leaderboard-row-gold",
+      mobileCardClass:
+        "border-amber-300 bg-[linear-gradient(135deg,#fff8d7_0%,#ffffff_52%,#fff1a8_100%)] shadow-amber-900/15",
+      mobileHaloClass: "bg-amber-300/45",
+      badgeClass:
+        "bg-amber-400 text-amber-950 ring-amber-200 shadow-lg shadow-amber-500/25",
+      tag: "Vua dự đoán",
+      tagClass: "bg-amber-500 text-amber-950 shadow-amber-500/25",
+      progressClass: "from-amber-400 via-yellow-300 to-amber-500",
+      avatarClass:
+        "ring-2 ring-amber-300 shadow-[0_0_0_4px_rgba(251,191,36,0.16),0_0_24px_rgba(245,158,11,0.35)]",
+    };
+  }
+
+  if (rank === 2) {
+    return {
+      elite: true,
+      Icon: Award,
+      tableRowClass: "leaderboard-row-silver",
+      mobileCardClass:
+        "border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_50%,#e8eef6_100%)] shadow-slate-900/10",
+      mobileHaloClass: "bg-slate-300/45",
+      badgeClass:
+        "bg-slate-200 text-slate-900 ring-slate-100 shadow-lg shadow-slate-400/20",
+      tag: "Bám sát",
+      tagClass: "bg-slate-900 text-white shadow-slate-900/15",
+      progressClass: "from-slate-400 via-slate-200 to-slate-500",
+      avatarClass:
+        "ring-2 ring-slate-300 shadow-[0_0_0_4px_rgba(148,163,184,0.15),0_0_20px_rgba(100,116,139,0.22)]",
+    };
+  }
+
+  if (rank === 3) {
+    return {
+      elite: true,
+      Icon: Flame,
+      tableRowClass: "leaderboard-row-bronze",
+      mobileCardClass:
+        "border-orange-200 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_52%,#ffedd5_100%)] shadow-orange-900/10",
+      mobileHaloClass: "bg-orange-300/42",
+      badgeClass:
+        "bg-orange-300 text-orange-950 ring-orange-100 shadow-lg shadow-orange-500/18",
+      tag: "Phong độ cao",
+      tagClass: "bg-orange-500 text-white shadow-orange-500/20",
+      progressClass: "from-orange-400 via-amber-300 to-orange-500",
+      avatarClass:
+        "ring-2 ring-orange-300 shadow-[0_0_0_4px_rgba(253,186,116,0.14),0_0_20px_rgba(249,115,22,0.24)]",
+    };
+  }
+
+  return {
+    elite: false,
+    Icon: Trophy,
+    tableRowClass: "",
+    mobileCardClass: "border-emerald-950/10 bg-white shadow-emerald-950/5",
+    mobileHaloClass: "",
+    badgeClass: "bg-emerald-950 text-white ring-emerald-900/10",
+    tag: "",
+    tagClass: "",
+    progressClass: "from-emerald-500 to-teal-400",
+    avatarClass: "ring-1 ring-emerald-200",
+  };
+}
+
+function RankBadge({ rank, compact = false }: { rank: number; compact?: boolean }) {
+  const visual = getRankVisual(rank);
+  const Icon = visual.Icon;
+
   return (
-    <article className="rounded-2xl border border-emerald-950/10 bg-white p-3 shadow-sm shadow-emerald-950/5">
-      <div className="flex items-center justify-between gap-2">
+    <div
+      className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden font-black ring-4 ${
+        compact ? "h-9 min-w-9 rounded-xl px-2 text-xs" : "h-10 min-w-10 rounded-2xl px-2.5 text-sm"
+      } ${visual.badgeClass}`}
+    >
+      {visual.elite && (
+        <span
+          className={`rank-halo pointer-events-none absolute inset-[-8px] rounded-2xl ${visual.mobileHaloClass}`}
+          style={{ animation: "rankHalo 2.9s ease-in-out infinite" }}
+        />
+      )}
+      <span className="relative z-10 inline-flex items-center gap-1">
+        {visual.elite && !compact && <Icon size={14} strokeWidth={2.5} aria-hidden="true" />}
+        #{rank}
+      </span>
+    </div>
+  );
+}
+
+function RankTag({ rank, compact = false }: { rank: number; compact?: boolean }) {
+  const visual = getRankVisual(rank);
+  const Icon = visual.Icon;
+
+  if (!visual.elite) {
+    return null;
+  }
+
+  return (
+    <span
+      className={`elite-lift mt-1 inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 font-black uppercase tracking-[0.1em] ${
+        compact ? "text-[9px]" : "text-[10px]"
+      } ${visual.tagClass}`}
+      style={{ animation: "eliteLift 3s ease-in-out infinite" }}
+    >
+      <Icon size={compact ? 11 : 12} strokeWidth={2.5} aria-hidden="true" />
+      <span className="truncate">{visual.tag}</span>
+    </span>
+  );
+}
+
+function AccuracyCell({ value, rank }: { value: number; rank: number }) {
+  return (
+    <div className="min-w-24">
+      <p className="font-black tabular-nums text-emerald-950">{value.toFixed(1)}%</p>
+      <AccuracyBar value={value} rank={rank} />
+    </div>
+  );
+}
+
+function AccuracyBar({ value, rank }: { value: number; rank: number }) {
+  const visual = getRankVisual(rank);
+  const safeValue = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
+
+  return (
+    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200/70">
+      <div
+        className={`h-full rounded-full bg-gradient-to-r ${visual.progressClass}`}
+        style={{ width: `${safeValue}%` }}
+      />
+    </div>
+  );
+}
+
+function LeaderboardMobileCard({ row }: { row: LeaderboardRow }) {
+  const visual = getRankVisual(row.rank);
+
+  return (
+    <article className={`relative overflow-hidden rounded-2xl border p-3 shadow-sm transition duration-300 active:scale-[0.99] ${visual.mobileCardClass}`}>
+      {visual.elite && (
+        <span
+          className={`rank-halo pointer-events-none absolute -right-5 -top-7 h-20 w-20 rounded-full ${visual.mobileHaloClass}`}
+          style={{ animation: "rankHalo 3.2s ease-in-out infinite" }}
+        />
+      )}
+      <div className="relative flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-950 text-sm font-black text-white">
-            #{row.rank}
-          </div>
-          <Avatar image={row.image} name={row.name} />
+          <RankBadge rank={row.rank} compact />
+          <Avatar image={row.image} name={row.name} rank={row.rank} />
           <div className="min-w-0">
             <p className="truncate text-base font-black text-emerald-950">
               {row.name}
@@ -136,6 +343,7 @@ function LeaderboardMobileCard({ row }: { row: LeaderboardRow }) {
               {row.accuracy.toFixed(0)}% chính xác
               {row.hopeStarUsed > 0 ? ` · ${row.hopeStarUsed} sao` : ""}
             </p>
+            <RankTag rank={row.rank} compact />
           </div>
         </div>
         <div className="shrink-0 text-right">
@@ -148,7 +356,11 @@ function LeaderboardMobileCard({ row }: { row: LeaderboardRow }) {
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-1.5">
+      <div className="relative mt-2">
+        <AccuracyBar value={row.accuracy} rank={row.rank} />
+      </div>
+
+      <div className="relative mt-3 flex flex-wrap gap-1.5">
         <MobileStat label="Chọn" value={String(row.voted)} />
         <MobileStat label="Đúng" value={String(row.correct)} tone="good" />
         <MobileStat label="Sai" value={String(row.wrong)} tone="bad" />
@@ -329,7 +541,7 @@ function PredictionKingCard({
         >
           {rankLabel}
         </div>
-        <Avatar image={row.image} name={row.name} size={index === 0 ? "lg" : "md"} />
+        <Avatar image={row.image} name={row.name} size={index === 0 ? "lg" : "md"} rank={index + 1} />
         <div className="min-w-0">
           <p className="truncate text-base font-black text-emerald-950">{row.name}</p>
           <p className="truncate text-xs font-semibold text-slate-500">
@@ -393,30 +605,51 @@ function Avatar({
   image,
   name,
   size = "md",
+  rank,
 }: {
   image: string | null;
   name: string;
   size?: "md" | "lg";
+  rank?: number;
 }) {
   const initial = name.trim().charAt(0).toUpperCase() || "U";
   const sizeClass =
     size === "lg"
       ? "h-12 w-12 rounded-2xl"
       : "h-10 w-10 rounded-2xl";
+  const visual = getRankVisual(rank ?? 99);
+  const avatarClass = `relative z-10 ${sizeClass} ${visual.avatarClass}`;
+
   if (image) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={image}
-        alt={`Ảnh đại diện của ${name}`}
-        className={`${sizeClass} object-cover ring-1 ring-emerald-200`}
-      />
+      <span className="relative inline-flex shrink-0">
+        {visual.elite && (
+          <span
+            className={`rank-halo pointer-events-none absolute inset-[-7px] rounded-2xl ${visual.mobileHaloClass}`}
+            style={{ animation: "rankHalo 3.4s ease-in-out infinite" }}
+          />
+        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={image}
+          alt={`Ảnh đại diện của ${name}`}
+          className={`${avatarClass} object-cover`}
+        />
+      </span>
     );
   }
 
   return (
-    <div className={`flex ${sizeClass} items-center justify-center bg-emerald-100 text-sm font-black text-emerald-900`}>
-      {initial}
-    </div>
+    <span className="relative inline-flex shrink-0">
+      {visual.elite && (
+        <span
+          className={`rank-halo pointer-events-none absolute inset-[-7px] rounded-2xl ${visual.mobileHaloClass}`}
+          style={{ animation: "rankHalo 3.4s ease-in-out infinite" }}
+        />
+      )}
+      <div className={`flex ${avatarClass} items-center justify-center bg-emerald-100 text-sm font-black text-emerald-900`}>
+        {initial}
+      </div>
+    </span>
   );
 }
