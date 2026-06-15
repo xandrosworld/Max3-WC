@@ -485,6 +485,9 @@ export default async function LeaderboardPage({
           box-shadow:
             0 12px 24px rgba(88, 28, 135, 0.12),
             0 0 0 1px rgba(255, 255, 255, 0.72) inset;
+          color: transparent;
+          font-size: 0;
+          line-height: 0;
           pointer-events: none;
         }
         .top-winner-gif::after {
@@ -497,10 +500,14 @@ export default async function LeaderboardPage({
         }
         .top-winner-gif .tenor-gif-embed,
         .top-winner-gif iframe {
+          display: block !important;
           width: 100% !important;
           height: 100% !important;
           min-height: 0 !important;
           border: 0 !important;
+          color: transparent !important;
+          font-size: 0 !important;
+          line-height: 0 !important;
         }
         .top-winner-gif a {
           color: transparent;
@@ -1001,7 +1008,7 @@ function TopWinnerGif() {
         <a href="https://tenor.com/view/football-world-cup-soccer-fans-gif-11935086" tabIndex={-1}>
           Football World Cup Soccer Fans GIF
         </a>
-        from <a href="https://tenor.com/search/football-gifs" tabIndex={-1}>Football GIFs</a>
+        <a href="https://tenor.com/search/football-gifs" tabIndex={-1}>Football GIFs</a>
       </div>
     </div>
   );
