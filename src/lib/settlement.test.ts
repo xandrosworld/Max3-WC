@@ -9,8 +9,12 @@ const txMock = vi.hoisted(() => ({
   user: {
     findMany: vi.fn(),
   },
+  vote: {
+    createMany: vi.fn(),
+  },
   lossTransaction: {
     createMany: vi.fn(),
+    groupBy: vi.fn(),
   },
   resultRevision: {
     create: vi.fn(),
@@ -52,7 +56,9 @@ describe("settleMatch hope star", () => {
     vi.clearAllMocks();
     txMock.match.update.mockResolvedValue({});
     txMock.user.findMany.mockResolvedValue([]);
+    txMock.vote.createMany.mockResolvedValue({});
     txMock.lossTransaction.createMany.mockResolvedValue({});
+    txMock.lossTransaction.groupBy.mockResolvedValue([]);
     txMock.resultRevision.create.mockResolvedValue({});
     txMock.matchResult.upsert.mockResolvedValue({ id: "result-1" });
     txMock.auditLog.create.mockResolvedValue({});
@@ -163,7 +169,7 @@ describe("settleMatch hope star", () => {
         role: "user",
         banned: false,
       },
-      select: { id: true },
+      select: { id: true, autoFollowUserId: true },
     });
     expect(txMock.lossTransaction.createMany).toHaveBeenCalledWith({
       data: [
@@ -172,6 +178,95 @@ describe("settleMatch hope star", () => {
           amount: 40_000,
           type: LossTransactionType.LOSS,
           note: "Không chọn; cửa đúng TEAM_B",
+        }),
+      ],
+    });
+  });
+
+  it("tự copy lựa chọn của người được theo nếu người chơi quên chọn", async () => {
+    txMock.user.findMany.mockResolvedValue([
+      { id: "leader", autoFollowUserId: null },
+      { id: "follower", autoFollowUserId: "leader" },
+    ]);
+    txMock.match.findUnique.mockResolvedValue(
+      baseMatch({
+        votes: [{ userId: "leader", choice: VoteChoice.TEAM_B, hopeStar: true }],
+      }),
+    );
+
+    await settleMatch({
+      matchId: "match-1",
+      teamAScore: 0,
+      teamBScore: 1,
+      adminId: "admin-1",
+    });
+
+    expect(txMock.vote.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          userId: "follower",
+          matchId: "match-1",
+          choice: VoteChoice.TEAM_B,
+          hopeStar: false,
+        },
+      ],
+      skipDuplicates: true,
+    });
+    expect(txMock.lossTransaction.createMany).not.toHaveBeenCalled();
+  });
+
+  it("Ngôi sao hy vọng đúng sẽ giảm đóng góp đang có, không âm quá số đang đóng", async () => {
+    txMock.lossTransaction.groupBy.mockResolvedValue([
+      { userId: "star", _sum: { amount: 20_000 } },
+    ]);
+    txMock.match.findUnique.mockResolvedValue(
+      baseMatch({
+        votes: [{ userId: "star", choice: VoteChoice.TEAM_B, hopeStar: true }],
+      }),
+    );
+
+    await settleMatch({
+      matchId: "match-1",
+      teamAScore: 0,
+      teamBScore: 1,
+      adminId: "admin-1",
+    });
+
+    expect(txMock.lossTransaction.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          userId: "star",
+          amount: -20_000,
+          type: LossTransactionType.LOSS,
+          note: "Ngôi sao hy vọng đúng; giảm đóng góp",
+        }),
+      ],
+    });
+  });
+
+  it("không cộng vượt trần đóng góp 2,5 triệu", async () => {
+    txMock.lossTransaction.groupBy.mockResolvedValue([
+      { userId: "near-cap", _sum: { amount: 2_490_000 } },
+    ]);
+    txMock.match.findUnique.mockResolvedValue(
+      baseMatch({
+        contributionAmount: 40_000,
+        votes: [{ userId: "near-cap", choice: VoteChoice.TEAM_A, hopeStar: false }],
+      }),
+    );
+
+    await settleMatch({
+      matchId: "match-1",
+      teamAScore: 0,
+      teamBScore: 1,
+      adminId: "admin-1",
+    });
+
+    expect(txMock.lossTransaction.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          userId: "near-cap",
+          amount: 10_000,
         }),
       ],
     });

@@ -3,6 +3,8 @@ import { MatchStatus, RoundType, TeamSide, VoteChoice } from "@prisma/client";
 import {
   calculateWinningChoice,
   canUseHopeStar,
+  formatCurrency,
+  getContributionChangeForVote,
   getContributionAmount,
   getLossAmountForVote,
   getPaymentStatus,
@@ -208,6 +210,31 @@ describe("settlement money rule", () => {
       80_000,
     );
   });
+
+  it("Ngôi sao hy vọng đúng chỉ giảm phần đang đóng góp, không vượt quá 0", () => {
+    expect(
+      getContributionChangeForVote({
+        choice: VoteChoice.DRAW,
+        winningChoice: VoteChoice.DRAW,
+        contributionAmount: 40_000,
+        hopeStar: true,
+        currentBalance: 20_000,
+      }),
+    ).toBe(-20_000);
+    expect(
+      getContributionChangeForVote({
+        choice: VoteChoice.DRAW,
+        winningChoice: VoteChoice.DRAW,
+        contributionAmount: 40_000,
+        hopeStar: true,
+        currentBalance: 100_000,
+      }),
+    ).toBe(-40_000);
+  });
+
+  it("đơn vị hiển thị là Belly", () => {
+    expect(formatCurrency(2_500_000)).toBe("2.500.000 Belly");
+  });
 });
 
 describe("hope star eligibility", () => {
@@ -215,8 +242,10 @@ describe("hope star eligibility", () => {
     expect(canUseHopeStar(RoundType.GROUP)).toBe(false);
   });
 
-  it("cho dùng từ vòng loại trực tiếp", () => {
-    expect(canUseHopeStar(RoundType.ROUND_OF_32)).toBe(true);
+  it("chỉ cho dùng từ tứ kết trở đi", () => {
+    expect(canUseHopeStar(RoundType.ROUND_OF_32)).toBe(false);
+    expect(canUseHopeStar(RoundType.ROUND_OF_16)).toBe(false);
+    expect(canUseHopeStar(RoundType.QUARTER_FINAL)).toBe(true);
     expect(canUseHopeStar(RoundType.FINAL)).toBe(true);
   });
 });

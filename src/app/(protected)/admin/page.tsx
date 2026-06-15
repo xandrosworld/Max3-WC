@@ -606,7 +606,7 @@ binh.tran,Bình Trần,Marketing`}
                     Xóa người chơi này
                   </summary>
                   <p className="mt-2 text-xs leading-5 text-red-700">
-                    Xóa luôn lựa chọn, điểm quỹ và lịch sử nộp của người này. Chỉ dùng khi tạo nhầm tài khoản.
+                    Xóa luôn lựa chọn, đóng góp và lịch sử ghi nhận của người này. Chỉ dùng khi tạo nhầm tài khoản.
                   </p>
                   <form action={deleteUserAction} className="mt-2">
                     <input type="hidden" name="id" value={user.id} />
@@ -619,13 +619,13 @@ binh.tran,Bình Trần,Marketing`}
         </div>
       </AdminSection>
 
-      <AdminSection id="payments" title="Quỹ nội bộ" description="Ghi nhận phần quỹ nội bộ đã hoàn tất. Nếu nhập sai thì hủy bản ghi và nhập lại.">
+      <AdminSection id="payments" title="Đóng góp nội bộ" description="Ghi nhận phần đóng góp đã hoàn tất. Nếu nhập sai thì hủy bản ghi và nhập lại.">
         <form action={addPaymentAction} className="grid gap-3 rounded-2xl bg-emerald-50 p-4 md:grid-cols-4">
           <select name="userId" required className={inputClass}>
-            <option value="">Chọn người nộp</option>
+            <option value="">Chọn người chơi</option>
             {users.map((user) => <option key={user.id} value={user.id}>{user.name} · {user.department}</option>)}
           </select>
-          <input name="amount" required type="number" min="1" step="1000" placeholder="Số điểm quỹ" className={inputClass} />
+          <input name="amount" required type="number" min="1" step="1000" placeholder="Số Belly" className={inputClass} />
           <input name="paidAt" required type="datetime-local" defaultValue={toVietnamDateTimeLocal(new Date())} className={inputClass} />
           <input name="note" placeholder="Ghi chú" className={inputClass} />
           <button className={`${buttonClass} md:col-span-4`}>Ghi nhận hoàn tất</button>
@@ -633,7 +633,7 @@ binh.tran,Bình Trần,Marketing`}
         <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200">
           <table className="w-full min-w-[850px] text-sm">
             <thead className="bg-slate-800 text-left text-white">
-              <tr>{["Người hoàn tất", "Điểm quỹ", "Ngày giờ", "Ghi chú", "Xác nhận", "Trạng thái", "Thao tác"].map((x) => <th key={x} className="px-3 py-2">{x}</th>)}</tr>
+              <tr>{["Người chơi", "Đóng góp", "Ngày giờ", "Ghi chú", "Xác nhận", "Trạng thái", "Thao tác"].map((x) => <th key={x} className="px-3 py-2">{x}</th>)}</tr>
             </thead>
             <tbody>
               {payments.map((payment) => (

@@ -57,6 +57,7 @@ model User {
   banExpires         DateTime?
   department         String   @default("")
   mustChangePassword Boolean  @default(false)
+  autoFollowUserId   String?
 
   sessions           Session[]
   accounts           Account[]
@@ -68,6 +69,10 @@ model User {
   settledResults     MatchResult[]     @relation("ResultSettler")
   resultRevisions    ResultRevision[]  @relation("RevisionCreator")
   auditLogs          AuditLog[]        @relation("AuditActor")
+  autoFollowUser     User?             @relation("UserAutoFollow", fields: [autoFollowUserId], references: [id], onDelete: SetNull)
+  autoFollowers      User[]            @relation("UserAutoFollow")
+
+  @@index([autoFollowUserId])
 }
 
 model Session {

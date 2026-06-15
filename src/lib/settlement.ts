@@ -3,7 +3,12 @@ import {
   MatchStatus,
   Prisma,
 } from "@prisma/client";
-import { calculateWinningChoice, getLossAmountForVote } from "./domain";
+import {
+  calculateWinningChoice,
+  clampContributionBalance,
+  getContributionChangeForVote,
+  MAX_CONTRIBUTION_BALANCE,
+} from "./domain";
 import { prisma } from "./prisma";
 
 export async function settleMatch(input: {
@@ -101,35 +106,107 @@ export async function settleMatch(input: {
           role: "user",
           banned: false,
         },
-        select: { id: true },
+        select: { id: true, autoFollowUserId: true },
       });
-      const votedUserIds = new Set(match.votes.map((vote) => vote.userId));
+      const votes = [...match.votes];
+      const voteByUserId = new Map(votes.map((vote) => [vote.userId, vote]));
+      const autoVotes = eligibleUsers.flatMap((user) => {
+        if (voteByUserId.has(user.id) || !user.autoFollowUserId) return [];
+        const followedVote = voteByUserId.get(user.autoFollowUserId);
+        if (!followedVote) return [];
+        return {
+          userId: user.id,
+          matchId: match.id,
+          choice: followedVote.choice,
+          hopeStar: false,
+        };
+      });
 
-      const voteLosses = match.votes.flatMap((vote) => {
-        const amount = getLossAmountForVote(
-          vote.choice,
+      if (autoVotes.length > 0) {
+        await tx.vote.createMany({ data: autoVotes, skipDuplicates: true });
+        for (const vote of autoVotes) {
+          const copiedVote = {
+            id: `auto-${vote.userId}-${match.id}`,
+            userId: vote.userId,
+            matchId: match.id,
+            choice: vote.choice,
+            hopeStar: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          votes.push(copiedVote);
+          voteByUserId.set(vote.userId, copiedVote);
+        }
+      }
+
+      const involvedUserIds = [
+        ...new Set([
+          ...eligibleUsers.map((user) => user.id),
+          ...votes.map((vote) => vote.userId),
+        ]),
+      ];
+      const balanceRows =
+        involvedUserIds.length > 0
+          ? await tx.lossTransaction.groupBy({
+              by: ["userId"],
+              where: { userId: { in: involvedUserIds } },
+              _sum: { amount: true },
+            })
+          : [];
+      const balances = new Map(
+        balanceRows.map((row) => [
+          row.userId,
+          clampContributionBalance(row._sum.amount ?? 0),
+        ]),
+      );
+      const changeForUser = (userId: string, rawAmount: number) => {
+        const current = balances.get(userId) ?? 0;
+        let amount = rawAmount;
+
+        if (rawAmount > 0) {
+          amount = Math.min(rawAmount, MAX_CONTRIBUTION_BALANCE - current);
+        }
+        if (rawAmount < 0) {
+          amount = -Math.min(Math.abs(rawAmount), current);
+        }
+        if (amount === 0) return 0;
+        balances.set(userId, clampContributionBalance(current + amount));
+        return amount;
+      };
+      const votedUserIds = new Set(votes.map((vote) => vote.userId));
+
+      const voteLosses = votes.flatMap((vote) => {
+        const rawAmount = getContributionChangeForVote({
+          choice: vote.choice,
           winningChoice,
-          match.contributionAmount,
-          vote.hopeStar,
-        );
-        if (amount <= 0) return [];
+          contributionAmount: match.contributionAmount,
+          hopeStar: vote.hopeStar,
+          currentBalance: balances.get(vote.userId) ?? 0,
+        });
+        const amount = changeForUser(vote.userId, rawAmount);
+        if (amount === 0) return [];
         return {
           userId: vote.userId,
           matchId: match.id,
           amount,
           type: LossTransactionType.LOSS,
           settlementRevision: revision,
-          note: vote.hopeStar
-            ? `Ngôi sao hy vọng sai; cửa đúng ${winningChoice}`
-            : `Sai cửa ${vote.choice}; cửa đúng ${winningChoice}`,
+          note:
+            amount < 0
+              ? `Ngôi sao hy vọng đúng; giảm đóng góp`
+              : vote.hopeStar
+                ? `Ngôi sao hy vọng sai; cửa đúng ${winningChoice}`
+                : `Sai cửa ${vote.choice}; cửa đúng ${winningChoice}`,
         };
       });
       const missingVoteLosses = eligibleUsers.flatMap((user) => {
         if (votedUserIds.has(user.id)) return [];
+        const amount = changeForUser(user.id, match.contributionAmount);
+        if (amount === 0) return [];
         return {
           userId: user.id,
           matchId: match.id,
-          amount: match.contributionAmount,
+          amount,
           type: LossTransactionType.LOSS,
           settlementRevision: revision,
           note: `Không chọn; cửa đúng ${winningChoice}`,
@@ -177,6 +254,7 @@ export async function settleMatch(input: {
             teamAScore: input.teamAScore,
             teamBScore: input.teamBScore,
             winningChoice,
+            autoCopiedVotes: autoVotes.length,
           } satisfies Prisma.InputJsonValue,
         },
       });

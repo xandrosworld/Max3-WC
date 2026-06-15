@@ -9,13 +9,16 @@ import {
 } from "react";
 import {
   changePasswordAction,
+  updateAutoFollowAction,
   updateProfileAction,
+  type AutoFollowState,
   type ChangePasswordState,
   type ProfileState,
 } from "@/app/actions";
 
 const initialProfileState: ProfileState = { error: "", success: "" };
 const initialPasswordState: ChangePasswordState = { error: "" };
+const initialAutoFollowState: AutoFollowState = { error: "" };
 
 export function ProfileForm({
   name,
@@ -215,6 +218,74 @@ export function PasswordForm() {
         className="w-full rounded-xl bg-emerald-700 px-4 py-3 font-bold text-white shadow-lg shadow-emerald-900/15 hover:bg-emerald-800 disabled:opacity-60"
       >
         {pending ? "Đang đổi mật khẩu..." : "Đổi mật khẩu"}
+      </button>
+    </form>
+  );
+}
+
+export function AutoFollowForm({
+  currentAutoFollowUserId,
+  options,
+}: {
+  currentAutoFollowUserId: string | null;
+  options: Array<{
+    id: string;
+    name: string;
+    department: string;
+    image: string | null;
+  }>;
+}) {
+  const [state, formAction, pending] = useActionState(
+    updateAutoFollowAction,
+    initialAutoFollowState,
+  );
+
+  return (
+    <form action={formAction} className="space-y-4 rounded-3xl bg-white p-6 shadow-lg shadow-emerald-950/5">
+      <div>
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-700">
+          Khi bận không kịp chọn
+        </p>
+        <h2 className="mt-1 text-xl font-extrabold text-emerald-950">
+          Tự theo lựa chọn của một người
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Nếu bạn chưa chọn trước giờ khóa, hệ thống sẽ tự lấy lựa chọn của người này.
+          Ngôi sao hy vọng sẽ không được tự bật.
+        </p>
+      </div>
+
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-semibold text-emerald-950">
+          Người muốn theo
+        </span>
+        <select
+          name="autoFollowUserId"
+          defaultValue={currentAutoFollowUserId ?? ""}
+          className="w-full rounded-xl border border-emerald-950/15 bg-white px-4 py-3 outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+        >
+          <option value="">Không tự theo ai</option>
+          {options.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.name}
+              {option.department ? ` · ${option.department}` : ""}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+        Bạn vẫn có thể tự chọn từng trận như bình thường. Tự theo chỉ chạy khi bạn quên chọn.
+      </div>
+
+      {state.error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{state.error}</p>}
+      {state.success && <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{state.success}</p>}
+
+      <button
+        disabled={pending}
+        className="w-full rounded-xl bg-emerald-700 px-4 py-3 font-bold text-white shadow-lg shadow-emerald-900/15 hover:bg-emerald-800 disabled:opacity-60"
+      >
+        {pending ? "Đang lưu..." : "Lưu cài đặt tự theo"}
       </button>
     </form>
   );

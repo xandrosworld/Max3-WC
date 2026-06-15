@@ -1,5 +1,9 @@
 import { VoteChoice } from "@prisma/client";
-import { calculateAccuracy, getPaymentStatus } from "./domain";
+import {
+  calculateAccuracy,
+  clampContributionBalance,
+  getPaymentStatus,
+} from "./domain";
 import { prisma } from "./prisma";
 
 export async function getLeaderboard() {
@@ -53,7 +57,9 @@ export async function getLeaderboard() {
         vote.match.result &&
         vote.match.result.winningChoice !== (vote.choice as VoteChoice),
     ).length;
-    const loss = user.lossTransactions.reduce((sum, row) => sum + row.amount, 0);
+    const loss = clampContributionBalance(
+      user.lossTransactions.reduce((sum, row) => sum + row.amount, 0),
+    );
     const paid = user.payments.reduce((sum, row) => sum + row.amount, 0);
 
     return {

@@ -241,7 +241,7 @@ export async function voteAction(formData: FormData) {
     throw new Error("Kèo nửa trái chỉ có hai cửa đội A hoặc đội B");
   }
   if (requestedHopeStar && !canUseHopeStar(match.round)) {
-    throw new Error("Ngôi sao hy vọng chỉ dùng từ vòng loại trực tiếp");
+    throw new Error("Ngôi sao hy vọng chỉ dùng từ tứ kết trở đi");
   }
 
   const existingVote = await prisma.vote.findUnique({
@@ -999,8 +999,8 @@ export async function voidPaymentAction(formData: FormData) {
   const id = formString(formData, "id");
   const reason = z.string().trim().min(2).max(300).parse(formString(formData, "reason"));
   const payment = await prisma.payment.findUnique({ where: { id } });
-  if (!payment) throw new Error("Không tìm thấy khoản nộp");
-  if (payment.voidedAt) throw new Error("Khoản nộp này đã bị hủy");
+  if (!payment) throw new Error("Không tìm thấy khoản đóng góp");
+  if (payment.voidedAt) throw new Error("Khoản đóng góp này đã bị hủy");
   await prisma.payment.update({
     where: { id },
     data: { voidedAt: new Date(), voidedById: admin.id, voidReason: reason },
@@ -1013,6 +1013,11 @@ export async function voidPaymentAction(formData: FormData) {
 export type ProfileState = {
   error: string;
   success: string;
+};
+
+export type AutoFollowState = {
+  error: string;
+  success?: string;
 };
 
 async function avatarFileToDataUrl(file: File) {
@@ -1073,6 +1078,56 @@ export async function updateProfileAction(
   revalidatePath("/matches");
   revalidatePath("/leaderboard");
   return { error: "", success: "Đã lưu hồ sơ." };
+}
+
+export async function updateAutoFollowAction(
+  _previousState: AutoFollowState,
+  formData: FormData,
+): Promise<AutoFollowState> {
+  const user = await requireUser();
+  const autoFollowUserId = formString(formData, "autoFollowUserId").trim();
+
+  if (!autoFollowUserId) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { autoFollowUserId: null },
+    });
+    revalidatePath("/profile");
+    revalidatePath("/matches");
+    return {
+      error: "",
+      success: "Đã tắt tự theo. Nếu quên chọn, bạn sẽ bị tính là không chọn.",
+    };
+  }
+
+  if (autoFollowUserId === user.id) {
+    return { error: "Bạn không thể tự theo chính mình." };
+  }
+
+  const target = await prisma.user.findFirst({
+    where: {
+      id: autoFollowUserId,
+      role: "user",
+      banned: false,
+    },
+    select: { id: true, name: true },
+  });
+
+  if (!target) {
+    return { error: "Không tìm thấy người chơi để theo." };
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { autoFollowUserId: target.id },
+  });
+
+  revalidatePath("/profile");
+  revalidatePath("/matches");
+  return {
+    error: "",
+    success: `Đã lưu. Nếu bạn quên chọn, hệ thống sẽ tự theo ${target.name}.`,
+  };
 }
 
 const changePasswordSchema = z.object({

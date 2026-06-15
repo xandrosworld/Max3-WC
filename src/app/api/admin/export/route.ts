@@ -30,17 +30,17 @@ export async function GET() {
     { header: "Độ chính xác (%)", key: "accuracy", width: 16 },
     { header: "Ngôi sao đã dùng", key: "hopeStarUsed", width: 18 },
     { header: "Ngôi sao sai", key: "hopeStarWrong", width: 16 },
-    { header: "Phải nộp", key: "loss", width: 20 },
+    { header: "Đóng góp", key: "loss", width: 20 },
   ];
   leaderboard.forEach((row) => sheet.addRow({ ...row, accuracy: Number(row.accuracy.toFixed(2)) }));
   sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
   sheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF064E3B" } };
-  sheet.getColumn("K").numFmt = '#,##0" đ"';
+  sheet.getColumn("K").numFmt = '#,##0" Belly"';
 
-  const paymentSheet = workbook.addWorksheet("Quỹ nội bộ");
+  const paymentSheet = workbook.addWorksheet("Đóng góp nội bộ");
   paymentSheet.columns = [
     { header: "Họ tên", key: "name", width: 28 },
-    { header: "Điểm quỹ", key: "amount", width: 18 },
+    { header: "Đóng góp", key: "amount", width: 18 },
     { header: "Ngày giờ", key: "paidAt", width: 24 },
     { header: "Ghi chú", key: "note", width: 30 },
     { header: "Người xác nhận", key: "confirmedBy", width: 26 },
@@ -58,7 +58,7 @@ export async function GET() {
   );
   paymentSheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
   paymentSheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF064E3B" } };
-  paymentSheet.getColumn("B").numFmt = '#,##0" đ"';
+  paymentSheet.getColumn("B").numFmt = '#,##0" Belly"';
 
   const buffer = await workbook.xlsx.writeBuffer();
   return new Response(new Uint8Array(buffer), {

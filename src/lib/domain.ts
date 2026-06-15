@@ -6,6 +6,7 @@ import {
 } from "@prisma/client";
 
 export const LOCK_MINUTES = 5;
+export const MAX_CONTRIBUTION_BALANCE = 2_500_000;
 
 export const ROUND_LABELS: Record<RoundType, string> = {
   GROUP: "Vòng bảng",
@@ -32,7 +33,13 @@ export function getContributionAmount(round: RoundType) {
 }
 
 export function canUseHopeStar(round: RoundType) {
-  return round !== RoundType.GROUP;
+  const hopeStarRounds: RoundType[] = [
+    RoundType.QUARTER_FINAL,
+    RoundType.SEMI_FINAL,
+    RoundType.THIRD_PLACE,
+    RoundType.FINAL,
+  ];
+  return hopeStarRounds.includes(round);
 }
 
 export function isValidHandicap(handicap: number) {
@@ -101,6 +108,29 @@ export function getLossAmountForVote(
   return choice === winningChoice ? 0 : contributionAmount * (hopeStar ? 2 : 1);
 }
 
+export function clampContributionBalance(amount: number) {
+  if (!Number.isFinite(amount)) return 0;
+  return Math.max(0, Math.min(MAX_CONTRIBUTION_BALANCE, amount));
+}
+
+export function getContributionChangeForVote(input: {
+  choice: VoteChoice;
+  winningChoice: VoteChoice;
+  contributionAmount: number;
+  hopeStar?: boolean;
+  currentBalance?: number;
+}) {
+  if (input.choice === input.winningChoice) {
+    if (!input.hopeStar) return 0;
+    return -Math.min(
+      input.contributionAmount,
+      clampContributionBalance(input.currentBalance ?? 0),
+    );
+  }
+
+  return input.contributionAmount * (input.hopeStar ? 2 : 1);
+}
+
 export function formatHandicap(input: {
   teamA: string;
   teamB: string;
@@ -116,11 +146,9 @@ export function formatHandicap(input: {
 }
 
 export function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
+  return `${new Intl.NumberFormat("vi-VN", {
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(amount)} Belly`;
 }
 
 export function formatVietnamTime(value: Date | string) {

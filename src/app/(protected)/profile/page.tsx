@@ -1,10 +1,28 @@
-import { PasswordForm, ProfileForm } from "@/components/profile-forms";
+import { AutoFollowForm, PasswordForm, ProfileForm } from "@/components/profile-forms";
+import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
   const user = await requireUser();
+  const autoFollowOptions =
+    user.role === "user"
+      ? await prisma.user.findMany({
+          where: {
+            role: "user",
+            banned: false,
+            id: { not: user.id },
+          },
+          orderBy: { name: "asc" },
+          select: {
+            id: true,
+            name: true,
+            department: true,
+            image: true,
+          },
+        })
+      : [];
 
   return (
     <div className="space-y-6">
@@ -26,6 +44,13 @@ export default async function ProfilePage() {
         />
         <PasswordForm />
       </div>
+
+      {user.role === "user" && (
+        <AutoFollowForm
+          currentAutoFollowUserId={user.autoFollowUserId}
+          options={autoFollowOptions}
+        />
+      )}
     </div>
   );
 }

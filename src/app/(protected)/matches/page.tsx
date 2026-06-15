@@ -71,6 +71,12 @@ export default async function MatchesPage({
   const savedMatchId = typeof params.match === "string" ? params.match : null;
   const now = new Date();
   const activeExtraFilter = extraFilters.find((filter) => filter.id === activeFilter);
+  const autoFollowTarget = user.autoFollowUserId
+    ? await prisma.user.findUnique({
+        where: { id: user.autoFollowUserId },
+        select: { name: true, department: true },
+      })
+    : null;
 
   const matches = await prisma.match.findMany({
     where: {
@@ -400,7 +406,7 @@ export default async function MatchesPage({
                                     {formatHandicap(match)}
                                   </span>
                                   <span className="rounded-lg bg-white px-2.5 py-1.5 text-slate-600 ring-1 ring-slate-200">
-                                    Điểm quỹ {formatCurrency(match.contributionAmount)}
+                                    Đóng góp {formatCurrency(match.contributionAmount)}
                                   </span>
                                   <span className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-emerald-800 ring-1 ring-emerald-100">
                                     {participantCount > 0
@@ -469,7 +475,7 @@ export default async function MatchesPage({
                                   <span className="font-bold">
                                     {hopeStarAllowed
                                       ? "Bật Ngôi sao hy vọng"
-                                      : "Ngôi sao mở từ vòng loại trực tiếp"}
+                                      : "Ngôi sao mở từ tứ kết"}
                                   </span>
                                 </label>
 
@@ -513,6 +519,31 @@ export default async function MatchesPage({
         </div>
 
         <aside className="space-y-4 xl:sticky xl:top-24">
+          <section className="rounded-2xl border border-emerald-900/10 bg-white p-4 shadow-sm shadow-emerald-950/5">
+            <div>
+              <h2 className="font-extrabold text-[#082d24]">Tự theo khi quên</h2>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                Nếu quá giờ mà bạn chưa chọn, hệ thống có thể tự theo một người bạn đã cài trước.
+              </p>
+            </div>
+            {autoFollowTarget ? (
+              <div className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-900">
+                Đang theo {autoFollowTarget.name}
+                {autoFollowTarget.department ? ` · ${autoFollowTarget.department}` : ""}
+              </div>
+            ) : (
+              <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600">
+                Chưa chọn ai để tự theo.
+              </p>
+            )}
+            <a
+              href="/profile"
+              className="mt-3 inline-flex text-sm font-bold text-emerald-700 hover:text-emerald-900"
+            >
+              Cài đặt trong hồ sơ
+            </a>
+          </section>
+
           <section className="rounded-2xl border border-emerald-900/10 bg-white p-4 shadow-sm shadow-emerald-950/5">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -712,7 +743,7 @@ function SettledMatchSummary({
         >
           Bạn dự đoán {correct ? "đúng" : "sai"}
           {!correct &&
-            ` · Điểm quỹ +${formatCurrency(
+            ` · Đóng góp +${formatCurrency(
               match.contributionAmount * (myVote.hopeStar ? 2 : 1),
             )}`}
         </div>
@@ -743,7 +774,7 @@ function LockedMatchSummary({
           {formatHandicap(match)}
         </span>
         <span className="rounded-lg bg-white px-2.5 py-1.5 text-slate-600 ring-1 ring-slate-200">
-          Điểm quỹ {formatCurrency(match.contributionAmount)}
+          Đóng góp {formatCurrency(match.contributionAmount)}
         </span>
       </div>
       <p className="text-sm font-semibold text-slate-600">

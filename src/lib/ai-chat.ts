@@ -51,9 +51,10 @@ export function buildWorldCupChatReply(question: string, context: ChatContext) {
       "- Kèo chấp số nguyên có ba cửa: đội A, Hòa-sau-chấp hoặc đội B.",
       "- Kèo nửa trái như 0,5 hoặc 1,5 chỉ có hai cửa đội A hoặc đội B.",
       "- Admin đặt mức chấp trước trận. Tỷ số tính theo 90 phút chính thức.",
-      "- Chọn đúng thì điểm quỹ không phát sinh. Chọn sai thì ghi nhận điểm quỹ theo mức của vòng.",
-      "- Ngôi sao hy vọng chỉ dùng từ vòng loại trực tiếp: nếu sai thì điểm quỹ trận đó nhân đôi.",
-      "- Không chọn trước giờ khóa thì tính như thua và phải nộp theo mức của vòng.",
+      "- Chọn đúng thì không tăng đóng góp. Chọn sai thì ghi nhận đóng góp theo mức của vòng.",
+      "- Ngôi sao hy vọng chỉ dùng từ tứ kết trở đi: đúng thì giảm đóng góp bằng mức trận đó, sai thì đóng góp trận đó nhân đôi.",
+      "- Không chọn trước giờ khóa thì tính như thua và ghi nhận đóng góp theo mức của vòng.",
+      "- Nếu đã cài tự theo một người, hệ thống chỉ copy lựa chọn khi bạn quên chọn; Ngôi sao hy vọng không tự copy.",
       "- Đây là dự đoán vui nội bộ, không phải nền tảng cá cược.",
     ].join("\n");
   }
@@ -72,9 +73,9 @@ export function buildWorldCupChatReply(question: string, context: ChatContext) {
   if (includesAny(normalized, ["bang xep hang", "top", "ai dang", "quy", "thua nhieu", "gop nhieu"])) {
     if (context.leaderboard.length === 0) return "Bảng xếp hạng chưa có người chơi nào.";
     return [
-      "Top điểm quỹ nội bộ hiện tại:",
+      "Top đóng góp nội bộ hiện tại:",
       ...context.leaderboard.slice(0, 5).map((row, index) =>
-        `${index + 1}. ${row.name}: phải nộp ${formatCurrency(row.loss)} · đúng ${row.correct}, sai ${row.wrong}, quên chọn ${row.missed}, dùng Ngôi sao ${row.hopeStarUsed} lần.`,
+        `${index + 1}. ${row.name}: đóng góp ${formatCurrency(row.loss)} · đúng ${row.correct}, sai ${row.wrong}, quên chọn ${row.missed}, dùng Ngôi sao ${row.hopeStarUsed} lần.`,
       ),
     ].join("\n");
   }
@@ -115,7 +116,7 @@ function buildPrediction(match: ChatMatch) {
 
   return [
     `Dự đoán vui cho ${match.teamA} vs ${match.teamB}: tôi nghiêng nhẹ về cửa ${choiceLabel(suggestedChoice, match.teamA, match.teamB)}.`,
-    `Mức chấp hiện tại: ${formatHandicap(match)} · điểm quỹ ${formatCurrency(match.contributionAmount)}.`,
+    `Mức chấp hiện tại: ${formatHandicap(match)} · đóng góp ${formatCurrency(match.contributionAmount)}.`,
     `Số người đã chọn: ${voteSummary}.`,
     "Đây chỉ là tham khảo vui dựa trên dữ liệu trong portal, không phải lời khuyên tài chính hay ăn thua.",
   ].join("\n");
