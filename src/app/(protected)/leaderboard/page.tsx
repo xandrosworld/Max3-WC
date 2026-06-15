@@ -68,6 +68,25 @@ export default async function LeaderboardPage({
         @keyframes wcRingSpin {
           to { transform: rotate(360deg); }
         }
+        @keyframes wcLightningOrbit {
+          0% { transform: rotate(0deg) scale(1); }
+          18% { transform: rotate(68deg) scale(1.03); }
+          21% { transform: rotate(82deg) scale(0.98); }
+          43% { transform: rotate(158deg) scale(1.02); }
+          47% { transform: rotate(178deg) scale(1); }
+          70% { transform: rotate(258deg) scale(1.04); }
+          74% { transform: rotate(276deg) scale(0.99); }
+          100% { transform: rotate(360deg) scale(1); }
+        }
+        @keyframes wcLightningFlicker {
+          0%, 100% { opacity: 0.36; filter: drop-shadow(0 0 3px currentColor); }
+          12% { opacity: 1; filter: drop-shadow(0 0 12px currentColor); }
+          18% { opacity: 0.58; }
+          31% { opacity: 0.92; filter: drop-shadow(0 0 10px currentColor); }
+          48% { opacity: 0.28; }
+          63% { opacity: 0.86; }
+          76% { opacity: 0.46; }
+        }
         @keyframes wcSpark {
           0%, 100% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.7); }
           20% { opacity: 1; }
@@ -220,26 +239,126 @@ export default async function LeaderboardPage({
           position: absolute;
           inset: -2px;
           border-radius: 20px;
-          background:
-            conic-gradient(from 20deg, transparent 0 10%, var(--rank-accent) 18%, #ffffff 26%, var(--rank-accent-2, var(--rank-accent)) 34%, transparent 46% 100%);
+          background: transparent;
+          box-shadow:
+            0 0 0 1px rgba(255,255,255,0.58),
+            0 0 16px var(--rank-glow);
           animation: wcRingSpin 3.8s linear infinite;
-          opacity: 0.95;
-          filter: drop-shadow(0 0 10px var(--rank-glow));
+          opacity: 0.46;
+          filter: blur(0.2px) drop-shadow(0 0 8px var(--rank-glow));
         }
         .rank-gold .avatar-ring {
           inset: -5px;
           border-radius: 26px;
-          background:
-            conic-gradient(from -40deg, transparent 0 6%, #7c3aed 10%, #ffffff 15%, #c084fc 22%, transparent 30% 43%, #a855f7 50%, #f5d0fe 57%, transparent 66% 100%);
-          animation-duration: 2.15s;
-          filter: drop-shadow(0 0 14px rgba(139, 92, 246, 0.72));
+          box-shadow:
+            0 0 0 1px rgba(216, 180, 254, 0.48),
+            0 0 20px rgba(139, 92, 246, 0.62);
+          animation-duration: 3.2s;
+          opacity: 0.36;
+          filter: blur(0.4px) drop-shadow(0 0 16px rgba(139, 92, 246, 0.72));
         }
         .rank-silver .avatar-ring {
           inset: -3px;
+          box-shadow:
+            0 0 0 1px rgba(254, 215, 170, 0.52),
+            0 0 16px rgba(249, 115, 22, 0.46);
+          animation-duration: 3.9s;
+          opacity: 0.34;
+          filter: blur(0.3px) drop-shadow(0 0 12px rgba(249, 115, 22, 0.52));
+        }
+        .avatar-lightning-ring {
+          position: absolute;
+          inset: -7px;
+          z-index: 16;
+          border-radius: 28px;
+          color: var(--rank-accent);
+          animation: wcLightningOrbit 2.75s steps(9, end) infinite;
+          filter: drop-shadow(0 0 9px currentColor);
+        }
+        .rank-gold .avatar-lightning-ring {
+          inset: -11px;
+          color: #a855f7;
+          animation-duration: 1.75s;
+          filter: drop-shadow(0 0 14px #a855f7);
+        }
+        .rank-silver .avatar-lightning-ring {
+          inset: -9px;
+          color: #f97316;
+          animation-duration: 2.35s;
+          filter: drop-shadow(0 0 11px #fb923c);
+        }
+        .rank-bronze .avatar-lightning-ring {
+          inset: -7px;
+          color: #fb923c;
+          animation-duration: 3.15s;
+          opacity: 0.82;
+        }
+        .avatar-bolt-segment {
+          position: absolute;
+          z-index: 16;
+          width: 25px;
+          height: 10px;
+          color: inherit;
           background:
-            conic-gradient(from 30deg, transparent 0 12%, #ef4444 19%, #fff7ed 26%, #f97316 34%, transparent 48% 100%);
-          animation-duration: 3.05s;
-          filter: drop-shadow(0 0 12px rgba(249, 115, 22, 0.55));
+            linear-gradient(90deg, transparent 0 5%, currentColor 12%, #ffffff 46%, currentColor 82%, transparent 100%);
+          clip-path: polygon(0 56%, 10% 35%, 22% 58%, 34% 18%, 47% 64%, 60% 34%, 73% 56%, 88% 20%, 100% 48%, 90% 65%, 76% 45%, 62% 78%, 48% 43%, 35% 84%, 22% 49%, 9% 72%);
+          animation: wcLightningFlicker 1.35s steps(4, end) infinite;
+        }
+        .avatar-bolt-segment-a {
+          left: 50%;
+          top: -2px;
+          transform: translate(-50%, -50%);
+        }
+        .avatar-bolt-segment-b {
+          right: -8px;
+          top: 50%;
+          transform: translate(50%, -50%) rotate(90deg);
+          animation-delay: 0.18s;
+        }
+        .avatar-bolt-segment-c {
+          bottom: -2px;
+          left: 50%;
+          transform: translate(-50%, 50%) rotate(180deg);
+          animation-delay: 0.36s;
+        }
+        .avatar-bolt-segment-d {
+          left: -8px;
+          top: 50%;
+          transform: translate(-50%, -50%) rotate(270deg);
+          animation-delay: 0.54s;
+        }
+        .avatar-bolt-segment-e,
+        .avatar-bolt-segment-f {
+          display: none;
+          width: 19px;
+          height: 9px;
+        }
+        .rank-gold .avatar-bolt-segment {
+          width: 29px;
+          height: 11px;
+          animation-duration: 0.96s;
+          background:
+            linear-gradient(90deg, transparent 0 4%, #7c3aed 13%, #ffffff 45%, #d8b4fe 59%, #8b5cf6 84%, transparent 100%);
+        }
+        .rank-gold .avatar-bolt-segment-e {
+          display: block;
+          right: 0px;
+          top: 3px;
+          transform: translate(42%, -42%) rotate(45deg);
+          animation-delay: 0.22s;
+        }
+        .rank-gold .avatar-bolt-segment-f {
+          display: block;
+          left: 0px;
+          bottom: 3px;
+          transform: translate(-42%, 42%) rotate(225deg);
+          animation-delay: 0.66s;
+        }
+        .rank-silver .avatar-bolt-segment {
+          width: 24px;
+          animation-duration: 1.22s;
+          background:
+            linear-gradient(90deg, transparent 0 6%, #ef4444 14%, #fff7ed 48%, #f97316 82%, transparent 100%);
         }
         .avatar-glow {
           position: absolute;
@@ -413,6 +532,8 @@ export default async function LeaderboardPage({
           .rank-badge-elite::after,
           .avatar-ring,
           .avatar-glow,
+          .avatar-lightning-ring,
+          .avatar-bolt-segment,
           .avatar-zap,
           .avatar-spark,
           .accuracy-sweep::after {
@@ -974,6 +1095,18 @@ function Avatar({
         <>
           <span className="avatar-glow pointer-events-none" />
           <span className="avatar-ring pointer-events-none" />
+          <span className="avatar-lightning-ring pointer-events-none" aria-hidden="true">
+            <span className="avatar-bolt-segment avatar-bolt-segment-a" />
+            <span className="avatar-bolt-segment avatar-bolt-segment-b" />
+            <span className="avatar-bolt-segment avatar-bolt-segment-c" />
+            <span className="avatar-bolt-segment avatar-bolt-segment-d" />
+            {rank === 1 && (
+              <>
+                <span className="avatar-bolt-segment avatar-bolt-segment-e" />
+                <span className="avatar-bolt-segment avatar-bolt-segment-f" />
+              </>
+            )}
+          </span>
           <Zap className="avatar-zap avatar-zap-a pointer-events-none" size={15} strokeWidth={3} aria-hidden="true" />
           <Zap className="avatar-zap avatar-zap-b pointer-events-none" size={12} strokeWidth={3} aria-hidden="true" />
           {rank === 1 && (
