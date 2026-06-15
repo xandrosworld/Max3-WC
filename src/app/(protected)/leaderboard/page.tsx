@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Award, Crown, Flame, Medal, Sparkles, Trophy } from "lucide-react";
+import { Award, Crown, Flame, Medal, Sparkles, Trophy, Zap } from "lucide-react";
 import { formatCurrency } from "@/lib/domain";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { requireUser } from "@/lib/session";
@@ -65,14 +65,52 @@ export default async function LeaderboardPage({
           0%, 100% { transform: scale(1); opacity: 0.52; }
           50% { transform: scale(1.16); opacity: 0.16; }
         }
+        @keyframes wcRingSpin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes wcSpark {
+          0%, 100% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.7); }
+          20% { opacity: 1; }
+          52% { opacity: 0.72; transform: translate3d(var(--spark-x), var(--spark-y), 0) scale(1); }
+          78% { opacity: 0; transform: translate3d(calc(var(--spark-x) * 1.35), calc(var(--spark-y) * 1.35), 0) scale(0.45); }
+        }
+        @keyframes wcBolt {
+          0%, 32%, 100% { opacity: 0; filter: drop-shadow(0 0 0 transparent); transform: translateY(0) rotate(var(--bolt-rotate)) scale(0.9); }
+          6%, 10% { opacity: 1; filter: drop-shadow(0 0 10px currentColor); transform: translateY(-1px) rotate(var(--bolt-rotate)) scale(1.08); }
+          14% { opacity: 0.42; transform: translateY(1px) rotate(var(--bolt-rotate)) scale(0.96); }
+        }
+        @keyframes wcBarSweep {
+          0% { transform: translateX(-140%); opacity: 0; }
+          35% { opacity: 0.7; }
+          100% { transform: translateX(250%); opacity: 0; }
+        }
+        @keyframes wcBadgePop {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-1px) scale(1.04); }
+        }
         @keyframes wcShine {
           0% { transform: translateX(-120%); opacity: 0; }
           35% { opacity: 0.32; }
           100% { transform: translateX(220%); opacity: 0; }
         }
+        .leaderboard-stage {
+          position: relative;
+          isolation: isolate;
+        }
+        .leaderboard-stage::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          background:
+            radial-gradient(circle at 18% 18%, rgba(16, 185, 129, 0.13), transparent 30%),
+            radial-gradient(circle at 85% 0%, rgba(251, 191, 36, 0.18), transparent 26%),
+            linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.92));
+        }
         .elite-row {
           position: relative;
-          overflow: hidden;
+          --rank-accent: #10b981;
+          --rank-glow: rgba(16, 185, 129, 0.18);
         }
         .elite-row::after {
           content: "";
@@ -83,9 +121,162 @@ export default async function LeaderboardPage({
           animation: wcShine 4.8s ease-in-out infinite;
           pointer-events: none;
         }
+        .elite-row td {
+          position: relative;
+        }
+        .elite-row td:first-child {
+          box-shadow: inset 4px 0 0 var(--rank-accent);
+        }
+        .elite-row td:nth-child(2)::before {
+          content: "";
+          position: absolute;
+          left: 0;
+          top: 14%;
+          bottom: 14%;
+          width: 1px;
+          background: linear-gradient(180deg, transparent, var(--rank-accent), transparent);
+          opacity: 0.55;
+        }
+        .elite-card {
+          isolation: isolate;
+          --rank-accent: #10b981;
+          --rank-glow: rgba(16, 185, 129, 0.18);
+        }
+        .elite-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          background:
+            radial-gradient(circle at 18% 18%, var(--rank-glow), transparent 42%),
+            radial-gradient(circle at 88% 8%, rgba(255,255,255,0.9), transparent 24%);
+        }
+        .elite-card::after {
+          content: "";
+          position: absolute;
+          left: -45%;
+          top: -20%;
+          height: 140%;
+          width: 36%;
+          z-index: -1;
+          background: linear-gradient(100deg, transparent, rgba(255,255,255,0.72), transparent);
+          animation: wcShine 5.2s ease-in-out infinite;
+        }
+        .rank-gold {
+          --rank-accent: #f59e0b;
+          --rank-glow: rgba(245, 158, 11, 0.24);
+          --rank-soft: rgba(254, 243, 199, 0.72);
+        }
+        .rank-silver {
+          --rank-accent: #64748b;
+          --rank-glow: rgba(100, 116, 139, 0.18);
+          --rank-soft: rgba(226, 232, 240, 0.74);
+        }
+        .rank-bronze {
+          --rank-accent: #fb923c;
+          --rank-glow: rgba(251, 146, 60, 0.2);
+          --rank-soft: rgba(255, 237, 213, 0.76);
+        }
+        .rank-badge-elite {
+          animation: wcBadgePop 3.5s ease-in-out infinite;
+          box-shadow: 0 12px 28px var(--rank-glow);
+        }
+        .rank-badge-elite::after {
+          content: "";
+          position: absolute;
+          inset: -40% -65%;
+          background: linear-gradient(100deg, transparent, rgba(255,255,255,0.78), transparent);
+          transform: translateX(-120%);
+          animation: wcShine 4.1s ease-in-out infinite;
+        }
+        .avatar-shell {
+          --rank-accent: #10b981;
+          --rank-glow: rgba(16, 185, 129, 0.18);
+        }
+        .avatar-elite {
+          padding: 4px;
+        }
+        .avatar-ring {
+          position: absolute;
+          inset: -2px;
+          border-radius: 20px;
+          background:
+            conic-gradient(from 20deg, transparent 0 10%, var(--rank-accent) 18%, #ffffff 26%, var(--rank-accent) 34%, transparent 46% 100%);
+          animation: wcRingSpin 3.8s linear infinite;
+          opacity: 0.95;
+          filter: drop-shadow(0 0 10px var(--rank-glow));
+        }
+        .avatar-glow {
+          position: absolute;
+          inset: -8px;
+          border-radius: 24px;
+          background: radial-gradient(circle, var(--rank-glow), transparent 68%);
+          animation: wcPulse 3.1s ease-in-out infinite;
+        }
+        .avatar-zap {
+          position: absolute;
+          z-index: 20;
+          color: var(--rank-accent);
+          animation: wcBolt 2.6s linear infinite;
+        }
+        .avatar-zap-a {
+          --bolt-rotate: -18deg;
+          right: -6px;
+          top: -7px;
+        }
+        .avatar-zap-b {
+          --bolt-rotate: 18deg;
+          bottom: -6px;
+          left: -6px;
+          animation-delay: 0.7s;
+        }
+        .avatar-spark {
+          position: absolute;
+          z-index: 20;
+          width: 5px;
+          height: 5px;
+          border-radius: 999px;
+          background: #ffffff;
+          box-shadow: 0 0 8px 2px var(--rank-accent);
+          animation: wcSpark 2.9s ease-out infinite;
+        }
+        .avatar-spark-a {
+          --spark-x: 13px;
+          --spark-y: -10px;
+          right: 4px;
+          top: 1px;
+        }
+        .avatar-spark-b {
+          --spark-x: -12px;
+          --spark-y: 11px;
+          left: 5px;
+          bottom: 1px;
+          animation-delay: 0.9s;
+        }
+        .accuracy-sweep {
+          position: relative;
+          overflow: hidden;
+        }
+        .accuracy-sweep::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 30%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.75), transparent);
+          animation: wcBarSweep 3.2s ease-in-out infinite;
+        }
         @media (prefers-reduced-motion: reduce) {
           .rank-pulse,
-          .elite-row::after {
+          .elite-row::after,
+          .elite-card::after,
+          .rank-badge-elite,
+          .rank-badge-elite::after,
+          .avatar-ring,
+          .avatar-glow,
+          .avatar-zap,
+          .avatar-spark,
+          .accuracy-sweep::after {
             animation: none !important;
           }
         }
@@ -211,7 +402,7 @@ function LeaderboardSection({
   mode: BoardMode;
 }) {
   return (
-    <section className="overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/5">
+    <section className="leaderboard-stage overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/5">
       <div className="flex flex-col gap-2 border-b border-slate-100 bg-gradient-to-r from-emerald-50 via-white to-amber-50 px-4 py-4 sm:px-5 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.16em] text-emerald-700">
@@ -269,7 +460,7 @@ function LeaderboardSection({
                 <tr
                   key={row.id}
                   className={`border-t border-slate-100 transition hover:bg-emerald-50/40 ${
-                    row.displayRank <= 3 ? "elite-row" : ""
+                    row.displayRank <= 3 ? `elite-row ${visual.rankClass}` : ""
                   } ${rowBg}`}
                 >
                   <td className="px-4 py-3">
@@ -320,6 +511,7 @@ function getRankVisual(rank: number, mode: BoardMode) {
       cardClass:
         "border-amber-300 bg-[linear-gradient(135deg,#fff8d7_0%,#ffffff_55%,#fff1a8_100%)] shadow-amber-900/15",
       desktopClass: "bg-[linear-gradient(90deg,#fff7cc_0%,#ffffff_60%,#fff5d6_100%)]",
+      rankClass: "rank-gold",
       tagClass: "bg-amber-500 text-amber-950",
       haloClass: "bg-amber-300/45",
       barClass: "from-amber-400 via-yellow-300 to-amber-500",
@@ -336,6 +528,7 @@ function getRankVisual(rank: number, mode: BoardMode) {
       cardClass:
         "border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_52%,#e8eef6_100%)] shadow-slate-900/10",
       desktopClass: "bg-[linear-gradient(90deg,#f8fafc_0%,#ffffff_62%,#eef2f7_100%)]",
+      rankClass: "rank-silver",
       tagClass: "bg-slate-900 text-white",
       haloClass: "bg-slate-300/45",
       barClass: "from-slate-400 via-slate-200 to-slate-500",
@@ -352,6 +545,7 @@ function getRankVisual(rank: number, mode: BoardMode) {
       cardClass:
         "border-orange-200 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_55%,#ffedd5_100%)] shadow-orange-900/10",
       desktopClass: "bg-[linear-gradient(90deg,#fff7ed_0%,#ffffff_62%,#ffedd5_100%)]",
+      rankClass: "rank-bronze",
       tagClass: "bg-orange-500 text-white",
       haloClass: "bg-orange-300/42",
       barClass: "from-orange-400 via-amber-300 to-orange-500",
@@ -366,6 +560,7 @@ function getRankVisual(rank: number, mode: BoardMode) {
     badgeClass: "bg-emerald-950 text-white ring-emerald-900/10",
     cardClass: "border-emerald-950/10 bg-white shadow-emerald-950/5",
     desktopClass: "",
+    rankClass: "",
     tagClass: "",
     haloClass: "",
     barClass: "from-emerald-500 to-teal-400",
@@ -389,7 +584,7 @@ function RankBadge({
     <div
       className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden font-black ring-4 ${
         compact ? "h-9 min-w-9 rounded-xl px-2 text-xs" : "h-10 min-w-10 rounded-2xl px-2.5 text-sm"
-      } ${visual.badgeClass}`}
+      } ${visual.badgeClass} ${rank <= 3 ? `rank-badge-elite ${visual.rankClass}` : ""}`}
     >
       {rank <= 3 && (
         <span
@@ -431,7 +626,7 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
     mode === "prediction" ? String(row.correct) : formatCurrency(row.loss);
 
   return (
-    <article className={`relative overflow-hidden rounded-2xl border p-3 shadow-sm active:scale-[0.99] ${visual.cardClass}`}>
+    <article className={`relative overflow-hidden rounded-2xl border p-3 shadow-sm active:scale-[0.99] ${row.displayRank <= 3 ? `elite-card ${visual.rankClass}` : ""} ${visual.cardClass}`}>
       {row.displayRank <= 3 && (
         <span
           className={`rank-pulse pointer-events-none absolute right-2 top-2 h-14 w-14 rounded-full ${visual.haloClass}`}
@@ -511,7 +706,7 @@ function AccuracyBar({
   return (
     <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200/70">
       <div
-        className={`h-full rounded-full bg-gradient-to-r ${visual.barClass}`}
+        className={`h-full rounded-full bg-gradient-to-r ${rank <= 3 ? "accuracy-sweep" : ""} ${visual.barClass}`}
         style={{ width: `${safeValue}%` }}
       />
     </div>
@@ -549,10 +744,21 @@ function Summary({
   label: string;
   value: string;
 }) {
+  const bellyValue = value.endsWith(" Belly")
+    ? value.slice(0, -" Belly".length)
+    : null;
+
   return (
     <div className="min-w-0 rounded-2xl bg-slate-50 px-2.5 py-3 text-center">
-      <p className="break-words text-base font-black leading-tight text-emerald-950 sm:text-lg">
-        {value}
+      <p className="text-[clamp(0.74rem,3.15vw,1.125rem)] font-black leading-tight text-emerald-950">
+        {bellyValue ? (
+          <>
+            <span className="inline-block whitespace-nowrap">{bellyValue}</span>{" "}
+            <span className="inline-block whitespace-nowrap">Belly</span>
+          </>
+        ) : (
+          value
+        )}
       </p>
       <p className="mt-1 text-xs font-bold text-slate-500">{label}</p>
     </div>
@@ -575,12 +781,16 @@ function Avatar({
   const avatarClass = `relative z-10 h-10 w-10 rounded-2xl ${visual.avatarClass}`;
 
   return (
-    <span className="relative inline-flex shrink-0">
+    <span className={`avatar-shell relative inline-flex shrink-0 ${rank <= 3 ? `avatar-elite ${visual.rankClass}` : ""}`}>
       {rank <= 3 && (
-        <span
-          className={`rank-pulse pointer-events-none absolute inset-[-7px] rounded-2xl ${visual.haloClass}`}
-          style={{ animation: "wcPulse 3.4s ease-in-out infinite" }}
-        />
+        <>
+          <span className="avatar-glow pointer-events-none" />
+          <span className="avatar-ring pointer-events-none" />
+          <Zap className="avatar-zap avatar-zap-a pointer-events-none" size={15} strokeWidth={3} aria-hidden="true" />
+          <Zap className="avatar-zap avatar-zap-b pointer-events-none" size={12} strokeWidth={3} aria-hidden="true" />
+          <span className="avatar-spark avatar-spark-a pointer-events-none" />
+          <span className="avatar-spark avatar-spark-b pointer-events-none" />
+        </>
       )}
       {image ? (
         // eslint-disable-next-line @next/next/no-img-element
