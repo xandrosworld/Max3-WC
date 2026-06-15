@@ -1,20 +1,22 @@
 "use client";
 
 import ReactDOM from "react-dom";
+import { getTopWinnerMedia, type LeaderboardMediaMode } from "@/lib/leaderboard-media";
 
-export const TOP_WINNER_VIDEO_MP4 =
-  "https://media.tenor.com/DtxBiq6VNtcAAAPo/football-world-cup.mp4";
-export const TOP_WINNER_POSTER_URL =
-  "https://media.tenor.com/DtxBiq6VNtcAAAAe/football-world-cup.png";
+export function LeaderboardMediaHints({
+  activeBoard,
+}: {
+  activeBoard: LeaderboardMediaMode;
+}) {
+  const media = getTopWinnerMedia(activeBoard);
 
-export function LeaderboardMediaHints() {
   ReactDOM.prefetchDNS("https://media.tenor.com");
   ReactDOM.preconnect("https://media.tenor.com", { crossOrigin: "anonymous" });
-  ReactDOM.preload(TOP_WINNER_POSTER_URL, {
+  ReactDOM.preload(media.poster, {
     as: "image",
     fetchPriority: "high",
   });
-  ReactDOM.preload(TOP_WINNER_VIDEO_MP4, {
+  ReactDOM.preload(media.video, {
     as: "video",
     crossOrigin: "anonymous",
     type: "video/mp4",

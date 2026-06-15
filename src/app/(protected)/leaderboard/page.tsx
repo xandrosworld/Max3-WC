@@ -1,12 +1,9 @@
 import Image from "next/image";
 import { Award, Crown, Flame, Medal, Sparkles, Trophy, Zap } from "lucide-react";
-import {
-  LeaderboardMediaHints,
-  TOP_WINNER_POSTER_URL,
-  TOP_WINNER_VIDEO_MP4,
-} from "@/components/leaderboard-media-hints";
+import { LeaderboardMediaHints } from "@/components/leaderboard-media-hints";
 import { formatCurrency } from "@/lib/domain";
 import { getLeaderboard } from "@/lib/leaderboard";
+import { getTopWinnerMedia } from "@/lib/leaderboard-media";
 import { requireUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -584,12 +581,25 @@ export default async function LeaderboardPage({
           border: 0 !important;
           object-fit: cover;
         }
+        .top-winner-gif.top-winner-gif-inline {
+          position: relative;
+          right: auto;
+          top: auto;
+          z-index: 2;
+          width: clamp(5.65rem, 28vw, 6.8rem);
+          flex: 0 0 auto;
+        }
         @media (max-width: 374px) {
           .top-winner-gif {
             right: 0.95rem;
             top: 4.55rem;
             width: 5.85rem;
             opacity: 0.92;
+          }
+          .top-winner-gif.top-winner-gif-inline {
+            right: auto;
+            top: auto;
+            width: 5.55rem;
           }
         }
         .desktop-winner-gif {
@@ -645,7 +655,7 @@ export default async function LeaderboardPage({
           }
         }
       `}</style>
-      <LeaderboardMediaHints />
+      <LeaderboardMediaHints activeBoard={activeBoard} />
 
       <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-end">
         <div>
@@ -843,7 +853,7 @@ function LeaderboardSection({
                         </p>
                         <RankTag rank={row.displayRank} mode={mode} />
                       </div>
-                      {row.displayRank === 1 && <TopWinnerGif variant="desktop" />}
+                      {row.displayRank === 1 && <TopWinnerGif variant="desktop" mode={mode} />}
                     </div>
                   </td>
                   <td className="px-4 py-3 font-semibold tabular-nums">{row.voted}</td>
@@ -1041,6 +1051,8 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
   const primaryLabel = mode === "prediction" ? "Đúng" : "Đóng góp";
   const primaryValue =
     mode === "prediction" ? String(row.correct) : formatCurrency(row.loss);
+  const showInlineWinnerGif = row.displayRank === 1 && mode === "contribution";
+  const showFloatingWinnerGif = row.displayRank === 1 && !showInlineWinnerGif;
 
   return (
     <article className={`relative overflow-hidden rounded-2xl border p-3 shadow-sm active:scale-[0.99] ${row.displayRank <= 3 ? `elite-card ${visual.rankClass}` : ""} ${visual.cardClass}`}>
@@ -1050,7 +1062,7 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
           style={{ animation: "wcPulse 3.2s ease-in-out infinite" }}
         />
       )}
-      {row.displayRank === 1 && <TopWinnerGif variant="mobile" />}
+      {showFloatingWinnerGif && <TopWinnerGif variant="mobile" mode={mode} />}
       <div className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
         <div className="flex flex-col items-center gap-2">
           <RankBadge rank={row.displayRank} mode={mode} compact />
@@ -1066,7 +1078,7 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
             <p className="mt-0.5 text-[11px] font-bold leading-snug text-slate-400">
               {row.accuracy.toFixed(0)}% chính xác
             </p>
-            <RankTag rank={row.displayRank} mode={mode} />
+            {!showInlineWinnerGif && <RankTag rank={row.displayRank} mode={mode} />}
         </div>
         <MobilePrimaryBadge
           label={primaryLabel}
@@ -1076,7 +1088,16 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
         />
       </div>
 
-      <div className={`relative ${row.displayRank === 1 ? "mt-12" : "mt-2"}`}>
+      {showInlineWinnerGif && (
+        <div className="relative mt-2.5 flex min-w-0 items-center justify-between gap-2 pl-[4.4rem]">
+          <div className="min-w-0">
+            <RankTag rank={row.displayRank} mode={mode} />
+          </div>
+          <TopWinnerGif variant="mobileInline" mode={mode} />
+        </div>
+      )}
+
+      <div className={`relative ${showFloatingWinnerGif ? "mt-12" : row.displayRank === 1 ? "mt-3" : "mt-2"}`}>
         <AccuracyBar value={row.accuracy} rank={row.displayRank} mode={mode} />
       </div>
 
@@ -1090,22 +1111,36 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
   );
 }
 
-function TopWinnerGif({ variant }: { variant: "mobile" | "desktop" }) {
+function TopWinnerGif({
+  variant,
+  mode,
+}: {
+  variant: "mobile" | "mobileInline" | "desktop";
+  mode: BoardMode;
+}) {
+  const className =
+    variant === "desktop"
+      ? "desktop-winner-gif"
+      : variant === "mobileInline"
+        ? "top-winner-gif top-winner-gif-inline"
+        : "top-winner-gif";
+  const media = getTopWinnerMedia(mode);
+
   return (
-    <div className={variant === "mobile" ? "top-winner-gif" : "desktop-winner-gif"} aria-hidden="true">
+    <div className={className} aria-hidden="true">
       <video
         autoPlay
         loop
         muted
         playsInline
         preload="auto"
-        poster={TOP_WINNER_POSTER_URL}
+        poster={media.poster}
         crossOrigin="anonymous"
       >
         <source
-          src={TOP_WINNER_VIDEO_MP4}
+          src={media.video}
           type="video/mp4"
-          media={variant === "mobile" ? "(max-width: 767px)" : "(min-width: 768px)"}
+          media={variant === "desktop" ? "(min-width: 768px)" : "(max-width: 767px)"}
         />
       </video>
     </div>
