@@ -574,6 +574,7 @@ export default async function LeaderboardPage({
           box-shadow: 0 0 18px rgba(168, 85, 247, 0.22) inset;
           pointer-events: none;
         }
+        .top-winner-gif img,
         .top-winner-gif video {
           display: block !important;
           width: 100% !important;
@@ -619,6 +620,7 @@ export default async function LeaderboardPage({
           line-height: 0;
           pointer-events: none;
         }
+        .desktop-winner-gif img,
         .desktop-winner-gif video {
           display: block !important;
           width: 100% !important;
@@ -645,11 +647,6 @@ export default async function LeaderboardPage({
           .elite-card::after,
           .rank-badge-elite,
           .rank-badge-elite::after,
-          .avatar-ring,
-          .avatar-glow,
-          .avatar-lightning-svg,
-          .electric-runner,
-          .avatar-zap,
           .accuracy-sweep::after {
             animation: none !important;
           }
@@ -1128,21 +1125,14 @@ function TopWinnerGif({
 
   return (
     <div className={className} aria-hidden="true">
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
-        poster={media.poster}
-        crossOrigin="anonymous"
-      >
-        <source
-          src={media.video}
-          type="video/mp4"
-          media={variant === "desktop" ? "(min-width: 768px)" : "(max-width: 767px)"}
-        />
-      </video>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={media.gif}
+        alt=""
+        loading="eager"
+        decoding="async"
+        fetchPriority="high"
+      />
     </div>
   );
 }

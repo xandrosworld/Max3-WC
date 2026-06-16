@@ -12,14 +12,9 @@ export function LeaderboardMediaHints({
 
   ReactDOM.prefetchDNS("https://media.tenor.com");
   ReactDOM.preconnect("https://media.tenor.com", { crossOrigin: "anonymous" });
-  ReactDOM.preload(media.poster, {
+  ReactDOM.preload(media.gif, {
     as: "image",
     fetchPriority: "high",
-  });
-  ReactDOM.preload(media.video, {
-    as: "video",
-    crossOrigin: "anonymous",
-    type: "video/mp4",
   });
 
   return null;
