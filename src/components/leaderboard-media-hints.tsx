@@ -10,8 +10,6 @@ export function LeaderboardMediaHints({
 }) {
   const media = getTopWinnerMedia(activeBoard);
 
-  ReactDOM.prefetchDNS("https://media.tenor.com");
-  ReactDOM.preconnect("https://media.tenor.com", { crossOrigin: "anonymous" });
   ReactDOM.preload(media.gif, {
     as: "image",
     fetchPriority: "high",
