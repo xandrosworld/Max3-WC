@@ -32,16 +32,14 @@ export default async function LeaderboardPage({
     .sort(
       (a, b) =>
         b.loss - a.loss ||
-        b.correct - a.correct ||
-        b.accuracy - a.accuracy ||
-        a.missed - b.missed ||
+        b.voted - a.voted ||
         a.name.localeCompare(b.name, "vi"),
     )
     .map((row, index) => ({ ...row, displayRank: index + 1 }));
 
   const totalContribution = rows.reduce((sum, row) => sum + row.loss, 0);
   const totalCorrect = rows.reduce((sum, row) => sum + row.correct, 0);
-  const totalMissed = rows.reduce((sum, row) => sum + row.missed, 0);
+  const totalVoted = rows.reduce((sum, row) => sum + row.voted, 0);
   const activeSection =
     activeBoard === "prediction"
       ? {
@@ -53,9 +51,10 @@ export default async function LeaderboardPage({
           mode: "prediction" as const,
         }
       : {
-          kicker: "Top đóng góp",
-          title: "Top đóng góp nhiều nhất",
-          description: "Xếp theo tổng Belly đóng góp sau các trận đã chốt.",
+          kicker: "Tiếp sức quỹ",
+          title: "Bảng vàng quỹ thưởng",
+          description:
+            "Vinh danh những người góp Belly nhiều nhất cho quỹ thưởng nội bộ.",
           rows: contributionRows,
           mode: "contribution" as const,
         };
@@ -663,7 +662,7 @@ export default async function LeaderboardPage({
             Hai đường đua, nhìn là muốn tranh top
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-            Một bảng vinh danh người đoán đúng nhiều nhất, một bảng ghi nhận người đóng góp nhiều nhất.
+            Một bảng vinh danh người đoán đúng nhiều nhất, một bảng ghi nhận người tiếp sức quỹ thưởng.
             Tất cả dùng đơn vị vui Belly trong phạm vi nội bộ.
           </p>
         </div>
@@ -680,8 +679,8 @@ export default async function LeaderboardPage({
           </div>
           <div className="grid grid-cols-3 gap-2 rounded-3xl border border-emerald-950/10 bg-white p-3 shadow-sm shadow-emerald-950/5">
             <Summary label="Lượt đúng" value={String(totalCorrect)} />
-            <Summary label="Quên chọn" value={String(totalMissed)} />
-            <Summary label="Tổng đóng góp" value={formatCurrency(totalContribution)} />
+            <Summary label="Lượt dự đoán" value={String(totalVoted)} />
+            <Summary label="Tổng góp quỹ" value={formatCurrency(totalContribution)} />
           </div>
         </div>
       </section>
@@ -697,7 +696,7 @@ export default async function LeaderboardPage({
           <BoardTab
             href="/leaderboard?board=contribution"
             selected={activeBoard === "contribution"}
-            title="Top đóng góp nhiều nhất"
+            title="Bảng vàng quỹ thưởng"
             helper={formatCurrency(totalContribution)}
           />
         </div>
@@ -773,6 +772,22 @@ function LeaderboardSection({
   rows: RankedRow[];
   mode: BoardMode;
 }) {
+  const tableHeaders =
+    mode === "contribution"
+      ? ["Hạng", "Người chơi", "Lượt dự đoán", "Góp quỹ"]
+      : [
+          "Hạng",
+          "Người chơi",
+          "Đã chọn",
+          "Quên",
+          "Đúng",
+          "Sai",
+          "Độ chính xác",
+          "Ngôi sao",
+          "Ngôi sao sai",
+          "Góp quỹ",
+        ];
+
   return (
     <section className="leaderboard-stage overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/5">
       <div className="flex flex-col gap-2 border-b border-slate-100 bg-gradient-to-r from-emerald-50 via-white to-amber-50 px-4 py-4 sm:px-5 md:flex-row md:items-end md:justify-between">
@@ -800,18 +815,7 @@ function LeaderboardSection({
         <table className="w-full text-sm">
           <thead className="bg-emerald-950 text-left text-white">
             <tr>
-              {[
-                "Hạng",
-                "Người chơi",
-                "Đã chọn",
-                "Quên",
-                "Đúng",
-                "Sai",
-                "Độ chính xác",
-                "Ngôi sao",
-                "Ngôi sao sai",
-                "Đóng góp",
-              ].map((title) => (
+              {tableHeaders.map((title) => (
                 <th key={title} className="px-4 py-3 font-bold">
                   {title}
                 </th>
@@ -853,18 +857,33 @@ function LeaderboardSection({
                       {row.displayRank === 1 && <TopWinnerGif variant="desktop" mode={mode} />}
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-semibold tabular-nums">{row.voted}</td>
-                  <td className="px-4 py-3 font-semibold tabular-nums text-amber-700">{row.missed}</td>
-                  <td className="px-4 py-3 font-black tabular-nums text-emerald-700">{row.correct}</td>
-                  <td className="px-4 py-3 font-semibold tabular-nums text-red-700">{row.wrong}</td>
-                  <td className="px-4 py-3">
-                    <AccuracyCell value={row.accuracy} rank={row.displayRank} mode={mode} />
-                  </td>
-                  <td className="px-4 py-3 font-semibold tabular-nums">{row.hopeStarUsed}</td>
-                  <td className="px-4 py-3 font-semibold tabular-nums text-amber-700">{row.hopeStarWrong}</td>
-                  <td className="px-4 py-3 font-black tabular-nums text-red-700">
-                    {formatCurrency(row.loss)}
-                  </td>
+                  {mode === "contribution" ? (
+                    <>
+                      <td className="px-4 py-3 font-semibold tabular-nums text-emerald-900">
+                        {row.voted}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 font-black tabular-nums text-amber-700 ring-1 ring-amber-100">
+                          {formatCurrency(row.loss)}
+                        </span>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="px-4 py-3 font-semibold tabular-nums">{row.voted}</td>
+                      <td className="px-4 py-3 font-semibold tabular-nums text-amber-700">{row.missed}</td>
+                      <td className="px-4 py-3 font-black tabular-nums text-emerald-700">{row.correct}</td>
+                      <td className="px-4 py-3 font-semibold tabular-nums text-red-700">{row.wrong}</td>
+                      <td className="px-4 py-3">
+                        <AccuracyCell value={row.accuracy} rank={row.displayRank} mode={mode} />
+                      </td>
+                      <td className="px-4 py-3 font-semibold tabular-nums">{row.hopeStarUsed}</td>
+                      <td className="px-4 py-3 font-semibold tabular-nums text-amber-700">{row.hopeStarWrong}</td>
+                      <td className="px-4 py-3 font-black tabular-nums text-amber-700">
+                        {formatCurrency(row.loss)}
+                      </td>
+                    </>
+                  )}
                 </tr>
               );
             })}
@@ -879,7 +898,7 @@ function getRankVisual(rank: number, mode: BoardMode) {
   if (rank === 1) {
     return {
       Icon: mode === "prediction" ? Crown : Trophy,
-      tag: mode === "prediction" ? "Vua dự đoán" : "Dẫn đầu đóng góp",
+      tag: mode === "prediction" ? "Vua dự đoán" : "Dẫn đầu quỹ thưởng",
       badgeClass: "bg-amber-400 text-amber-950 ring-amber-200 shadow-amber-500/25",
       cardClass:
         "border-amber-300 bg-[linear-gradient(135deg,#fff8d7_0%,#ffffff_55%,#fff1a8_100%)] shadow-amber-900/15",
@@ -896,7 +915,7 @@ function getRankVisual(rank: number, mode: BoardMode) {
   if (rank === 2) {
     return {
       Icon: Award,
-      tag: mode === "prediction" ? "Bám sát" : "Tiếp sức mạnh",
+      tag: mode === "prediction" ? "Bám sát" : "Tiếp sức quỹ",
       badgeClass: "bg-slate-200 text-slate-900 ring-slate-100 shadow-slate-400/20",
       cardClass:
         "border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_52%,#e8eef6_100%)] shadow-slate-900/10",
@@ -913,7 +932,7 @@ function getRankVisual(rank: number, mode: BoardMode) {
   if (rank === 3) {
     return {
       Icon: Flame,
-      tag: mode === "prediction" ? "Phong độ cao" : "Máu lửa",
+      tag: mode === "prediction" ? "Phong độ cao" : "Giữ lửa giải",
       badgeClass: "bg-orange-300 text-orange-950 ring-orange-100 shadow-orange-500/18",
       cardClass:
         "border-orange-200 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_55%,#ffedd5_100%)] shadow-orange-900/10",
@@ -1027,13 +1046,13 @@ function MobilePrimaryBadge({
       </span>
       <span
         className={`mt-1 font-black leading-tight tabular-nums ${
-          bellyValue ? "text-[11px] text-red-700" : "text-xl text-red-700"
+          bellyValue ? "text-[11px] text-amber-700" : "text-xl text-red-700"
         }`}
       >
         {bellyValue ? (
           <>
             <span className="block whitespace-nowrap">{bellyValue}</span>
-            <span className="block text-[10px] text-red-700">Belly</span>
+            <span className="block text-[10px] text-amber-700">Belly</span>
           </>
         ) : (
           value
@@ -1045,7 +1064,7 @@ function MobilePrimaryBadge({
 
 function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
   const visual = getRankVisual(row.displayRank, mode);
-  const primaryLabel = mode === "prediction" ? "Đúng" : "Đóng góp";
+  const primaryLabel = mode === "prediction" ? "Đúng" : "Góp quỹ";
   const primaryValue =
     mode === "prediction" ? String(row.correct) : formatCurrency(row.loss);
   const showInlineWinnerGif = row.displayRank === 1 && mode === "contribution";
@@ -1073,7 +1092,9 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
               {row.department || "Chưa có đơn vị"}
             </p>
             <p className="mt-0.5 text-[11px] font-bold leading-snug text-slate-400">
-              {row.accuracy.toFixed(0)}% chính xác
+              {mode === "prediction"
+                ? `${row.accuracy.toFixed(0)}% chính xác`
+                : `${row.voted} lượt dự đoán`}
             </p>
             {!showInlineWinnerGif && <RankTag rank={row.displayRank} mode={mode} />}
         </div>
@@ -1094,16 +1115,24 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
         </div>
       )}
 
-      <div className={`relative ${showFloatingWinnerGif ? "mt-12" : row.displayRank === 1 ? "mt-3" : "mt-2"}`}>
-        <AccuracyBar value={row.accuracy} rank={row.displayRank} mode={mode} />
-      </div>
+      {mode === "prediction" ? (
+        <>
+          <div className={`relative ${showFloatingWinnerGif ? "mt-12" : row.displayRank === 1 ? "mt-3" : "mt-2"}`}>
+            <AccuracyBar value={row.accuracy} rank={row.displayRank} mode={mode} />
+          </div>
 
-      <div className="relative mt-3 flex flex-wrap gap-1.5">
-        <MobileStat label="Chọn" value={String(row.voted)} />
-        <MobileStat label="Đúng" value={String(row.correct)} tone="good" />
-        <MobileStat label="Sai" value={String(row.wrong)} tone="bad" />
-        <MobileStat label="Quên" value={String(row.missed)} tone="warn" />
-      </div>
+          <div className="relative mt-3 flex flex-wrap gap-1.5">
+            <MobileStat label="Chọn" value={String(row.voted)} />
+            <MobileStat label="Đúng" value={String(row.correct)} tone="good" />
+            <MobileStat label="Sai" value={String(row.wrong)} tone="bad" />
+            <MobileStat label="Quên" value={String(row.missed)} tone="warn" />
+          </div>
+        </>
+      ) : (
+        <div className="relative mt-3 flex flex-wrap gap-1.5">
+          <MobileStat label="Dự đoán" value={String(row.voted)} tone="good" />
+        </div>
+      )}
     </article>
   );
 }
