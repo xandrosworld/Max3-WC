@@ -108,6 +108,9 @@ export default async function MatchesPage({
     match,
     locked: isVoteLocked(match, now),
     myVote: match.votes.find((vote) => vote.userId === user.id) ?? null,
+    followedVote: user.autoFollowUserId
+      ? match.votes.find((vote) => vote.userId === user.autoFollowUserId) ?? null
+      : null,
   }));
 
   const filteredRows = rows.filter(({ match, locked, myVote }) => {
@@ -283,7 +286,7 @@ export default async function MatchesPage({
               </div>
 
               <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-emerald-950/5 divide-y divide-slate-100">
-                {dayRows.map(({ match, locked, myVote }) => {
+                {dayRows.map(({ match, locked, myVote, followedVote }) => {
                   const isScheduled = match.status === MatchStatus.DRAFT;
                   const canPick = match.status === MatchStatus.OPEN && !locked;
                   const hopeStarAllowed = canUseHopeStar(match.round);
@@ -400,6 +403,8 @@ export default async function MatchesPage({
                             <SettledMatchSummary
                               match={match}
                               myVote={myVote}
+                              autoFollowTargetName={autoFollowTarget?.name ?? null}
+                              followedVote={followedVote}
                             />
                           ) : canPick ? (
                             <form action={voteAction} className="space-y-4">
@@ -496,6 +501,8 @@ export default async function MatchesPage({
                             <LockedMatchSummary
                               match={match}
                               myVote={myVote}
+                              autoFollowTargetName={autoFollowTarget?.name ?? null}
+                              followedVote={followedVote}
                             />
                           )}
                         </div>
@@ -848,6 +855,8 @@ function StatusBadge({
 function SettledMatchSummary({
   match,
   myVote,
+  autoFollowTargetName,
+  followedVote,
 }: {
   match: {
     teamA: string;
@@ -860,9 +869,17 @@ function SettledMatchSummary({
     } | null;
   };
   myVote: { choice: VoteChoice; hopeStar: boolean } | null;
+  autoFollowTargetName: string | null;
+  followedVote: { choice: VoteChoice; hopeStar: boolean } | null;
 }) {
   if (!match.result) return null;
   const correct = myVote?.choice === match.result.winningChoice;
+  const missingVoteText = getMissingVoteText({
+    autoFollowTargetName,
+    followedVote,
+    teamA: match.teamA,
+    teamB: match.teamB,
+  });
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -891,7 +908,7 @@ function SettledMatchSummary({
             )}`}
         </div>
       ) : (
-        <p className="text-sm font-semibold text-slate-500">Bạn không chọn trận này</p>
+        <p className="max-w-sm text-sm font-semibold text-slate-500">{missingVoteText}</p>
       )}
     </div>
   );
@@ -900,6 +917,8 @@ function SettledMatchSummary({
 function LockedMatchSummary({
   match,
   myVote,
+  autoFollowTargetName,
+  followedVote,
 }: {
   match: {
     teamA: string;
@@ -909,7 +928,16 @@ function LockedMatchSummary({
     contributionAmount: number;
   };
   myVote: { choice: VoteChoice; hopeStar: boolean } | null;
+  autoFollowTargetName: string | null;
+  followedVote: { choice: VoteChoice; hopeStar: boolean } | null;
 }) {
+  const missingVoteText = getMissingVoteText({
+    autoFollowTargetName,
+    followedVote,
+    teamA: match.teamA,
+    teamB: match.teamB,
+  });
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-wrap gap-2 text-xs font-bold">
@@ -923,10 +951,32 @@ function LockedMatchSummary({
       <p className="text-sm font-semibold text-slate-600">
         {myVote
           ? `Bạn đã chọn: ${choiceLabel(myVote.choice, match.teamA, match.teamB)}`
-          : "Bạn không chọn trận này"}
+          : missingVoteText}
       </p>
     </div>
   );
+}
+
+function getMissingVoteText({
+  autoFollowTargetName,
+  followedVote,
+  teamA,
+  teamB,
+}: {
+  autoFollowTargetName: string | null;
+  followedVote: { choice: VoteChoice } | null;
+  teamA: string;
+  teamB: string;
+}) {
+  if (!autoFollowTargetName) return "Bạn không chọn trận này";
+  if (!followedVote) {
+    return `Bạn không chọn trận này vì ${autoFollowTargetName} cũng không chọn`;
+  }
+  return `Bạn chưa có lựa chọn; ${autoFollowTargetName} đã chọn ${choiceLabel(
+    followedVote.choice,
+    teamA,
+    teamB,
+  )}`;
 }
 
 function groupMatchesByDay<

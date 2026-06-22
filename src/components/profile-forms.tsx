@@ -251,7 +251,7 @@ export function AutoFollowForm({
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
           Nếu bạn chưa chọn trước giờ khóa, hệ thống sẽ tự lấy lựa chọn của người này.
-          Ngôi sao hy vọng sẽ không được tự bật.
+          Nếu người này cũng không chọn, bạn vẫn bị tính là không chọn. Ngôi sao hy vọng sẽ không được tự bật.
         </p>
       </div>
 
