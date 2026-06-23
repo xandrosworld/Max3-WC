@@ -53,42 +53,36 @@ const groupAccents = [
     dot: "bg-emerald-700",
     surface: "bg-emerald-50",
     text: "text-emerald-800",
-    pill: "bg-emerald-700 text-white",
   },
   {
     border: "border-sky-700",
     dot: "bg-sky-700",
     surface: "bg-sky-50",
     text: "text-sky-800",
-    pill: "bg-sky-700 text-white",
   },
   {
     border: "border-orange-600",
     dot: "bg-orange-600",
     surface: "bg-orange-50",
     text: "text-orange-800",
-    pill: "bg-orange-600 text-white",
   },
   {
     border: "border-violet-700",
     dot: "bg-violet-700",
     surface: "bg-violet-50",
     text: "text-violet-800",
-    pill: "bg-violet-700 text-white",
   },
   {
     border: "border-rose-700",
     dot: "bg-rose-700",
     surface: "bg-rose-50",
     text: "text-rose-800",
-    pill: "bg-rose-700 text-white",
   },
   {
     border: "border-teal-700",
     dot: "bg-teal-700",
     surface: "bg-teal-50",
     text: "text-teal-800",
-    pill: "bg-teal-700 text-white",
   },
 ];
 
@@ -272,7 +266,7 @@ function GroupCard({ group, index }: { group: GroupStanding; index: number }) {
       className={`scroll-mt-28 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 ${accent.border}`}
     >
       <header className={`border-b border-slate-200 px-4 py-4 ${accent.surface}`}>
-        <div className="flex items-start justify-between gap-3">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
           <div className="min-w-0">
             <p className={`text-xs font-black ${accent.text}`}>Bảng xếp hạng</p>
             <h2 className="mt-1 text-2xl font-black leading-tight text-slate-950">
@@ -280,12 +274,12 @@ function GroupCard({ group, index }: { group: GroupStanding; index: number }) {
             </h2>
           </div>
 
-          <div className="flex shrink-0 flex-col items-end gap-1.5 text-xs font-black">
-            <span className={`rounded-lg px-3 py-1 ${accent.pill}`}>
+          <div className="flex shrink-0 flex-col items-end gap-2 text-xs font-black">
+            <span className="inline-flex min-h-7 items-center whitespace-nowrap rounded-lg bg-slate-950 px-3 text-white shadow-sm shadow-slate-950/10">
               {group.completedMatches}/{group.totalMatches} trận
             </span>
             <span
-              className="max-w-44 truncate text-slate-700"
+              className="max-w-44 truncate font-mono text-[13px] font-black text-slate-700 tabular-nums"
               title={group.nextMatchAt ? formatVietnamTime(group.nextMatchAt) : "Đã đủ kết quả"}
             >
               {group.nextMatchAt ? formatVietnamTime(group.nextMatchAt) : "Đã đủ kết quả"}

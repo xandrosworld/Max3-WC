@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Music } from "lucide-react";
+import { ArrowUp, Music } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 type Track = {
@@ -33,6 +33,7 @@ export function BackgroundMusic() {
   const hasTriedAutoPlay = useRef(false);
   const [playing, setPlaying] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   const refillQueue = useCallback(() => {
     const tracks = tracksRef.current;
@@ -202,6 +203,30 @@ export function BackgroundMusic() {
     return () => window.removeEventListener("toggle-music", handler);
   }, [toggle]);
 
+  useEffect(() => {
+    let ticking = false;
+
+    function updateVisibility() {
+      const threshold = Math.max(120, window.innerHeight * 0.2);
+      setShowScrollTop(window.scrollY > threshold);
+      ticking = false;
+    }
+
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(updateVisibility);
+    }
+
+    updateVisibility();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", updateVisibility);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", updateVisibility);
+    };
+  }, []);
+
   if (!visible) return null;
 
   const isAuthPage =
@@ -228,45 +253,58 @@ export function BackgroundMusic() {
           50% { transform: translateY(-2px); }
         }
       `}</style>
-      <button
-        id="bg-music-toggle"
-        type="button"
-        onClick={toggle}
-        aria-label={playing ? "Tắt nhạc nền" : "Bật nhạc nền"}
-        title={playing ? "Tắt nhạc nền" : "Bật nhạc nền"}
-        className={`fixed z-50 flex items-center justify-center rounded-full border-2 backdrop-blur-xl transition-all duration-300 hover:scale-105 ${positionClass} ${
-          playing
-            ? "h-12 w-12 border-emerald-300/70 bg-emerald-950/95 text-emerald-200"
-            : "h-12 w-12 border-amber-300/70 bg-gradient-to-br from-emerald-950 to-slate-950 text-amber-200"
-        }`}
-        style={{
-          animation: playing
-            ? "musicGlow 2.5s ease-in-out infinite"
-            : "musicGlow 3s ease-in-out infinite",
-        }}
-      >
-        {playing ? (
-          <span className="flex h-4 items-end gap-[2.5px]">
-            {[0, 1, 2, 3].map((index) => (
-              <span
-                key={index}
-                className="w-[2.5px] rounded-full bg-gradient-to-t from-emerald-500 to-amber-200"
-                style={{
-                  animation: `musicBar 0.5s ease-in-out ${
-                    index * 0.1
-                  }s infinite alternate`,
-                }}
-              />
-            ))}
-          </span>
-        ) : (
-          <Music
-            size={20}
-            aria-hidden="true"
-            style={{ animation: "noteFloat 2s ease-in-out infinite" }}
-          />
+      <div className={`fixed z-50 flex flex-col items-end gap-3 ${positionClass}`}>
+        {!isAuthPage && showScrollTop && (
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-emerald-200 bg-white text-emerald-950 shadow-xl shadow-emerald-950/15 ring-1 ring-white/80 transition-all duration-300 hover:scale-105 sm:hidden"
+            aria-label="Lên đầu trang"
+            title="Lên đầu trang"
+          >
+            <ArrowUp size={22} strokeWidth={2.7} aria-hidden="true" />
+          </button>
         )}
-      </button>
+        <button
+          id="bg-music-toggle"
+          type="button"
+          onClick={toggle}
+          aria-label={playing ? "Tắt nhạc nền" : "Bật nhạc nền"}
+          title={playing ? "Tắt nhạc nền" : "Bật nhạc nền"}
+          className={`flex h-12 w-12 items-center justify-center rounded-full border-2 backdrop-blur-xl transition-all duration-300 hover:scale-105 ${
+            playing
+              ? "border-emerald-300/70 bg-emerald-950/95 text-emerald-200"
+              : "border-amber-300/70 bg-gradient-to-br from-emerald-950 to-slate-950 text-amber-200"
+          }`}
+          style={{
+            animation: playing
+              ? "musicGlow 2.5s ease-in-out infinite"
+              : "musicGlow 3s ease-in-out infinite",
+          }}
+        >
+          {playing ? (
+            <span className="flex h-4 items-end gap-[2.5px]">
+              {[0, 1, 2, 3].map((index) => (
+                <span
+                  key={index}
+                  className="w-[2.5px] rounded-full bg-gradient-to-t from-emerald-500 to-amber-200"
+                  style={{
+                    animation: `musicBar 0.5s ease-in-out ${
+                      index * 0.1
+                    }s infinite alternate`,
+                  }}
+                />
+              ))}
+            </span>
+          ) : (
+            <Music
+              size={20}
+              aria-hidden="true"
+              style={{ animation: "noteFloat 2s ease-in-out infinite" }}
+            />
+          )}
+        </button>
+      </div>
     </>
   );
 }
