@@ -7,6 +7,7 @@ export function AppNav({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
   const items = [
     { href: "/matches", label: "Lịch & dự đoán", mobileLabel: "Lịch" },
+    { href: "/groups", label: "Bảng đấu", mobileLabel: "Bảng đấu" },
     { href: "/leaderboard", label: "Bảng xếp hạng", mobileLabel: "Xếp hạng" },
     ...(isAdmin ? [{ href: "/admin", label: "Quản trị", mobileLabel: "Quản trị" }] : []),
     { href: "/profile", label: "Hồ sơ", mobileLabel: "Hồ sơ" },
