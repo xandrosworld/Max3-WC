@@ -4,13 +4,11 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronDown,
-  Clock3,
   Search,
   SlidersHorizontal,
-  Sparkles,
   Trophy,
 } from "lucide-react";
-import { voteAction } from "@/app/actions";
+import { MatchVoteForm } from "@/components/match-vote-form";
 import { TeamMark } from "@/components/team-mark";
 import {
   canUseHopeStar,
@@ -407,96 +405,26 @@ export default async function MatchesPage({
                               followedVote={followedVote}
                             />
                           ) : canPick ? (
-                            <form action={voteAction} className="space-y-4">
-                              <input type="hidden" name="matchId" value={match.id} />
-                              <input type="hidden" name="returnFilter" value={activeFilter} />
-                              {searchTerm && (
-                                <input type="hidden" name="returnQ" value={searchTerm} />
-                              )}
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <div className="flex flex-wrap gap-2 text-xs font-bold">
-                                  <span className="rounded-lg bg-amber-50 px-2.5 py-1.5 text-amber-900 ring-1 ring-amber-100">
-                                    {formatHandicap(match)}
-                                  </span>
-                                  <span className="rounded-lg bg-white px-2.5 py-1.5 text-slate-600 ring-1 ring-slate-200">
-                                    Đóng góp {formatCurrency(match.contributionAmount)}
-                                  </span>
-                                  <span className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-emerald-800 ring-1 ring-emerald-100">
-                                    {participantCount > 0
-                                      ? `${participantCount} người đã tham gia`
-                                      : "Chưa có người tham gia"}
-                                  </span>
-                                </div>
-                                <p className="flex items-center gap-1.5 text-xs font-bold text-emerald-700">
-                                  <Clock3 size={15} aria-hidden="true" />
-                                  {timeStatusLabel(match, locked, now)}
-                                </p>
-                              </div>
-
-                              <div
-                                className={`grid gap-2 ${
-                                  availableChoices.length === 2
-                                    ? "sm:grid-cols-2"
-                                    : "sm:grid-cols-3"
-                                }`}
-                              >
-                                {availableChoices.map((choice) => {
-                                    const selected = myVote?.choice === choice;
-                                    return (
-                                      <label key={choice} className="block">
-                                        <input
-                                          type="radio"
-                                          name="choice"
-                                          value={choice}
-                                          required
-                                          defaultChecked={selected}
-                                          className="peer sr-only"
-                                        />
-                                        <span className="flex min-h-20 items-center rounded-xl border border-slate-200 bg-white px-3 py-3 transition peer-checked:border-emerald-600 peer-checked:bg-emerald-50 peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-200">
-                                          <span className="text-sm font-extrabold text-[#082d24]">
-                                            {choiceLabel(choice, match.teamA, match.teamB)}
-                                          </span>
-                                        </span>
-                                      </label>
-                                    );
-                                  })}
-                              </div>
-
-                              {!hasDrawChoice(match.handicap) && (
-                                <p className="text-xs font-semibold text-slate-600">
-                                  Kèo nửa trái không có cửa Hòa-sau-chấp.
-                                </p>
-                              )}
-
-                              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                <label
-                                  className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
-                                    hopeStarAllowed
-                                      ? "border-amber-200 bg-amber-50 text-amber-950"
-                                      : "border-slate-200 bg-slate-100 text-slate-500"
-                                  }`}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    name="hopeStar"
-                                    value="true"
-                                    defaultChecked={Boolean(myVote?.hopeStar)}
-                                    disabled={!hopeStarAllowed}
-                                    className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
-                                  />
-                                  <Sparkles size={17} aria-hidden="true" />
-                                  <span className="font-bold">
-                                    {hopeStarAllowed
-                                      ? "Bật Ngôi sao hy vọng"
-                                      : "Ngôi sao mở từ tứ kết"}
-                                  </span>
-                                </label>
-
-                                <button className="min-h-11 rounded-xl bg-emerald-700 px-5 py-2 text-sm font-extrabold text-white shadow-sm shadow-emerald-950/15 hover:bg-emerald-800 active:translate-y-px">
-                                  {myVote ? "Cập nhật lựa chọn" : "Lưu lựa chọn"}
-                                </button>
-                              </div>
-                            </form>
+                            <MatchVoteForm
+                              matchId={match.id}
+                              returnFilter={activeFilter}
+                              returnQ={searchTerm}
+                              teamA={match.teamA}
+                              teamB={match.teamB}
+                              handicapLabel={formatHandicap(match)}
+                              contributionLabel={formatCurrency(match.contributionAmount)}
+                              participantLabel={
+                                participantCount > 0
+                                  ? `${participantCount} người đã tham gia`
+                                  : "Chưa có người tham gia"
+                              }
+                              timeStatus={timeStatusLabel(match, locked, now)}
+                              choices={availableChoices}
+                              selectedChoice={myVote?.choice ?? null}
+                              selectedHopeStar={Boolean(myVote?.hopeStar)}
+                              hopeStarAllowed={hopeStarAllowed}
+                              hasDrawChoice={hasDrawChoice(match.handicap)}
+                            />
                           ) : (
                             <LockedMatchSummary
                               match={match}
