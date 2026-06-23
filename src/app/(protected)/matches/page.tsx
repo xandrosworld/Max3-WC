@@ -970,7 +970,7 @@ function getMissingVoteText({
 }) {
   if (!autoFollowTargetName) return "Bạn không chọn trận này";
   if (!followedVote) {
-    return `Bạn không chọn trận này vì ${autoFollowTargetName} cũng không chọn`;
+    return `Bạn không chọn trận này; hệ thống không tìm thấy lựa chọn nào trong chuỗi tự theo từ ${autoFollowTargetName}`;
   }
   return `Bạn chưa có lựa chọn; ${autoFollowTargetName} đã chọn ${choiceLabel(
     followedVote.choice,

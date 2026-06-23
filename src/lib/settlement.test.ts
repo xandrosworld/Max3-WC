@@ -271,4 +271,74 @@ describe("settleMatch hope star", () => {
       ],
     });
   });
+
+  it("tu copy lua chon theo chuoi auto-follow neu nguoi giua cung quen chon", async () => {
+    txMock.user.findMany.mockResolvedValue([
+      { id: "leader", autoFollowUserId: null },
+      { id: "middle", autoFollowUserId: "leader" },
+      { id: "follower", autoFollowUserId: "middle" },
+    ]);
+    txMock.match.findUnique.mockResolvedValue(
+      baseMatch({
+        votes: [{ userId: "leader", choice: VoteChoice.TEAM_B, hopeStar: true }],
+      }),
+    );
+
+    await settleMatch({
+      matchId: "match-1",
+      teamAScore: 0,
+      teamBScore: 1,
+      adminId: "admin-1",
+    });
+
+    expect(txMock.vote.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          userId: "middle",
+          matchId: "match-1",
+          choice: VoteChoice.TEAM_B,
+          hopeStar: false,
+        },
+        {
+          userId: "follower",
+          matchId: "match-1",
+          choice: VoteChoice.TEAM_B,
+          hopeStar: false,
+        },
+      ],
+      skipDuplicates: true,
+    });
+    expect(txMock.lossTransaction.createMany).not.toHaveBeenCalled();
+  });
+
+  it("khong auto-copy neu chuoi auto-follow bi vong lap va khong ai chon", async () => {
+    txMock.user.findMany.mockResolvedValue([
+      { id: "cycle-a", autoFollowUserId: "cycle-b" },
+      { id: "cycle-b", autoFollowUserId: "cycle-a" },
+    ]);
+    txMock.match.findUnique.mockResolvedValue(baseMatch());
+
+    await settleMatch({
+      matchId: "match-1",
+      teamAScore: 0,
+      teamBScore: 1,
+      adminId: "admin-1",
+    });
+
+    expect(txMock.vote.createMany).not.toHaveBeenCalled();
+    expect(txMock.lossTransaction.createMany).toHaveBeenCalledWith({
+      data: expect.arrayContaining([
+        expect.objectContaining({
+          userId: "cycle-a",
+          amount: 40_000,
+          type: LossTransactionType.LOSS,
+        }),
+        expect.objectContaining({
+          userId: "cycle-b",
+          amount: 40_000,
+          type: LossTransactionType.LOSS,
+        }),
+      ]),
+    });
+  });
 });

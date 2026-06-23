@@ -110,33 +110,68 @@ export async function settleMatch(input: {
       });
       const votes = [...match.votes];
       const voteByUserId = new Map(votes.map((vote) => [vote.userId, vote]));
-      const autoVotes = eligibleUsers.flatMap((user) => {
-        if (voteByUserId.has(user.id) || !user.autoFollowUserId) return [];
-        const followedVote = voteByUserId.get(user.autoFollowUserId);
-        if (!followedVote) return [];
-        return {
-          userId: user.id,
+      const eligibleUserById = new Map(eligibleUsers.map((user) => [user.id, user]));
+      const resolvingUserIds = new Set<string>();
+      const autoVotes: Array<{
+        userId: string;
+        matchId: string;
+        choice: (typeof votes)[number]["choice"];
+        hopeStar: false;
+      }> = [];
+
+      const createAutoVote = (
+        userId: string,
+        followedVote: (typeof votes)[number],
+      ) => {
+        const autoVote = {
+          userId,
+          matchId: match.id,
+          choice: followedVote.choice,
+          hopeStar: false as const,
+        };
+        autoVotes.push(autoVote);
+
+        const copiedVote = {
+          id: `auto-${userId}-${match.id}`,
+          userId,
           matchId: match.id,
           choice: followedVote.choice,
           hopeStar: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         };
-      });
+        votes.push(copiedVote);
+        voteByUserId.set(userId, copiedVote);
+        return copiedVote;
+      };
+
+      const resolveFollowedVote = (
+        user: (typeof eligibleUsers)[number],
+      ): (typeof votes)[number] | null => {
+        const existingVote = voteByUserId.get(user.id);
+        if (existingVote) return existingVote;
+        if (!user.autoFollowUserId || resolvingUserIds.has(user.id)) return null;
+
+        resolvingUserIds.add(user.id);
+        const directFollowedVote = voteByUserId.get(user.autoFollowUserId);
+        const followedUser = eligibleUserById.get(user.autoFollowUserId);
+        const followedVote =
+          directFollowedVote ??
+          (followedUser ? resolveFollowedVote(followedUser) : null);
+        resolvingUserIds.delete(user.id);
+
+        if (!followedVote) return null;
+        return createAutoVote(user.id, followedVote);
+      };
+
+      for (const user of eligibleUsers) {
+        if (!voteByUserId.has(user.id) && user.autoFollowUserId) {
+          resolveFollowedVote(user);
+        }
+      }
 
       if (autoVotes.length > 0) {
         await tx.vote.createMany({ data: autoVotes, skipDuplicates: true });
-        for (const vote of autoVotes) {
-          const copiedVote = {
-            id: `auto-${vote.userId}-${match.id}`,
-            userId: vote.userId,
-            matchId: match.id,
-            choice: vote.choice,
-            hopeStar: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
-          votes.push(copiedVote);
-          voteByUserId.set(vote.userId, copiedVote);
-        }
       }
 
       const involvedUserIds = [
