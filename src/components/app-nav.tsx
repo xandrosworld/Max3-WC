@@ -14,7 +14,7 @@ export function AppNav({ isAdmin }: { isAdmin: boolean }) {
   ];
 
   return (
-    <nav className="flex max-w-full items-center gap-1 overflow-x-auto text-sm font-semibold" aria-label="Điều hướng chính">
+    <nav className="flex w-full max-w-full min-w-0 items-center gap-1 overflow-x-auto text-sm font-semibold" aria-label="Điều hướng chính">
       {items.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (

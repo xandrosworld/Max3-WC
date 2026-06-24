@@ -295,8 +295,55 @@ function GroupCard({ group, index }: { group: GroupStanding; index: number }) {
         </div>
       </header>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[500px] table-fixed border-collapse text-left text-sm sm:min-w-0">
+      <div className="sm:hidden">
+        <div className="border-b border-slate-200 bg-slate-950 px-3 py-2.5 text-xs font-black text-white">
+          Đội
+        </div>
+        <div className="divide-y divide-slate-100">
+          {group.teams.map((team, teamIndex) => (
+            <div
+              key={team.key}
+              className={`px-3 py-3.5 ${
+                teamIndex < 2 ? "bg-emerald-50" : "bg-white"
+              }`}
+            >
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="w-5 shrink-0 text-center font-mono text-xs font-black text-slate-700 tabular-nums">
+                    {teamIndex + 1}
+                  </span>
+                  <TeamMark
+                    name={team.name}
+                    code={team.code}
+                    crest={team.crest}
+                    size="sm"
+                  />
+                  <span
+                    className="min-w-0 truncate text-base font-black text-slate-950"
+                    title={team.name}
+                  >
+                    {team.name}
+                  </span>
+                </div>
+                <span className="inline-flex min-w-10 justify-center rounded-lg bg-slate-950 px-2.5 py-1.5 font-mono text-lg font-black text-white tabular-nums">
+                  {team.points}
+                </span>
+              </div>
+
+              <div className="mt-3 grid grid-cols-5 gap-1 rounded-xl border border-slate-200 bg-white/70 px-2 py-2 text-center">
+                <MobileStat label="Tr" value={team.played} />
+                <MobileStat label="T" value={team.won} accent="text-emerald-700" />
+                <MobileStat label="H" value={team.drawn} />
+                <MobileStat label="B" value={team.lost} accent="text-rose-700" />
+                <MobileStat label="HS" value={formatGoalDifference(team.goalDifference)} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="hidden sm:block">
+        <table className="w-full table-fixed border-collapse text-left text-sm">
           <colgroup>
             <col className="w-[45%]" />
             <col className="w-[8%]" />
@@ -397,6 +444,27 @@ function TableNumber({
     <td className={`px-1 py-3.5 text-center font-mono text-sm font-extrabold tabular-nums ${accent}`}>
       {children}
     </td>
+  );
+}
+
+function MobileStat({
+  label,
+  value,
+  accent = "text-slate-700",
+}: {
+  label: string;
+  value: ReactNode;
+  accent?: string;
+}) {
+  return (
+    <span className="min-w-0">
+      <span className="block text-[10px] font-black uppercase text-slate-500">
+        {label}
+      </span>
+      <span className={`mt-0.5 block font-mono text-sm font-black tabular-nums ${accent}`}>
+        {value}
+      </span>
+    </span>
   );
 }
 
