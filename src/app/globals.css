@@ -49,3 +49,19 @@ textarea {
   background: #bbf7d0;
   color: #14532d;
 }
+
+@keyframes badge-shine {
+  0%,
+  35% {
+    transform: translateX(0) rotate(12deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  72%,
+  100% {
+    transform: translateX(72px) rotate(12deg);
+    opacity: 0;
+  }
+}
