@@ -202,7 +202,7 @@ function PageHero({
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2">
           <HeroStat icon={<Trophy size={18} />} label="Bảng" value={groupCount} />
           <HeroStat icon={<Users size={18} />} label="Đội" value={totalTeams} />
           <HeroStat
@@ -243,7 +243,7 @@ function HeroStat({
           {label}
         </span>
         <span
-          className={`mt-0.5 block font-mono font-black text-slate-950 tabular-nums ${
+          className={`mt-0.5 block break-words font-mono font-black text-slate-950 tabular-nums ${
             compact ? "text-sm leading-5" : "text-2xl"
           }`}
         >
