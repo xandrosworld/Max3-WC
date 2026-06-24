@@ -140,7 +140,7 @@ export default async function GroupsPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-5xl space-y-4">
       <PageHero
         groupCount={groups.length}
         totalTeams={totalTeams}
@@ -165,7 +165,7 @@ export default async function GroupsPage() {
         ))}
       </nav>
 
-      <section className="grid gap-4 xl:grid-cols-2">
+      <section className="mx-auto grid w-full max-w-5xl justify-center gap-4 lg:grid-cols-2">
         {groups.map((group, index) => (
           <GroupCard key={group.id} group={group} index={index} />
         ))}
@@ -263,18 +263,18 @@ function GroupCard({ group, index }: { group: GroupStanding; index: number }) {
   return (
     <article
       id={group.id}
-      className={`scroll-mt-28 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 ${accent.border}`}
+      className={`w-full max-w-[680px] scroll-mt-28 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 ${accent.border}`}
     >
-      <header className={`border-b border-slate-200 px-4 py-4 ${accent.surface}`}>
+      <header className={`border-b border-slate-200 px-4 py-3 ${accent.surface}`}>
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
           <div className="min-w-0">
             <p className={`text-xs font-black ${accent.text}`}>Bảng xếp hạng</p>
-            <h2 className="mt-1 text-2xl font-black leading-tight text-slate-950">
+            <h2 className="mt-1 text-2xl font-black leading-tight text-slate-950 sm:text-[1.7rem]">
               {group.label}
             </h2>
           </div>
 
-          <div className="flex shrink-0 flex-col items-end gap-2 text-xs font-black">
+          <div className="flex shrink-0 flex-col items-end gap-1.5 text-xs font-black">
             <span className="inline-flex min-h-7 items-center whitespace-nowrap rounded-lg bg-slate-950 px-3 text-white shadow-sm shadow-slate-950/10">
               {group.completedMatches}/{group.totalMatches} trận
             </span>
@@ -287,7 +287,7 @@ function GroupCard({ group, index }: { group: GroupStanding; index: number }) {
           </div>
         </div>
 
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/80 ring-1 ring-slate-200">
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/80 ring-1 ring-slate-200">
           <div
             className={`h-full rounded-full ${accent.dot}`}
             style={{ width: `${completion}%` }}
@@ -385,25 +385,25 @@ function GroupCard({ group, index }: { group: GroupStanding; index: number }) {
           </colgroup>
           <thead>
             <tr className="border-b border-slate-200 bg-slate-950 text-xs font-black text-white">
-              <th scope="col" className="px-3 py-3.5">
+              <th scope="col" className="px-3 py-3">
                 Đội
               </th>
-              <th scope="col" className="px-1 py-3.5 text-center">
+              <th scope="col" className="px-1 py-3 text-center">
                 Tr
               </th>
-              <th scope="col" className="px-1 py-3.5 text-center">
+              <th scope="col" className="px-1 py-3 text-center">
                 T
               </th>
-              <th scope="col" className="px-1 py-3.5 text-center">
+              <th scope="col" className="px-1 py-3 text-center">
                 H
               </th>
-              <th scope="col" className="px-1 py-3.5 text-center">
+              <th scope="col" className="px-1 py-3 text-center">
                 B
               </th>
-              <th scope="col" className="px-1 py-3.5 text-center">
+              <th scope="col" className="px-1 py-3 text-center">
                 HS
               </th>
-              <th scope="col" className="px-2 py-3.5 text-center">
+              <th scope="col" className="px-2 py-3 text-center">
                 Đ
               </th>
             </tr>
@@ -414,7 +414,7 @@ function GroupCard({ group, index }: { group: GroupStanding; index: number }) {
                 key={team.key}
                 className={teamIndex < 2 ? "bg-emerald-50" : "bg-white hover:bg-slate-50"}
               >
-                <th scope="row" className="px-3 py-3.5">
+                <th scope="row" className="px-3 py-2.5">
                   <div className="flex min-w-0 items-center gap-2">
                     <span className="w-5 shrink-0 text-center font-mono text-xs font-black text-slate-700 tabular-nums">
                       {teamIndex + 1}
@@ -438,8 +438,8 @@ function GroupCard({ group, index }: { group: GroupStanding; index: number }) {
                 <TableNumber>{team.drawn}</TableNumber>
                 <TableNumber accent="text-rose-700">{team.lost}</TableNumber>
                 <TableNumber>{formatGoalDifference(team.goalDifference)}</TableNumber>
-                <td className="px-2 py-3.5 text-center">
-                  <span className="inline-flex min-w-8 justify-center rounded-lg bg-slate-950 px-2 py-1 font-mono text-base font-black text-white tabular-nums">
+                <td className="px-2 py-2.5 text-center">
+                  <span className="inline-flex min-w-8 justify-center rounded-lg bg-slate-950 px-2 py-1 font-mono text-[15px] font-black text-white tabular-nums">
                     {team.points}
                   </span>
                 </td>
@@ -449,7 +449,7 @@ function GroupCard({ group, index }: { group: GroupStanding; index: number }) {
         </table>
       </div>
 
-      <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-white px-4 py-3 text-xs font-bold text-slate-700">
+      <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-white px-4 py-2.5 text-xs font-bold text-slate-700">
         <span className="inline-flex items-center gap-1">
           <CircleEqual size={14} />
           Thắng 3 điểm, hòa 1 điểm
@@ -471,7 +471,7 @@ function TableNumber({
   accent?: string;
 }) {
   return (
-    <td className={`px-1 py-3.5 text-center font-mono text-sm font-extrabold tabular-nums ${accent}`}>
+    <td className={`px-1 py-2.5 text-center font-mono text-sm font-extrabold tabular-nums ${accent}`}>
       {children}
     </td>
   );
