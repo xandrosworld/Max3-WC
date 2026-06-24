@@ -80,10 +80,13 @@ export function AppNav({
     <nav className="flex w-full max-w-full min-w-0 items-center gap-1 overflow-x-auto text-sm font-semibold" aria-label="Điều hướng chính">
       {items.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const showNewBadge = item.href === "/groups" && showGroupsNew && !active;
         return (
           <Link
             key={item.href}
-            className={`relative inline-flex shrink-0 items-center rounded-xl px-3 py-2 ${
+            className={`relative inline-flex shrink-0 items-center rounded-xl py-2 pl-3 ${
+              showNewBadge ? "pr-9" : "pr-3"
+            } ${
               active
                 ? "bg-white text-emerald-950"
                 : "text-emerald-50 hover:bg-white/10 hover:text-white"
@@ -93,8 +96,8 @@ export function AppNav({
           >
             <span className="sm:hidden">{item.mobileLabel}</span>
             <span className="hidden sm:inline">{item.label}</span>
-            {item.href === "/groups" && showGroupsNew && !active && (
-              <span className="pointer-events-none absolute -right-3 -top-1 inline-flex overflow-hidden rounded-full bg-amber-300 px-1.5 py-0.5 text-[10px] font-black leading-none text-emerald-950 shadow-sm ring-1 ring-white/70 before:absolute before:inset-y-0 before:-left-8 before:w-5 before:rotate-12 before:bg-white/80 before:blur-[1px] motion-safe:before:animate-[badge-shine_2.4s_ease-in-out_infinite]">
+            {showNewBadge && (
+              <span className="pointer-events-none absolute right-1.5 top-1/2 inline-flex -translate-y-1/2 overflow-hidden rounded-full bg-amber-300 px-1.5 py-0.5 text-[10px] font-black leading-none text-emerald-950 shadow-sm ring-1 ring-white/70 before:absolute before:inset-y-0 before:-left-8 before:w-5 before:rotate-12 before:bg-white/80 before:blur-[1px] motion-safe:before:animate-[badge-shine_2.4s_ease-in-out_infinite]">
                 <span className="mr-1 h-1.5 w-1.5 rounded-full bg-emerald-700" />
                 Mới
               </span>
