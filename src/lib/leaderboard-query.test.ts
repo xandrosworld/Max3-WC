@@ -95,4 +95,55 @@ describe("getLeaderboard", () => {
     expect(rows[0].rank).toBe(1);
     expect(rows[1].rank).toBe(2);
   });
+
+  it("calculates the current winning streak from latest settled matches", async () => {
+    prismaMock.user.findMany.mockResolvedValue([
+      {
+        id: "hot-player",
+        name: "Hot Player",
+        image: null,
+        department: "Sq1",
+        votes: [
+          {
+            choice: "TEAM_A",
+            hopeStar: false,
+            match: { result: { winningChoice: "TEAM_A" } },
+          },
+          {
+            choice: "TEAM_B",
+            hopeStar: false,
+            match: { result: { winningChoice: "TEAM_B" } },
+          },
+          {
+            choice: "TEAM_A",
+            hopeStar: false,
+            match: { result: { winningChoice: "TEAM_B" } },
+          },
+        ],
+        lossTransactions: [],
+        payments: [],
+      },
+    ]);
+    prismaMock.match.findMany.mockResolvedValue([
+      {
+        id: "latest",
+        result: { winningChoice: "TEAM_A" },
+        votes: [{ userId: "hot-player", choice: "TEAM_A" }],
+      },
+      {
+        id: "previous",
+        result: { winningChoice: "TEAM_B" },
+        votes: [{ userId: "hot-player", choice: "TEAM_B" }],
+      },
+      {
+        id: "older",
+        result: { winningChoice: "TEAM_B" },
+        votes: [{ userId: "hot-player", choice: "TEAM_A" }],
+      },
+    ]);
+
+    const rows = await getLeaderboard();
+
+    expect(rows[0].currentWinStreak).toBe(2);
+  });
 });

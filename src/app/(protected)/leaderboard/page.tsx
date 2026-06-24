@@ -137,6 +137,24 @@ export default async function LeaderboardPage({
           position: relative;
           isolation: isolate;
         }
+        .win-streak-badge {
+          position: relative;
+          overflow: hidden;
+        }
+        .win-streak-badge::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          width: 42%;
+          background: linear-gradient(100deg, transparent, rgba(255,255,255,0.78), transparent);
+          transform: translateX(-145%);
+          animation: wcTagShine 4.1s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .win-streak-badge::before {
+            animation: none;
+          }
+        }
         .leaderboard-stage::before {
           content: "";
           position: absolute;
@@ -853,6 +871,9 @@ function LeaderboardSection({
                           {row.department || "Chưa có đơn vị"}
                         </p>
                         <RankTag rank={row.displayRank} mode={mode} />
+                        {mode === "prediction" && (
+                          <WinStreakBadge streak={row.currentWinStreak} />
+                        )}
                       </div>
                       {row.displayRank === 1 && <TopWinnerGif variant="desktop" mode={mode} />}
                     </div>
@@ -1011,6 +1032,24 @@ function RankTag({
   );
 }
 
+function WinStreakBadge({ streak }: { streak: number }) {
+  if (streak < 2) return null;
+
+  return (
+    <span className="win-streak-badge mt-1.5 inline-flex max-w-full items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-600 via-teal-500 to-amber-400 px-2.5 py-1 text-[10px] font-black leading-tight text-white shadow-sm shadow-emerald-900/15 ring-1 ring-white/70">
+      <Flame
+        className="relative z-10 shrink-0"
+        size={12}
+        strokeWidth={2.6}
+        aria-hidden="true"
+      />
+      <span className="relative z-10 min-w-0 [overflow-wrap:anywhere]">
+        Đang thắng {streak} trận
+      </span>
+    </span>
+  );
+}
+
 function MobilePrimaryBadge({
   label,
   value,
@@ -1097,6 +1136,9 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
                 : `${row.voted} lượt dự đoán`}
             </p>
             {!showInlineWinnerGif && <RankTag rank={row.displayRank} mode={mode} />}
+            {mode === "prediction" && (
+              <WinStreakBadge streak={row.currentWinStreak} />
+            )}
         </div>
         <MobilePrimaryBadge
           label={primaryLabel}

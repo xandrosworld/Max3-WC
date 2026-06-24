@@ -6,6 +6,31 @@ import {
 } from "./domain";
 import { prisma } from "./prisma";
 
+type SettledMatchForStreak = {
+  result: { winningChoice: VoteChoice } | null;
+  votes: Array<{ userId: string; choice: VoteChoice }>;
+};
+
+function calculateCurrentWinStreak(
+  userId: string,
+  settledMatches: SettledMatchForStreak[],
+) {
+  let streak = 0;
+
+  for (const match of settledMatches) {
+    if (!match.result) continue;
+
+    const vote = match.votes.find((row) => row.userId === userId);
+    if (!vote || vote.choice !== match.result.winningChoice) {
+      break;
+    }
+
+    streak += 1;
+  }
+
+  return streak;
+}
+
 export async function getLeaderboard() {
   const [users, settledMatches] = await Promise.all([
     prisma.user.findMany({
@@ -31,7 +56,12 @@ export async function getLeaderboard() {
         status: "SETTLED",
         result: { isNot: null },
       },
-      select: { id: true, votes: { select: { userId: true } } },
+      orderBy: [{ kickoffAt: "desc" }, { id: "desc" }],
+      select: {
+        id: true,
+        result: { select: { winningChoice: true } },
+        votes: { select: { userId: true, choice: true } },
+      },
     }),
   ]);
 
@@ -61,6 +91,10 @@ export async function getLeaderboard() {
       user.lossTransactions.reduce((sum, row) => sum + row.amount, 0),
     );
     const paid = user.payments.reduce((sum, row) => sum + row.amount, 0);
+    const currentWinStreak = calculateCurrentWinStreak(
+      user.id,
+      settledMatches,
+    );
 
     return {
       id: user.id,
@@ -78,6 +112,7 @@ export async function getLeaderboard() {
       paid,
       outstanding: loss - paid,
       paymentStatus: getPaymentStatus(loss, paid),
+      currentWinStreak,
     };
   });
 
