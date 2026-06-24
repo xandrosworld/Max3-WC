@@ -4,8 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
 
-const GROUPS_SEEN_KEY = "wc2026-groups-tab-seen";
+const GROUPS_TAB_ANNOUNCEMENT_VERSION = "2026-06-24";
+const GROUPS_TAB_FIXED_UNTIL = new Date("2026-06-24T23:59:59.999+07:00").getTime();
 const GROUPS_SEEN_EVENT = "wc2026-groups-tab-seen-change";
+
+function groupsSeenKey(viewerId: string) {
+  return `wc2026-groups-tab-seen:${GROUPS_TAB_ANNOUNCEMENT_VERSION}:${viewerId}`;
+}
 
 function subscribeGroupsSeen(onStoreChange: () => void) {
   window.addEventListener("storage", onStoreChange);
@@ -16,9 +21,9 @@ function subscribeGroupsSeen(onStoreChange: () => void) {
   };
 }
 
-function getGroupsSeenSnapshot() {
+function getGroupsSeenSnapshot(viewerId: string) {
   try {
-    return window.localStorage.getItem(GROUPS_SEEN_KEY) === "1";
+    return window.localStorage.getItem(groupsSeenKey(viewerId)) === "1";
   } catch {
     return true;
   }
@@ -28,24 +33,37 @@ function getGroupsSeenServerSnapshot() {
   return true;
 }
 
-function markGroupsSeen() {
+function markGroupsSeen(viewerId: string) {
+  if (isGroupsAnnouncementFixed()) return;
+
   try {
-    window.localStorage.setItem(GROUPS_SEEN_KEY, "1");
+    window.localStorage.setItem(groupsSeenKey(viewerId), "1");
     window.dispatchEvent(new Event(GROUPS_SEEN_EVENT));
   } catch {
     // Storage can be unavailable in private browsing; navigation still works.
   }
 }
 
-export function AppNav({ isAdmin }: { isAdmin: boolean }) {
+function isGroupsAnnouncementFixed() {
+  return Date.now() <= GROUPS_TAB_FIXED_UNTIL;
+}
+
+export function AppNav({
+  isAdmin,
+  viewerId,
+}: {
+  isAdmin: boolean;
+  viewerId: string;
+}) {
   const pathname = usePathname();
   const groupsSeen = useSyncExternalStore(
     subscribeGroupsSeen,
-    getGroupsSeenSnapshot,
+    () => getGroupsSeenSnapshot(viewerId),
     getGroupsSeenServerSnapshot,
   );
   const isGroupsPath = pathname === "/groups" || pathname.startsWith("/groups/");
-  const showGroupsNew = !isGroupsPath && !groupsSeen;
+  const showGroupsNew =
+    !isGroupsPath && (isGroupsAnnouncementFixed() || !groupsSeen);
   const items = [
     { href: "/matches", label: "Lịch & dự đoán", mobileLabel: "Lịch" },
     { href: "/groups", label: "Bảng đấu", mobileLabel: "Bảng đấu" },
@@ -55,8 +73,8 @@ export function AppNav({ isAdmin }: { isAdmin: boolean }) {
   ];
 
   useEffect(() => {
-    if (isGroupsPath) markGroupsSeen();
-  }, [isGroupsPath]);
+    if (isGroupsPath) markGroupsSeen(viewerId);
+  }, [isGroupsPath, viewerId]);
 
   return (
     <nav className="flex w-full max-w-full min-w-0 items-center gap-1 overflow-x-auto text-sm font-semibold" aria-label="Điều hướng chính">
@@ -71,7 +89,7 @@ export function AppNav({ isAdmin }: { isAdmin: boolean }) {
                 : "text-emerald-50 hover:bg-white/10 hover:text-white"
             }`}
             href={item.href}
-            onClick={item.href === "/groups" ? markGroupsSeen : undefined}
+            onClick={item.href === "/groups" ? () => markGroupsSeen(viewerId) : undefined}
           >
             <span className="sm:hidden">{item.mobileLabel}</span>
             <span className="hidden sm:inline">{item.label}</span>

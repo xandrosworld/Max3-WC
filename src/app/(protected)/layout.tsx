@@ -35,7 +35,7 @@ export default async function ProtectedLayout({
             />
           </Link>
           <div className="order-3 w-full md:order-none md:w-auto">
-            <AppNav isAdmin={user.role === "admin"} />
+            <AppNav isAdmin={user.role === "admin"} viewerId={user.id} />
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <ProfileAvatar image={user.image} name={user.name} />
