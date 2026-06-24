@@ -140,6 +140,7 @@ export default async function LeaderboardPage({
         .win-streak-badge {
           position: relative;
           overflow: hidden;
+          animation: wcTagPulse 3.6s ease-in-out infinite;
         }
         .win-streak-badge::before {
           content: "";
@@ -150,7 +151,13 @@ export default async function LeaderboardPage({
           transform: translateX(-145%);
           animation: wcTagShine 4.1s ease-in-out infinite;
         }
+        .win-streak-badge svg {
+          filter: drop-shadow(0 0 5px rgba(255,255,255,0.64));
+          animation: wcBadgePop 2.3s ease-in-out infinite;
+        }
         @media (prefers-reduced-motion: reduce) {
+          .win-streak-badge,
+          .win-streak-badge svg,
           .win-streak-badge::before {
             animation: none;
           }
@@ -1044,7 +1051,7 @@ function WinStreakBadge({ streak }: { streak: number }) {
         aria-hidden="true"
       />
       <span className="relative z-10 min-w-0 [overflow-wrap:anywhere]">
-        Đang thắng {streak} trận
+        Chuỗi đúng {streak} trận
       </span>
     </span>
   );
