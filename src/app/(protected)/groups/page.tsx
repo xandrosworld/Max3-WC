@@ -296,50 +296,80 @@ function GroupCard({ group, index }: { group: GroupStanding; index: number }) {
       </header>
 
       <div className="sm:hidden">
-        <div className="border-b border-slate-200 bg-slate-950 px-3 py-2.5 text-xs font-black text-white">
-          Đội
-        </div>
-        <div className="divide-y divide-slate-100">
-          {group.teams.map((team, teamIndex) => (
-            <div
-              key={team.key}
-              className={`px-3 py-3.5 ${
-                teamIndex < 2 ? "bg-emerald-50" : "bg-white"
-              }`}
-            >
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="w-5 shrink-0 text-center font-mono text-xs font-black text-slate-700 tabular-nums">
-                    {teamIndex + 1}
+        <table className="w-full table-fixed border-collapse text-left">
+          <colgroup>
+            <col className="w-[45%]" />
+            <col className="w-[8%]" />
+            <col className="w-[8%]" />
+            <col className="w-[8%]" />
+            <col className="w-[8%]" />
+            <col className="w-[10%]" />
+            <col className="w-[13%]" />
+          </colgroup>
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-950 text-[11px] font-black text-white">
+              <th scope="col" className="px-2 py-3">
+                Đội
+              </th>
+              <th scope="col" className="px-0.5 py-3 text-center">
+                Tr
+              </th>
+              <th scope="col" className="px-0.5 py-3 text-center">
+                T
+              </th>
+              <th scope="col" className="px-0.5 py-3 text-center">
+                H
+              </th>
+              <th scope="col" className="px-0.5 py-3 text-center">
+                B
+              </th>
+              <th scope="col" className="px-0.5 py-3 text-center">
+                HS
+              </th>
+              <th scope="col" className="px-1 py-3 text-center">
+                Đ
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {group.teams.map((team, teamIndex) => (
+              <tr
+                key={team.key}
+                className={teamIndex < 2 ? "bg-emerald-50" : "bg-white"}
+              >
+                <th scope="row" className="px-2 py-3">
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    <span className="w-4 shrink-0 text-center font-mono text-[11px] font-black text-slate-700 tabular-nums">
+                      {teamIndex + 1}
+                    </span>
+                    <TeamMark
+                      name={team.name}
+                      code={team.code}
+                      crest={team.crest}
+                      size="xs"
+                    />
+                    <span
+                      className="min-w-0 truncate text-[13px] font-black leading-4 text-slate-950"
+                      title={team.name}
+                    >
+                      {team.name}
+                    </span>
+                  </div>
+                </th>
+                <MobileTableNumber>{team.played}</MobileTableNumber>
+                <MobileTableNumber accent="text-emerald-700">{team.won}</MobileTableNumber>
+                <MobileTableNumber>{team.drawn}</MobileTableNumber>
+                <MobileTableNumber accent="text-rose-700">{team.lost}</MobileTableNumber>
+                <MobileTableNumber>{formatGoalDifference(team.goalDifference)}</MobileTableNumber>
+                <td className="px-1 py-3 text-center">
+                  <span className="inline-flex min-w-7 justify-center rounded-md bg-slate-950 px-1.5 py-1 font-mono text-sm font-black text-white tabular-nums">
+                    {team.points}
                   </span>
-                  <TeamMark
-                    name={team.name}
-                    code={team.code}
-                    crest={team.crest}
-                    size="sm"
-                  />
-                  <span
-                    className="min-w-0 truncate text-base font-black text-slate-950"
-                    title={team.name}
-                  >
-                    {team.name}
-                  </span>
-                </div>
-                <span className="inline-flex min-w-10 justify-center rounded-lg bg-slate-950 px-2.5 py-1.5 font-mono text-lg font-black text-white tabular-nums">
-                  {team.points}
-                </span>
-              </div>
-
-              <div className="mt-3 grid grid-cols-5 gap-1 rounded-xl border border-slate-200 bg-white/70 px-2 py-2 text-center">
-                <MobileStat label="Tr" value={team.played} />
-                <MobileStat label="T" value={team.won} accent="text-emerald-700" />
-                <MobileStat label="H" value={team.drawn} />
-                <MobileStat label="B" value={team.lost} accent="text-rose-700" />
-                <MobileStat label="HS" value={formatGoalDifference(team.goalDifference)} />
-              </div>
-            </div>
-          ))}
-        </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <div className="hidden sm:block">
@@ -447,24 +477,17 @@ function TableNumber({
   );
 }
 
-function MobileStat({
-  label,
-  value,
+function MobileTableNumber({
+  children,
   accent = "text-slate-700",
 }: {
-  label: string;
-  value: ReactNode;
+  children: ReactNode;
   accent?: string;
 }) {
   return (
-    <span className="min-w-0">
-      <span className="block text-[10px] font-black uppercase text-slate-500">
-        {label}
-      </span>
-      <span className={`mt-0.5 block font-mono text-sm font-black tabular-nums ${accent}`}>
-        {value}
-      </span>
-    </span>
+    <td className={`px-0.5 py-3 text-center font-mono text-xs font-black tabular-nums ${accent}`}>
+      {children}
+    </td>
   );
 }
 
