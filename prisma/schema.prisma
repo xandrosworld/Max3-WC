@@ -53,6 +53,7 @@ enum ShopItemRarity {
   COMMON
   RARE
   EPIC
+  MYTHIC
   LEGENDARY
 }
 

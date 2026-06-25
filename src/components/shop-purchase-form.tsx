@@ -46,11 +46,13 @@ export function ShopPurchaseForm({
         className={`flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-black shadow-lg sm:min-h-11 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm ${
           rarity === "LEGENDARY"
             ? "bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-amber-950 shadow-amber-500/25 hover:from-amber-500 hover:via-yellow-400 hover:to-amber-500"
-            : rarity === "EPIC"
-              ? "bg-gradient-to-r from-violet-700 via-purple-600 to-violet-700 text-white shadow-violet-500/20 hover:from-violet-600 hover:via-purple-500 hover:to-violet-600"
-              : rarity === "RARE"
-                ? "bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-emerald-500/15 hover:from-emerald-600 hover:to-teal-600"
-                : "bg-emerald-700 text-white shadow-emerald-950/15 hover:bg-emerald-800"
+            : rarity === "MYTHIC"
+              ? "bg-gradient-to-r from-rose-700 via-pink-600 to-rose-700 text-white shadow-rose-500/20 hover:from-rose-600 hover:via-pink-500 hover:to-rose-600"
+              : rarity === "EPIC"
+                ? "bg-gradient-to-r from-violet-700 via-purple-600 to-violet-700 text-white shadow-violet-500/20 hover:from-violet-600 hover:via-purple-500 hover:to-violet-600"
+                : rarity === "RARE"
+                  ? "bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-emerald-500/15 hover:from-emerald-600 hover:to-teal-600"
+                  : "bg-emerald-700 text-white shadow-emerald-950/15 hover:bg-emerald-800"
         }`}
         data-testid={`buy-${itemSlug}`}
       >

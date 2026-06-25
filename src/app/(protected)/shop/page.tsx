@@ -349,6 +349,7 @@ const RARITY_CARD_GRADIENT: Record<string, string> = {
   COMMON: "from-slate-300 via-slate-200 to-slate-300",
   RARE: "from-emerald-500 via-teal-400 to-emerald-500",
   EPIC: "from-violet-500 via-fuchsia-400 to-violet-500",
+  MYTHIC: "from-rose-500 via-pink-400 to-rose-500",
   LEGENDARY: "from-amber-400 via-yellow-300 to-orange-400",
 };
 
@@ -356,6 +357,7 @@ const RARITY_CARD_RING: Record<string, string> = {
   COMMON: "border-slate-200",
   RARE: "border-emerald-300",
   EPIC: "border-violet-300 shop-card-epic",
+  MYTHIC: "border-rose-300 shop-card-mythic",
   LEGENDARY: "border-amber-300 shop-card-legendary",
 };
 
@@ -363,6 +365,7 @@ const RARITY_CARD_SHADOW: Record<string, string> = {
   COMMON: "hover:shadow-slate-950/8",
   RARE: "shadow-emerald-500/8 hover:shadow-emerald-500/18",
   EPIC: "shadow-violet-500/12 hover:shadow-violet-500/25",
+  MYTHIC: "shadow-rose-500/15 hover:shadow-rose-500/28",
   LEGENDARY: "shadow-amber-500/20 hover:shadow-amber-500/35",
 };
 
@@ -370,6 +373,7 @@ const RARITY_CARD_BG: Record<string, string> = {
   COMMON: "bg-white",
   RARE: "bg-gradient-to-br from-white via-white to-emerald-50/50",
   EPIC: "bg-gradient-to-br from-white via-violet-50/30 to-fuchsia-50/40",
+  MYTHIC: "bg-gradient-to-br from-white via-rose-50/30 to-pink-50/40",
   LEGENDARY: "bg-gradient-to-br from-amber-50/40 via-white to-yellow-50/50",
 };
 
@@ -401,10 +405,13 @@ function ShopItemCard({
       className={`group relative scroll-mt-28 overflow-hidden rounded-2xl border-2 sm:rounded-3xl ${RARITY_CARD_RING[item.rarity] ?? "border-slate-200"} ${RARITY_CARD_BG[item.rarity] ?? "bg-white"} p-2.5 sm:p-4 shadow-md transition hover:-translate-y-1 hover:shadow-xl ${RARITY_CARD_SHADOW[item.rarity] ?? ""}`}
     >
       <div className={`absolute inset-x-0 top-0 ${
-        item.rarity === "LEGENDARY" ? "h-1.5" : item.rarity === "EPIC" ? "h-1.5" : "h-1"
+        item.rarity === "LEGENDARY" || item.rarity === "MYTHIC" ? "h-1.5" : item.rarity === "EPIC" ? "h-1.5" : "h-1"
       } bg-gradient-to-r ${RARITY_CARD_GRADIENT[item.rarity] ?? "from-slate-400 to-slate-300"}`} />
       {item.rarity === "LEGENDARY" && (
         <div className="absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(251,191,36,0.12), transparent 50%)" }} />
+      )}
+      {item.rarity === "MYTHIC" && (
+        <div className="absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(244,63,94,0.10), transparent 50%)" }} />
       )}
       {item.rarity === "EPIC" && (
         <div className="absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(139,92,246,0.10), transparent 50%)" }} />
@@ -414,20 +421,25 @@ function ShopItemCard({
           <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] sm:px-2.5 sm:py-1 sm:text-[10px] font-black uppercase tracking-[0.12em] ring-1 ${
             item.rarity === "LEGENDARY"
               ? "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-900 ring-amber-300"
-              : item.rarity === "EPIC"
-                ? "bg-gradient-to-r from-violet-100 to-fuchsia-100 text-violet-900 ring-violet-300"
-                : SHOP_RARITY_TONES[item.rarity]
+              : item.rarity === "MYTHIC"
+                ? "bg-gradient-to-r from-rose-100 to-pink-100 text-rose-900 ring-rose-300"
+                : item.rarity === "EPIC"
+                  ? "bg-gradient-to-r from-violet-100 to-fuchsia-100 text-violet-900 ring-violet-300"
+                  : SHOP_RARITY_TONES[item.rarity]
           }`}>
             {item.rarity === "LEGENDARY" && <Sparkles size={10} className="hidden sm:inline text-amber-600" />}
+            {item.rarity === "MYTHIC" && <Sparkles size={10} className="hidden sm:inline text-rose-600" />}
             {item.rarity === "EPIC" && <Sparkles size={10} className="hidden sm:inline text-violet-600" />}
             {SHOP_RARITY_LABELS[item.rarity]}
           </span>
           <h3 className={`mt-1.5 text-sm font-black leading-tight sm:mt-2 sm:text-lg ${
             item.rarity === "LEGENDARY"
               ? "bg-gradient-to-r from-amber-700 via-yellow-600 to-amber-700 bg-clip-text text-transparent"
-              : item.rarity === "EPIC"
-                ? "text-violet-950"
-                : "text-slate-950"
+              : item.rarity === "MYTHIC"
+                ? "bg-gradient-to-r from-rose-700 via-pink-600 to-rose-700 bg-clip-text text-transparent"
+                : item.rarity === "EPIC"
+                  ? "text-violet-950"
+                  : "text-slate-950"
           }`}>
             {item.name}
           </h3>
@@ -435,11 +447,13 @@ function ShopItemCard({
         <span className={`shrink-0 rounded-xl px-2 py-1.5 text-[11px] font-black tabular-nums sm:rounded-2xl sm:px-3 sm:py-2 sm:text-sm ${
           item.rarity === "LEGENDARY"
             ? "bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-amber-950 shadow-lg shadow-amber-500/25 ring-1 ring-amber-400/40"
-            : item.rarity === "EPIC"
-              ? "bg-gradient-to-r from-violet-700 to-purple-700 text-white shadow-lg shadow-violet-500/20 ring-1 ring-violet-400/30"
-              : item.rarity === "RARE"
-                ? "bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md shadow-emerald-500/15"
-                : "bg-slate-800 text-slate-100"
+            : item.rarity === "MYTHIC"
+              ? "bg-gradient-to-r from-rose-700 via-pink-600 to-rose-700 text-white shadow-lg shadow-rose-500/20 ring-1 ring-rose-400/30"
+              : item.rarity === "EPIC"
+                ? "bg-gradient-to-r from-violet-700 to-purple-700 text-white shadow-lg shadow-violet-500/20 ring-1 ring-violet-400/30"
+                : item.rarity === "RARE"
+                  ? "bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md shadow-emerald-500/15"
+                  : "bg-slate-800 text-slate-100"
         }`}>
           {formatCtom(item.priceCtom)}
         </span>
@@ -450,18 +464,22 @@ function ShopItemCard({
           avatarShowcase
             ? (item.rarity === "LEGENDARY"
                 ? "bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.22),transparent_48%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.12),transparent_40%),linear-gradient(135deg,#1c1917,#292524_30%,#1c1917)] ring-1 ring-amber-500/20"
-                : item.rarity === "EPIC"
-                  ? "bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.20),transparent_48%),radial-gradient(circle_at_bottom_left,rgba(217,70,239,0.10),transparent_40%),linear-gradient(135deg,#1e1b4b,#0f172a_50%,#1e1b4b)] ring-1 ring-violet-500/20"
-                  : item.rarity === "RARE"
-                    ? "bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.18),transparent_48%),linear-gradient(135deg,#ecfdf5,#f0fdf4_50%,#ecfdf5)] ring-1 ring-emerald-200"
-                    : "bg-[linear-gradient(135deg,#f8fafc,#f1f5f9)] ring-1 ring-slate-200")
+                : item.rarity === "MYTHIC"
+                  ? "bg-[radial-gradient(circle_at_top,rgba(244,63,94,0.20),transparent_48%),radial-gradient(circle_at_bottom_left,rgba(236,72,153,0.10),transparent_40%),linear-gradient(135deg,#1c1017,#2a1520_30%,#1c1017)] ring-1 ring-rose-500/20"
+                  : item.rarity === "EPIC"
+                    ? "bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.20),transparent_48%),radial-gradient(circle_at_bottom_left,rgba(217,70,239,0.10),transparent_40%),linear-gradient(135deg,#1e1b4b,#0f172a_50%,#1e1b4b)] ring-1 ring-violet-500/20"
+                    : item.rarity === "RARE"
+                      ? "bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.18),transparent_48%),linear-gradient(135deg,#ecfdf5,#f0fdf4_50%,#ecfdf5)] ring-1 ring-emerald-200"
+                      : "bg-[linear-gradient(135deg,#f8fafc,#f1f5f9)] ring-1 ring-slate-200")
             : (item.rarity === "LEGENDARY"
                 ? "bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.14),transparent_50%),linear-gradient(135deg,#fffbeb,#fef3c7_50%,#fffbeb)] ring-1 ring-amber-200"
-                : item.rarity === "EPIC"
-                  ? "bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.10),transparent_50%),linear-gradient(135deg,#f5f3ff,#ede9fe_50%,#f5f3ff)] ring-1 ring-violet-200"
-                  : item.rarity === "RARE"
-                    ? "bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_48%),linear-gradient(135deg,#ecfdf5,#f0fdf4_50%,#ecfdf5)] ring-1 ring-emerald-200"
-                    : "bg-[linear-gradient(135deg,#f8fafc,#f1f5f9)] ring-1 ring-slate-200")
+                : item.rarity === "MYTHIC"
+                  ? "bg-[radial-gradient(circle_at_top_left,rgba(244,63,94,0.10),transparent_50%),linear-gradient(135deg,#fff1f2,#ffe4e6_50%,#fff1f2)] ring-1 ring-rose-200"
+                  : item.rarity === "EPIC"
+                    ? "bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.10),transparent_50%),linear-gradient(135deg,#f5f3ff,#ede9fe_50%,#f5f3ff)] ring-1 ring-violet-200"
+                    : item.rarity === "RARE"
+                      ? "bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_48%),linear-gradient(135deg,#ecfdf5,#f0fdf4_50%,#ecfdf5)] ring-1 ring-emerald-200"
+                      : "bg-[linear-gradient(135deg,#f8fafc,#f1f5f9)] ring-1 ring-slate-200")
         } ${avatarShowcase ? showcaseClass : "p-3 sm:p-4"}`}
       >
         {avatarShowcase ? (
@@ -496,7 +514,7 @@ function ShopItemCard({
       </div>
 
       <p className={`mt-2 line-clamp-2 text-xs font-semibold leading-4 sm:mt-3 sm:min-h-10 sm:text-sm sm:leading-5 ${
-        item.rarity === "LEGENDARY" ? "text-amber-900/70" : item.rarity === "EPIC" ? "text-violet-900/60" : "text-slate-600"
+        item.rarity === "LEGENDARY" ? "text-amber-900/70" : item.rarity === "MYTHIC" ? "text-rose-900/65" : item.rarity === "EPIC" ? "text-violet-900/60" : "text-slate-600"
       }`}>
         {item.description}
       </p>

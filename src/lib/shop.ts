@@ -34,6 +34,7 @@ export const SHOP_RARITY_LABELS: Record<ShopItemRarity, string> = {
   COMMON: "Thường",
   RARE: "Hiếm",
   EPIC: "Sử thi",
+  MYTHIC: "Thượng cổ",
   LEGENDARY: "Huyền thoại",
 };
 
@@ -41,6 +42,7 @@ export const SHOP_RARITY_TONES: Record<ShopItemRarity, string> = {
   COMMON: "bg-slate-50 text-slate-700 ring-slate-200",
   RARE: "bg-emerald-50 text-emerald-800 ring-emerald-200",
   EPIC: "bg-violet-50 text-violet-800 ring-violet-200",
+  MYTHIC: "bg-rose-50 text-rose-800 ring-rose-200",
   LEGENDARY: "bg-amber-50 text-amber-800 ring-amber-200",
 };
 
@@ -188,7 +190,7 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
   {
     slug: "wings-galaxy-nebula",
     type: ShopItemType.AVATAR_WINGS,
-    rarity: ShopItemRarity.LEGENDARY,
+    rarity: ShopItemRarity.MYTHIC,
     name: "Cánh Thiên Hà",
     description: "Sao và tinh vân bao quanh, vũ trụ nằm trên đôi cánh.",
     priceCtom: 78_888,
@@ -259,7 +261,7 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
   {
     slug: "aura-cosmic-orbit",
     type: ShopItemType.AVATAR_AURA,
-    rarity: ShopItemRarity.LEGENDARY,
+    rarity: ShopItemRarity.MYTHIC,
     name: "Aura Quỹ Đạo",
     description: "Vòng sáng xoay quanh avatar, dành cho bộ sưu tập xịn.",
     priceCtom: 78_000,
