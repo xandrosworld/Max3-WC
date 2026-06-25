@@ -1,0 +1,114 @@
+"use client";
+
+import { useId, useState } from "react";
+import { useFormStatus } from "react-dom";
+import { Gem, X } from "lucide-react";
+import { purchaseShopItemAction } from "@/app/actions";
+
+function ConfirmButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-black text-white shadow-lg shadow-emerald-950/15 hover:bg-emerald-800 disabled:opacity-60"
+      data-testid="confirm-purchase"
+    >
+      <Gem size={16} />
+      {pending ? "Đang mua..." : "Xác nhận mua"}
+    </button>
+  );
+}
+
+export function ShopPurchaseForm({
+  itemId,
+  itemSlug,
+  itemName,
+  priceLabel,
+}: {
+  itemId: string;
+  itemSlug: string;
+  itemName: string;
+  priceLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const dialogTitleId = useId();
+
+  return (
+    <form action={purchaseShopItemAction}>
+      <input type="hidden" name="itemId" value={itemId} />
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-black text-white shadow-lg shadow-emerald-950/15 hover:bg-emerald-800"
+        data-testid={`buy-${itemSlug}`}
+      >
+        <Gem size={16} />
+        Mua & trang bị
+      </button>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4 py-6 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={dialogTitleId}
+        >
+          <div className="w-full max-w-sm overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-2xl shadow-slate-950/25">
+            <div className="bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_42%),linear-gradient(135deg,#f8fafc,#fff7ed)] px-5 py-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.16em] text-emerald-700">
+                    <Gem size={14} />
+                    Xác nhận CTOM
+                  </p>
+                  <h3
+                    id={dialogTitleId}
+                    className="mt-2 text-2xl font-black leading-tight text-slate-950"
+                  >
+                    Mua vật phẩm này?
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 hover:text-slate-950"
+                  aria-label="Đóng"
+                >
+                  <X size={17} />
+                </button>
+              </div>
+
+              <div className="mt-4 rounded-2xl bg-white/90 p-4 ring-1 ring-slate-200">
+                <p className="text-sm font-bold text-slate-500">Vật phẩm</p>
+                <p className="mt-1 text-lg font-black text-slate-950">{itemName}</p>
+                <p className="mt-3 text-sm font-bold text-slate-500">Giá</p>
+                <p className="mt-1 text-xl font-black tabular-nums text-amber-700">
+                  {priceLabel}
+                </p>
+              </div>
+
+              <p className="mt-3 text-xs font-semibold leading-5 text-slate-600">
+                CTOM là điểm trang trí riêng của Shop. Sau khi xác nhận, vật phẩm sẽ được mua
+                và tự trang bị ngay.
+              </p>
+            </div>
+
+            <div className="flex gap-2 border-t border-slate-100 bg-white p-4">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-slate-100 px-4 text-sm font-black text-slate-700 hover:bg-slate-200"
+                data-testid="cancel-purchase"
+              >
+                Hủy
+              </button>
+              <ConfirmButton />
+            </div>
+          </div>
+        </div>
+      )}
+    </form>
+  );
+}

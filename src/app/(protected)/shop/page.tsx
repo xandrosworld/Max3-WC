@@ -2,15 +2,16 @@ import { ShopItemType, type ShopItem } from "@prisma/client";
 import {
   Check,
   Crown,
-  Gem,
+  Frame,
+  IdCard,
   PackageCheck,
   ShoppingBag,
   Sparkles,
   Trophy,
+  WandSparkles,
 } from "lucide-react";
 import {
   equipShopItemAction,
-  purchaseShopItemAction,
   unequipShopItemAction,
 } from "@/app/actions";
 import {
@@ -18,6 +19,7 @@ import {
   CosmeticTitleBadge,
   cosmeticNameplateClass,
 } from "@/components/cosmetic-avatar";
+import { ShopPurchaseForm } from "@/components/shop-purchase-form";
 import { formatVietnamTime } from "@/lib/domain";
 import { requireUser } from "@/lib/session";
 import {
@@ -34,6 +36,47 @@ import {
 export const dynamic = "force-dynamic";
 
 type ShopPageData = Awaited<ReturnType<typeof getShopPageData>>;
+
+const SHOP_SECTION_META = {
+  [ShopItemType.AVATAR_FRAME]: {
+    Icon: Frame,
+    headerClass: "border-emerald-100 bg-emerald-50/70",
+    iconClass: "bg-white text-emerald-700 ring-emerald-200",
+    countClass: "bg-white text-emerald-800 ring-emerald-200 shadow-emerald-950/5",
+  },
+  [ShopItemType.AVATAR_WINGS]: {
+    Icon: WandSparkles,
+    headerClass: "border-sky-100 bg-sky-50/80",
+    iconClass: "bg-white text-sky-700 ring-sky-200",
+    countClass: "bg-white text-sky-800 ring-sky-200 shadow-sky-950/5",
+  },
+  [ShopItemType.AVATAR_AURA]: {
+    Icon: Sparkles,
+    headerClass: "border-violet-100 bg-violet-50/75",
+    iconClass: "bg-white text-violet-700 ring-violet-200",
+    countClass: "bg-white text-violet-800 ring-violet-200 shadow-violet-950/5",
+  },
+  [ShopItemType.TITLE]: {
+    Icon: Crown,
+    headerClass: "border-amber-100 bg-amber-50/75",
+    iconClass: "bg-white text-amber-700 ring-amber-200",
+    countClass: "bg-white text-amber-800 ring-amber-200 shadow-amber-950/5",
+  },
+  [ShopItemType.NAMEPLATE]: {
+    Icon: IdCard,
+    headerClass: "border-slate-200 bg-white",
+    iconClass: "bg-emerald-50 text-emerald-800 ring-emerald-200",
+    countClass: "bg-emerald-50 text-emerald-800 ring-emerald-200 shadow-emerald-950/5",
+  },
+} satisfies Record<
+  ShopItemType,
+  {
+    Icon: typeof Sparkles;
+    headerClass: string;
+    iconClass: string;
+    countClass: string;
+  }
+>;
 
 export default async function ShopPage({
   searchParams,
@@ -268,20 +311,30 @@ function CatalogSection({
   ownedItemIds: Set<string>;
   equipped: EquippedCosmetics;
 }) {
+  const meta = SHOP_SECTION_META[type];
+  const Icon = meta.Icon;
+
   return (
     <section id={`shop-${type}`} className="scroll-mt-28">
-      <div className="mb-3 flex items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-700">
-            Shop
-          </p>
-          <h2 className="text-2xl font-black text-slate-950">
-            {SHOP_TYPE_LABELS[type]}
-          </h2>
+      <div className={`mb-3 rounded-2xl border px-3 py-3 shadow-sm ${meta.headerClass}`}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ring-1 shadow-sm ${meta.iconClass}`}>
+              <Icon size={20} strokeWidth={2.5} aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                Shop
+              </p>
+              <h2 className="truncate text-[1.7rem] font-black leading-tight text-slate-950 sm:text-2xl">
+                {SHOP_TYPE_LABELS[type]}
+              </h2>
+            </div>
+          </div>
+          <span className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-black ring-1 shadow-sm ${meta.countClass}`}>
+            {items.length} món
+          </span>
         </div>
-        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-800 ring-1 ring-emerald-100">
-          {items.length} món
-        </span>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -429,16 +482,12 @@ function ShopItemCard({
             </button>
           </form>
         ) : (
-          <form action={purchaseShopItemAction}>
-            <input type="hidden" name="itemId" value={item.id} />
-            <button
-              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-black text-white shadow-lg shadow-emerald-950/15 hover:bg-emerald-800"
-              data-testid={`buy-${item.slug}`}
-            >
-              <Gem size={16} />
-              Mua & trang bị
-            </button>
-          </form>
+          <ShopPurchaseForm
+            itemId={item.id}
+            itemSlug={item.slug}
+            itemName={item.name}
+            priceLabel={formatCtom(item.priceCtom)}
+          />
         )}
       </div>
     </article>
