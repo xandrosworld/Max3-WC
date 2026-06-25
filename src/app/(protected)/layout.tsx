@@ -74,7 +74,7 @@ function ProfileAvatar({
       name={name}
       cosmetics={cosmetics}
       size="sm"
-      effectIntensity="minimal"
+      effectIntensity="compact"
       coreClassName="ring-2 ring-emerald-300/60"
     />
   );
