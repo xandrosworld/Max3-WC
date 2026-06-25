@@ -720,6 +720,7 @@ textarea {
   background:
     linear-gradient(#0000, #0000) padding-box,
     linear-gradient(135deg, rgba(124, 58, 237, 0.9), rgba(253, 224, 71, 0.95), rgba(168, 85, 247, 0.86)) border-box;
+  mask: radial-gradient(circle, transparent 50%, #000 53%, #000 100%);
   filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.34));
 }
 
