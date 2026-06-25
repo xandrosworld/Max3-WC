@@ -19,6 +19,7 @@ import {
   CosmeticTitleBadge,
   cosmeticNameplateClass,
 } from "@/components/cosmetic-avatar";
+import { ExpandableList } from "@/components/expandable-list";
 import { ShopPurchaseForm } from "@/components/shop-purchase-form";
 import { formatVietnamTime } from "@/lib/domain";
 import { requireUser } from "@/lib/session";
@@ -144,6 +145,8 @@ export default async function ShopPage({
 
       {notice && <Notice tone={notice.tone}>{notice.message}</Notice>}
 
+      <CtomLeaderboard rows={data.leaderboard} />
+
       <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 space-y-5">
           <InventoryPanel data={data} />
@@ -180,7 +183,6 @@ export default async function ShopPage({
         </div>
 
         <aside className="min-w-0 space-y-5 lg:sticky lg:top-28 lg:self-start">
-          <CtomLeaderboard rows={data.leaderboard} />
           <RecentTransactions rows={data.recentTransactions} />
         </aside>
       </section>
@@ -251,39 +253,39 @@ function HeroStat({ label, value }: { label: string; value: string }) {
 
 function InventoryPanel({ data }: { data: ShopPageData }) {
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/5 sm:p-5">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <section className="rounded-3xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-950/5 sm:p-5">
+      <div className="flex items-end justify-between gap-2">
         <div>
           <p className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.16em] text-emerald-700">
             <PackageCheck size={14} />
             Tủ đồ
           </p>
-          <h2 className="mt-1 text-2xl font-black text-slate-950">Đang trang bị</h2>
+          <h2 className="mt-1 text-xl font-black text-slate-950 sm:text-2xl">Đang trang bị</h2>
         </div>
-        <p className="text-sm font-black text-emerald-800">
-          {data.ownedItems.length} vật phẩm đã sở hữu
+        <p className="text-xs font-black text-emerald-800 sm:text-sm">
+          {data.ownedItems.length} món
         </p>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="mt-3 flex gap-2 overflow-x-auto pb-1 sm:mt-4 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible sm:pb-0 xl:grid-cols-5">
         {SHOP_TYPE_ORDER.map((type) => {
           const item = data.equipped[type];
           return (
             <div
               key={type}
-              className="rounded-2xl border border-slate-200 bg-slate-50 p-3"
+              className="flex min-w-[120px] shrink-0 flex-col rounded-xl border border-slate-200 bg-slate-50 p-2.5 sm:min-w-0 sm:rounded-2xl sm:p-3"
             >
-              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500 sm:text-[11px]">
                 {SHOP_TYPE_LABELS[type]}
               </p>
-              <p className="mt-1 min-h-10 text-sm font-black leading-5 text-slate-950">
-                {item?.name ?? "Chưa trang bị"}
+              <p className="mt-1 text-xs font-black leading-4 text-slate-950 sm:min-h-10 sm:text-sm sm:leading-5">
+                {item?.name ?? "—"}
               </p>
               {item && (
-                <form action={unequipShopItemAction} className="mt-3">
+                <form action={unequipShopItemAction} className="mt-auto pt-2">
                   <input type="hidden" name="type" value={type} />
                   <button
-                    className="w-full rounded-xl bg-white px-3 py-2 text-xs font-black text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
+                    className="w-full rounded-lg bg-white px-2 py-1.5 text-[10px] font-black text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100 sm:rounded-xl sm:px-3 sm:py-2 sm:text-xs"
                     data-testid={`unequip-${type}`}
                   >
                     Tháo
@@ -541,14 +543,49 @@ function ShopItemCard({
 }
 
 function CtomLeaderboard({ rows }: { rows: ShopPageData["leaderboard"] }) {
+  const leaderRows = rows.map((row) => (
+    <div key={row.id} className="flex items-center gap-2.5 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
+      <div
+        className={`flex h-8 min-w-8 items-center justify-center rounded-xl text-xs font-black sm:h-9 sm:min-w-9 sm:rounded-2xl sm:text-sm ${
+          row.rank === 1
+            ? "bg-amber-300 text-amber-950"
+            : row.rank === 2
+              ? "bg-slate-200 text-slate-950"
+              : row.rank === 3
+                ? "bg-orange-200 text-orange-950"
+                : "bg-emerald-950 text-white"
+        }`}
+      >
+        #{row.rank}
+      </div>
+      <CosmeticAvatar
+        image={row.image}
+        name={row.name}
+        cosmetics={row.cosmetics}
+        size="sm"
+      />
+      <div className="min-w-0 flex-1">
+        <p className={`truncate text-sm font-black text-slate-950 ${cosmeticNameplateClass(row.cosmetics)}`}>
+          {row.name}
+        </p>
+        <p className="truncate text-xs font-semibold text-slate-500">
+          {row.itemCount} món
+        </p>
+      </div>
+      <p className="text-xs font-black tabular-nums text-emerald-800 sm:text-sm">
+        {formatCtom(row.totalCtom)}
+      </p>
+    </div>
+  ));
+
   return (
-    <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5">
-      <div className="bg-slate-950 px-4 py-4 text-white">
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 sm:rounded-3xl">
+      <div className="bg-slate-950 px-3 py-3 text-white sm:px-4 sm:py-4">
         <p className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.16em] text-amber-200">
           <Trophy size={14} />
           BXH CTOM
         </p>
-        <h2 className="mt-1 text-2xl font-black">Top đóng góp shop</h2>
+        <h2 className="mt-1 text-xl font-black sm:text-2xl">Top đóng góp shop</h2>
       </div>
 
       <div className="divide-y divide-slate-100">
@@ -557,40 +594,9 @@ function CtomLeaderboard({ rows }: { rows: ShopPageData["leaderboard"] }) {
             Chưa ai mở hàng CTOM.
           </p>
         ) : (
-          rows.map((row) => (
-            <div key={row.id} className="flex items-center gap-3 px-4 py-3">
-              <div
-                className={`flex h-9 min-w-9 items-center justify-center rounded-2xl text-sm font-black ${
-                  row.rank === 1
-                    ? "bg-amber-300 text-amber-950"
-                    : row.rank === 2
-                      ? "bg-slate-200 text-slate-950"
-                      : row.rank === 3
-                        ? "bg-orange-200 text-orange-950"
-                        : "bg-emerald-950 text-white"
-                }`}
-              >
-                #{row.rank}
-              </div>
-              <CosmeticAvatar
-                image={row.image}
-                name={row.name}
-                cosmetics={row.cosmetics}
-                size="sm"
-              />
-              <div className="min-w-0 flex-1">
-                <p className={`truncate text-sm font-black text-slate-950 ${cosmeticNameplateClass(row.cosmetics)}`}>
-                  {row.name}
-                </p>
-                <p className="truncate text-xs font-semibold text-slate-500">
-                  {row.itemCount} món
-                </p>
-              </div>
-              <p className="text-sm font-black tabular-nums text-emerald-800">
-                {formatCtom(row.totalCtom)}
-              </p>
-            </div>
-          ))
+          <ExpandableList visibleCount={3} totalCount={rows.length}>
+            {leaderRows}
+          </ExpandableList>
         )}
       </div>
     </section>
