@@ -4,6 +4,7 @@ import {
   MatchStatus,
   Prisma,
   RoundType,
+  ShopItemType,
   TeamSide,
   VoteChoice,
 } from "@prisma/client";
@@ -30,6 +31,11 @@ import { backfillMissedLossesForUser } from "@/lib/missed-losses";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireUser } from "@/lib/session";
 import { settleMatch } from "@/lib/settlement";
+import {
+  equipShopItem,
+  purchaseShopItem,
+  unequipShopItem,
+} from "@/lib/shop";
 import {
   buildOddsSuggestions,
   fetchWorldCupOddsEvents,
@@ -1147,6 +1153,76 @@ export async function updateAutoFollowAction(
     error: "",
     success: `Đã lưu. Nếu bạn quên chọn, hệ thống sẽ tự theo ${target.name}.`,
   };
+}
+
+function redirectToShop(params: Record<string, string>) {
+  const targetItem = params.item;
+  const search = new URLSearchParams(params);
+  const hash = targetItem ? `#item-${encodeURIComponent(targetItem)}` : "";
+  redirect(`/shop?${search.toString()}${hash}`);
+}
+
+function revalidateShopSurfaces() {
+  revalidatePath("/shop");
+  revalidatePath("/profile");
+  revalidatePath("/leaderboard");
+  revalidatePath("/matches");
+}
+
+export async function purchaseShopItemAction(formData: FormData) {
+  const user = await requireUser();
+  const itemId = z.string().min(1).parse(formString(formData, "itemId"));
+  let redirectParams: Record<string, string>;
+
+  try {
+    const result = await purchaseShopItem(user.id, itemId);
+    revalidateShopSurfaces();
+    redirectParams = {
+      notice: result.purchased ? "purchased" : "equipped",
+      item: result.item.slug,
+    };
+  } catch (error) {
+    redirectParams = {
+      notice: "error",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Không thể mua vật phẩm lúc này.",
+    };
+  }
+
+  redirectToShop(redirectParams);
+}
+
+export async function equipShopItemAction(formData: FormData) {
+  const user = await requireUser();
+  const itemId = z.string().min(1).parse(formString(formData, "itemId"));
+  let redirectParams: Record<string, string>;
+
+  try {
+    const item = await equipShopItem(user.id, itemId);
+    revalidateShopSurfaces();
+    redirectParams = { notice: "equipped", item: item.slug };
+  } catch (error) {
+    redirectParams = {
+      notice: "error",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Không thể trang bị vật phẩm lúc này.",
+    };
+  }
+
+  redirectToShop(redirectParams);
+}
+
+export async function unequipShopItemAction(formData: FormData) {
+  const user = await requireUser();
+  const type = z.nativeEnum(ShopItemType).parse(formString(formData, "type"));
+
+  await unequipShopItem(user.id, type);
+  revalidateShopSurfaces();
+  redirectToShop({ notice: "unequipped", type });
 }
 
 const changePasswordSchema = z.object({

@@ -4,8 +4,10 @@ import { redirect } from "next/navigation";
 import { AiChatBot } from "@/components/ai-chat-bot";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { AppNav } from "@/components/app-nav";
+import { CosmeticAvatar } from "@/components/cosmetic-avatar";
 import { LogoutButton } from "@/components/logout-button";
 import { requireUser } from "@/lib/session";
+import { getEquippedCosmetics, type EquippedCosmetics } from "@/lib/shop";
 
 export default async function ProtectedLayout({
   children,
@@ -14,6 +16,7 @@ export default async function ProtectedLayout({
 }) {
   const user = await requireUser();
   if (user.mustChangePassword) redirect("/change-password");
+  const cosmetics = await getEquippedCosmetics(user.id);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.18),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(251,191,36,0.18),_transparent_30%),linear-gradient(180deg,#f8fafc,#f1f5f9)]">
@@ -34,11 +37,11 @@ export default async function ProtectedLayout({
               className="h-7 w-auto"
             />
           </Link>
-          <div className="order-3 w-full md:order-none md:w-auto">
+          <div className="order-3 w-full min-w-0 overflow-hidden md:order-none md:w-auto">
             <AppNav isAdmin={user.role === "admin"} viewerId={user.id} />
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <ProfileAvatar image={user.image} name={user.name} />
+            <ProfileAvatar image={user.image} name={user.name} cosmetics={cosmetics} />
             <div className="hidden text-right text-xs sm:block">
               <p className="font-bold">{user.name}</p>
               <p className="text-emerald-200">{user.department}</p>
@@ -56,22 +59,23 @@ export default async function ProtectedLayout({
   );
 }
 
-function ProfileAvatar({ image, name }: { image: string | null; name: string }) {
-  const initial = name.trim().charAt(0).toUpperCase() || "U";
-  if (image) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={image}
-        alt={`Ảnh đại diện của ${name}`}
-        className="h-9 w-9 rounded-full object-cover ring-2 ring-emerald-300/60"
-      />
-    );
-  }
-
+function ProfileAvatar({
+  image,
+  name,
+  cosmetics,
+}: {
+  image: string | null;
+  name: string;
+  cosmetics: EquippedCosmetics;
+}) {
   return (
-    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-700 text-sm font-extrabold text-white ring-2 ring-emerald-300/60">
-      {initial}
-    </div>
+    <CosmeticAvatar
+      image={image}
+      name={name}
+      cosmetics={cosmetics}
+      size="sm"
+      effectIntensity="minimal"
+      coreClassName="ring-2 ring-emerald-300/60"
+    />
   );
 }

@@ -5,6 +5,7 @@ import {
   getPaymentStatus,
 } from "./domain";
 import { prisma } from "./prisma";
+import { toEquippedCosmeticsMap } from "./shop";
 
 type SettledMatchForStreak = {
   result: { winningChoice: VoteChoice } | null;
@@ -48,6 +49,7 @@ export async function getLeaderboard() {
         },
         lossTransactions: true,
         payments: { where: { voidedAt: null } },
+        equippedCosmetics: { include: { item: true } },
       },
     }),
     prisma.match.findMany({
@@ -113,6 +115,7 @@ export async function getLeaderboard() {
       outstanding: loss - paid,
       paymentStatus: getPaymentStatus(loss, paid),
       currentWinStreak,
+      cosmetics: toEquippedCosmeticsMap(user.equippedCosmetics ?? []),
     };
   });
 

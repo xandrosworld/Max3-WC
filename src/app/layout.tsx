@@ -32,9 +32,9 @@ export default function RootLayout({
   return (
     <html
       lang="vi"
-      className={`${appSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${appSans.variable} ${geistMono.variable} h-full overflow-x-hidden antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="flex min-h-full flex-col overflow-x-hidden">
         {children}
         <BackgroundMusic />
       </body>

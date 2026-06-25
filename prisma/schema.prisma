@@ -41,36 +41,60 @@ enum LossTransactionType {
   REVERSAL
 }
 
+enum ShopItemType {
+  AVATAR_FRAME
+  AVATAR_WINGS
+  AVATAR_AURA
+  TITLE
+  NAMEPLATE
+}
+
+enum ShopItemRarity {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum CtomTransactionType {
+  PURCHASE
+  REFUND
+  GRANT
+}
+
 model User {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   name               String
-  email              String   @unique
-  emailVerified      Boolean  @default(false)
+  email              String    @unique
+  emailVerified      Boolean   @default(false)
   image              String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  username           String?  @unique
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  username           String?   @unique
   displayUsername    String?
-  role               String   @default("user")
-  banned             Boolean  @default(false)
+  role               String    @default("user")
+  banned             Boolean   @default(false)
   banReason          String?
   banExpires         DateTime?
-  department         String   @default("")
-  mustChangePassword Boolean  @default(false)
+  department         String    @default("")
+  mustChangePassword Boolean   @default(false)
   autoFollowUserId   String?
 
-  sessions           Session[]
-  accounts           Account[]
-  votes              Vote[]
-  lossTransactions   LossTransaction[]
-  payments           Payment[]        @relation("PaymentOwner")
-  confirmedPayments  Payment[]        @relation("PaymentConfirmer")
-  voidedPayments     Payment[]        @relation("PaymentVoider")
-  settledResults     MatchResult[]     @relation("ResultSettler")
-  resultRevisions    ResultRevision[]  @relation("RevisionCreator")
-  auditLogs          AuditLog[]        @relation("AuditActor")
-  autoFollowUser     User?             @relation("UserAutoFollow", fields: [autoFollowUserId], references: [id], onDelete: SetNull)
-  autoFollowers      User[]            @relation("UserAutoFollow")
+  sessions          Session[]
+  accounts          Account[]
+  votes             Vote[]
+  lossTransactions  LossTransaction[]
+  payments          Payment[]           @relation("PaymentOwner")
+  confirmedPayments Payment[]           @relation("PaymentConfirmer")
+  voidedPayments    Payment[]           @relation("PaymentVoider")
+  settledResults    MatchResult[]       @relation("ResultSettler")
+  resultRevisions   ResultRevision[]    @relation("RevisionCreator")
+  auditLogs         AuditLog[]          @relation("AuditActor")
+  autoFollowUser    User?               @relation("UserAutoFollow", fields: [autoFollowUserId], references: [id], onDelete: SetNull)
+  autoFollowers     User[]              @relation("UserAutoFollow")
+  shopInventory     UserShopItem[]
+  equippedCosmetics UserCosmeticEquip[]
+  ctomTransactions  CtomTransaction[]
 
   @@index([autoFollowUserId])
 }
@@ -149,8 +173,8 @@ model Match {
   resultRevisions  ResultRevision[]
   lossTransactions LossTransaction[]
 
-  @@index([status, kickoffAt])
   @@unique([externalSource, externalFixtureId])
+  @@index([status, kickoffAt])
 }
 
 model Vote {
@@ -170,17 +194,17 @@ model Vote {
 }
 
 model MatchResult {
-  id              String     @id @default(cuid())
-  matchId         String     @unique
-  teamAScore      Int
-  teamBScore      Int
-  winningChoice   VoteChoice
-  revision        Int
-  settledAt       DateTime   @default(now()) @db.Timestamptz(3)
-  settledById     String
+  id            String     @id @default(cuid())
+  matchId       String     @unique
+  teamAScore    Int
+  teamBScore    Int
+  winningChoice VoteChoice
+  revision      Int
+  settledAt     DateTime   @default(now()) @db.Timestamptz(3)
+  settledById   String
 
-  match       Match @relation(fields: [matchId], references: [id], onDelete: Restrict)
-  settledBy   User  @relation("ResultSettler", fields: [settledById], references: [id], onDelete: Restrict)
+  match     Match @relation(fields: [matchId], references: [id], onDelete: Restrict)
+  settledBy User  @relation("ResultSettler", fields: [settledById], references: [id], onDelete: Restrict)
 }
 
 model ResultRevision {
@@ -248,4 +272,70 @@ model AuditLog {
 
   @@index([entityType, entityId])
   @@index([actorId, createdAt])
+}
+
+model ShopItem {
+  id          String         @id @default(cuid())
+  slug        String         @unique
+  type        ShopItemType
+  rarity      ShopItemRarity
+  name        String
+  description String
+  priceCtom   Int
+  visualKey   String
+  sortOrder   Int            @default(0)
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime       @updatedAt @db.Timestamptz(3)
+
+  purchases    UserShopItem[]
+  equippedBy   UserCosmeticEquip[]
+  transactions CtomTransaction[]
+
+  @@index([type, isActive, sortOrder])
+}
+
+model UserShopItem {
+  id          String   @id @default(cuid())
+  userId      String
+  itemId      String
+  purchasedAt DateTime @default(now()) @db.Timestamptz(3)
+
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item ShopItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, itemId])
+  @@index([userId])
+  @@index([itemId])
+}
+
+model UserCosmeticEquip {
+  id         String       @id @default(cuid())
+  userId     String
+  type       ShopItemType
+  itemId     String
+  equippedAt DateTime     @default(now()) @db.Timestamptz(3)
+
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item ShopItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, type])
+  @@index([userId])
+  @@index([itemId])
+}
+
+model CtomTransaction {
+  id        String              @id @default(cuid())
+  userId    String
+  itemId    String?
+  amount    Int
+  type      CtomTransactionType
+  note      String?
+  createdAt DateTime            @default(now()) @db.Timestamptz(3)
+
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item ShopItem? @relation(fields: [itemId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([itemId])
 }

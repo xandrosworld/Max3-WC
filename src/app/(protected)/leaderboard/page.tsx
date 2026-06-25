@@ -1,5 +1,10 @@
 import Image from "next/image";
 import { Award, Crown, Flame, Medal, Sparkles, Trophy, Zap } from "lucide-react";
+import {
+  CosmeticAvatar,
+  CosmeticTitleBadge,
+  cosmeticNameplateClass,
+} from "@/components/cosmetic-avatar";
 import { LeaderboardMediaHints } from "@/components/leaderboard-media-hints";
 import { formatCurrency } from "@/lib/domain";
 import { getLeaderboard } from "@/lib/leaderboard";
@@ -869,18 +874,16 @@ function LeaderboardSection({
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex min-w-0 items-center gap-3">
-                      <Avatar image={row.image} name={row.name} rank={row.displayRank} mode={mode} />
+                      <Avatar
+                        image={row.image}
+                        name={row.name}
+                        rank={row.displayRank}
+                        mode={mode}
+                        cosmetics={row.cosmetics}
+                      />
                       <div className="min-w-0">
-                        <p className="truncate font-extrabold text-emerald-950">
-                          {row.name}
-                        </p>
-                        <p className="truncate text-xs text-slate-500">
-                          {row.department || "Chưa có đơn vị"}
-                        </p>
-                        <RankTag rank={row.displayRank} mode={mode} />
-                        {mode === "prediction" && (
-                          <WinStreakBadge streak={row.currentWinStreak} />
-                        )}
+                        <PlayerIdentity row={row} />
+                        <PlayerStatusBadges row={row} mode={mode} />
                       </div>
                       {row.displayRank === 1 && <TopWinnerGif variant="desktop" mode={mode} />}
                     </div>
@@ -1020,6 +1023,62 @@ function RankBadge({
   );
 }
 
+function PlayerIdentity({
+  row,
+  variant = "desktop",
+}: {
+  row: RankedRow;
+  variant?: "desktop" | "mobile";
+}) {
+  const isMobile = variant === "mobile";
+
+  return (
+    <>
+      <div className="flex min-w-0 max-w-full flex-wrap items-center gap-x-1.5 gap-y-1">
+        <p
+          className={`min-w-0 max-w-full ${
+            isMobile
+              ? "text-[17px] font-black leading-tight text-emerald-950 [overflow-wrap:anywhere]"
+              : "truncate font-extrabold text-emerald-950"
+          } ${cosmeticNameplateClass(row.cosmetics)}`}
+        >
+          {row.name}
+        </p>
+        <CosmeticTitleBadge cosmetics={row.cosmetics} compact />
+      </div>
+      <p
+        className={
+          isMobile
+            ? "mt-0.5 text-xs font-semibold leading-snug text-slate-600 [overflow-wrap:anywhere]"
+            : "truncate text-xs text-slate-500"
+        }
+      >
+        {row.department || "Chưa có đơn vị"}
+      </p>
+    </>
+  );
+}
+
+function PlayerStatusBadges({
+  row,
+  mode,
+}: {
+  row: RankedRow;
+  mode: BoardMode;
+}) {
+  const showRank = row.displayRank <= 3;
+  const showStreak = mode === "prediction" && row.currentWinStreak >= 2;
+
+  if (!showRank && !showStreak) return null;
+
+  return (
+    <div className="mt-1.5 flex max-w-full flex-wrap items-center gap-1.5">
+      {showRank && <RankTag rank={row.displayRank} mode={mode} />}
+      {showStreak && <WinStreakBadge streak={row.currentWinStreak} />}
+    </div>
+  );
+}
+
 function RankTag({
   rank,
   mode,
@@ -1032,7 +1091,7 @@ function RankTag({
   if (rank > 3) return null;
 
   return (
-    <span className={`rank-tag-elite ${visual.rankClass} mt-1.5 inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black uppercase leading-tight tracking-normal ${visual.tagClass}`}>
+    <span className={`rank-tag-elite ${visual.rankClass} inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black uppercase leading-tight tracking-normal ${visual.tagClass}`}>
       <Icon className="shrink-0" size={12} strokeWidth={2.5} aria-hidden="true" />
       <span className="min-w-0 [overflow-wrap:anywhere]">{visual.tag}</span>
     </span>
@@ -1043,7 +1102,7 @@ function WinStreakBadge({ streak }: { streak: number }) {
   if (streak < 2) return null;
 
   return (
-    <span className="win-streak-badge mt-1.5 inline-flex max-w-full items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-600 via-teal-500 to-amber-400 px-2.5 py-1 text-[10px] font-black leading-tight text-white shadow-sm shadow-emerald-900/15 ring-1 ring-white/70">
+    <span className="win-streak-badge inline-flex max-w-full items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-600 via-teal-500 to-amber-400 px-2.5 py-1 text-[10px] font-black leading-tight text-white shadow-sm shadow-emerald-900/15 ring-1 ring-white/70">
       <Flame
         className="relative z-10 shrink-0"
         size={12}
@@ -1128,23 +1187,23 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
       <div className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
         <div className="flex flex-col items-center gap-2">
           <RankBadge rank={row.displayRank} mode={mode} compact />
-          <Avatar image={row.image} name={row.name} rank={row.displayRank} mode={mode} />
+          <Avatar
+            image={row.image}
+            name={row.name}
+            rank={row.displayRank}
+            mode={mode}
+            cosmetics={row.cosmetics}
+          />
         </div>
         <div className="min-w-0 pt-0.5">
-            <p className="text-[17px] font-black leading-tight text-emerald-950 [overflow-wrap:anywhere]">
-              {row.name}
-            </p>
-            <p className="mt-0.5 text-xs font-semibold leading-snug text-slate-600 [overflow-wrap:anywhere]">
-              {row.department || "Chưa có đơn vị"}
-            </p>
+            <PlayerIdentity row={row} variant="mobile" />
             <p className="mt-0.5 text-[11px] font-bold leading-snug text-slate-400">
               {mode === "prediction"
                 ? `${row.accuracy.toFixed(0)}% chính xác`
                 : `${row.voted} lượt dự đoán`}
             </p>
-            {!showInlineWinnerGif && <RankTag rank={row.displayRank} mode={mode} />}
-            {mode === "prediction" && (
-              <WinStreakBadge streak={row.currentWinStreak} />
+            {!showInlineWinnerGif && (
+              <PlayerStatusBadges row={row} mode={mode} />
             )}
         </div>
         <MobilePrimaryBadge
@@ -1311,13 +1370,14 @@ function Avatar({
   name,
   rank,
   mode,
+  cosmetics,
 }: {
   image: string | null;
   name: string;
   rank: number;
   mode: BoardMode;
+  cosmetics: RankedRow["cosmetics"];
 }) {
-  const initial = name.trim().charAt(0).toUpperCase() || "U";
   const visual = getRankVisual(rank, mode);
   const avatarClass = `relative z-10 h-10 w-10 rounded-2xl ${visual.avatarClass}`;
 
@@ -1371,18 +1431,15 @@ function Avatar({
           )}
         </>
       )}
-      {image ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={image}
-          alt={`Ảnh đại diện của ${name}`}
-          className={`${avatarClass} object-cover`}
-        />
-      ) : (
-        <span className={`flex ${avatarClass} items-center justify-center bg-emerald-100 text-sm font-black text-emerald-900`}>
-          {initial}
-        </span>
-      )}
+      <CosmeticAvatar
+        image={image}
+        name={name}
+        cosmetics={cosmetics}
+        size="md"
+        className="relative z-10"
+        coreClassName={avatarClass}
+        effectIntensity="compact"
+      />
     </span>
   );
 }
