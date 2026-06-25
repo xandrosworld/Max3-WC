@@ -21,7 +21,15 @@ import {
 } from "@/components/cosmetic-avatar";
 import { ExpandableList } from "@/components/expandable-list";
 import { ShopCatalogTabs } from "@/components/shop-catalog-tabs";
+import { ShopGuideTour } from "@/components/shop-guide-tour";
 import { ShopPurchaseForm } from "@/components/shop-purchase-form";
+import {
+  ShopTryOnButton,
+  ShopTryOnPanel,
+  ShopTryOnProvider,
+  type ShopTryOnCosmetics,
+  type ShopTryOnItem,
+} from "@/components/shop-try-on";
 import { formatVietnamTime } from "@/lib/domain";
 import { requireUser } from "@/lib/session";
 import {
@@ -91,17 +99,27 @@ export default async function ShopPage({
   const equippedCount = Object.values(data.equipped).filter(Boolean).length;
   const myCtomRank = data.leaderboard.find((row) => row.id === user.id)?.rank;
   const notice = getNotice(params);
+  const tryOnUser = {
+    image: user.image,
+    name: user.name,
+    department: user.department,
+  };
+  const initialTryOnCosmetics = toTryOnCosmetics(data.equipped);
 
   return (
-    <div className="space-y-6" data-testid="shop-page">
+    <ShopTryOnProvider user={tryOnUser} initialCosmetics={initialTryOnCosmetics}>
+      <div className="space-y-6" data-testid="shop-page">
       <section className="relative overflow-hidden rounded-3xl border border-emerald-950/10 bg-slate-950 text-white shadow-xl shadow-emerald-950/15">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(52,211,153,0.28),transparent_28%),radial-gradient(circle_at_82%_8%,rgba(251,191,36,0.2),transparent_26%),linear-gradient(135deg,#052e2b,#08111f_62%,#111827)]" />
         <div className="relative grid gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center lg:py-7">
           <div className="min-w-0">
-            <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-emerald-100 ring-1 ring-white/15">
-              <ShoppingBag size={14} />
-              CTOM Shop
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-emerald-100 ring-1 ring-white/15">
+                <ShoppingBag size={14} />
+                CTOM Shop
+              </p>
+              <ShopGuideTour />
+            </div>
             <h1 className="mt-4 text-3xl font-black leading-tight tracking-normal sm:text-4xl">
               Nâng cấp diện mạo, lên bảng là thấy chất riêng
             </h1>
@@ -148,6 +166,8 @@ export default async function ShopPage({
 
       <CtomLeaderboard rows={data.leaderboard} />
 
+      <ShopTryOnPanel />
+
       <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 space-y-5">
           <InventoryPanel data={data} />
@@ -161,9 +181,9 @@ export default async function ShopPage({
                   type={type}
                   items={data.items.filter((item) => item.type === type)}
                   user={{
-                    image: user.image,
-                    name: user.name,
-                    department: user.department,
+                    image: tryOnUser.image,
+                    name: tryOnUser.name,
+                    department: tryOnUser.department,
                   }}
                   ownedItemIds={data.ownedItemIds}
                   equipped={data.equipped}
@@ -177,8 +197,31 @@ export default async function ShopPage({
           <RecentTransactions rows={data.recentTransactions} />
         </aside>
       </section>
-    </div>
+      </div>
+    </ShopTryOnProvider>
   );
+}
+
+function toTryOnItem(
+  item: Pick<ShopItem, "id" | "slug" | "type" | "rarity" | "name" | "visualKey">,
+): ShopTryOnItem {
+  return {
+    id: item.id,
+    slug: item.slug,
+    type: item.type as ShopTryOnItem["type"],
+    rarity: item.rarity,
+    name: item.name,
+    visualKey: item.visualKey,
+  };
+}
+
+function toTryOnCosmetics(equipped: EquippedCosmetics): ShopTryOnCosmetics {
+  return Object.fromEntries(
+    SHOP_TYPE_ORDER.flatMap((type) => {
+      const item = equipped[type];
+      return item ? [[type, toTryOnItem(item)]] : [];
+    }),
+  ) as ShopTryOnCosmetics;
 }
 
 function getNotice(params: Record<string, string | string[] | undefined>) {
@@ -390,6 +433,7 @@ function ShopItemCard({
 }) {
   const previewCosmetics: EquippedCosmetics = { [item.type]: item };
   const isEquipped = equipped[item.type]?.id === item.id;
+  const tryOnItem = toTryOnItem(item);
   const avatarShowcase =
     item.type === ShopItemType.AVATAR_FRAME ||
     item.type === ShopItemType.AVATAR_WINGS ||
@@ -527,24 +571,30 @@ function ShopItemCard({
             <span className="sm:hidden">Đang dùng</span>
           </div>
         ) : owned ? (
-          <form action={equipShopItemAction}>
-            <input type="hidden" name="itemId" value={item.id} />
-            <button
-              className="flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-slate-950 px-3 text-xs font-black text-white shadow-lg shadow-slate-950/10 hover:bg-emerald-800 sm:min-h-11 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm"
-              data-testid={`equip-${item.slug}`}
-            >
-              <Sparkles size={14} className="sm:h-4 sm:w-4" />
-              Trang bị
-            </button>
-          </form>
+          <div className="grid grid-cols-2 gap-2">
+            <ShopTryOnButton item={tryOnItem} />
+            <form action={equipShopItemAction}>
+              <input type="hidden" name="itemId" value={item.id} />
+              <button
+                className="flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-slate-950 px-3 text-xs font-black text-white shadow-lg shadow-slate-950/10 hover:bg-emerald-800 sm:min-h-11 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm"
+                data-testid={`equip-${item.slug}`}
+              >
+                <Sparkles size={14} className="sm:h-4 sm:w-4" />
+                Trang bị
+              </button>
+            </form>
+          </div>
         ) : (
-          <ShopPurchaseForm
-            itemId={item.id}
-            itemSlug={item.slug}
-            itemName={item.name}
-            priceLabel={formatCtom(item.priceCtom)}
-            rarity={item.rarity}
-          />
+          <div className="grid grid-cols-2 gap-2">
+            <ShopTryOnButton item={tryOnItem} />
+            <ShopPurchaseForm
+              itemId={item.id}
+              itemSlug={item.slug}
+              itemName={item.name}
+              priceLabel={formatCtom(item.priceCtom)}
+              rarity={item.rarity}
+            />
+          </div>
         )}
       </div>
     </article>

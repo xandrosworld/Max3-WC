@@ -57,7 +57,8 @@ export function ShopPurchaseForm({
         data-testid={`buy-${itemSlug}`}
       >
         <Gem size={16} />
-        Mua & trang bị
+        <span className="sm:hidden">Mua</span>
+        <span className="hidden sm:inline">Mua & trang bị</span>
       </button>
 
       {open && (
