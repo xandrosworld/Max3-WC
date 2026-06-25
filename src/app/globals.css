@@ -829,6 +829,34 @@ textarea {
   animation: cosmetic-frame-shine 3.2s ease-in-out infinite;
 }
 
+.cosmetic-avatar[data-frame="ancient-divine"] .cosmetic-avatar-frame {
+  border: 2px solid rgba(244, 63, 94, 0.9);
+  box-shadow:
+    0 0 0 2px rgba(255, 228, 230, 0.6),
+    0 0 20px rgba(244, 63, 94, 0.35),
+    0 0 30px rgba(236, 72, 153, 0.18);
+  opacity: 1;
+}
+
+.cosmetic-avatar[data-frame="ancient-divine"] .cosmetic-avatar-frame::before {
+  content: "";
+  inset: -12%;
+  border-radius: inherit;
+  background: conic-gradient(from 0deg, rgba(244, 63, 94, 0.8), rgba(236, 72, 153, 0.85), rgba(190, 18, 60, 0.7), rgba(244, 63, 94, 0.82), rgba(251, 113, 133, 0.75), rgba(244, 63, 94, 0.8));
+  opacity: 0.68;
+  mask: radial-gradient(circle, transparent 48%, #000 50%, #000 62%, transparent 65%);
+  animation: cosmetic-frame-energy 3.5s linear infinite;
+}
+
+.cosmetic-avatar[data-frame="ancient-divine"] .cosmetic-avatar-frame::after {
+  content: "";
+  position: absolute;
+  inset: -30% auto -30% -45%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 228, 230, 0.85), transparent);
+  animation: cosmetic-frame-shine 3.5s ease-in-out infinite;
+}
+
 .cosmetic-avatar[data-wings="angel-soft"] .cosmetic-avatar-wings,
 .cosmetic-avatar[data-wings="demon-night"] .cosmetic-avatar-wings,
 .cosmetic-avatar[data-wings="phoenix-flame"] .cosmetic-avatar-wings,
@@ -1278,6 +1306,17 @@ textarea {
   text-shadow: 0 1px 0 rgba(127, 29, 29, 0.5);
 }
 
+.cosmetic-title-badge[data-title="ancient-master"] {
+  color: #fff1f2;
+  background:
+    linear-gradient(135deg, rgba(136, 19, 55, 0.92), rgba(244, 63, 94, 0.88) 50%, rgba(251, 113, 133, 0.82));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 228, 230, 0.38),
+    0 8px 16px rgba(190, 18, 60, 0.18),
+    0 0 14px rgba(244, 63, 94, 0.12);
+  text-shadow: 0 1px 0 rgba(76, 5, 25, 0.5);
+}
+
 .cosmetic-nameplate {
   display: inline-block;
   max-width: 100%;
@@ -1331,6 +1370,18 @@ textarea {
     0 0 12px rgba(251, 191, 36, 0.15),
     0 8px 18px rgba(180, 83, 9, 0.14);
   animation: cosmetic-nameplate-sweep 4.5s ease-in-out infinite;
+}
+
+.cosmetic-nameplate-blood-ruby {
+  background:
+    linear-gradient(115deg, rgba(76, 5, 25, 0.06), rgba(255, 241, 242, 0.98), rgba(244, 63, 94, 0.35), rgba(255, 228, 230, 0.96), rgba(190, 18, 60, 0.22), rgba(255, 241, 242, 0.98));
+  background-size: 280% 280%;
+  box-shadow:
+    inset 0 0 0 1px rgba(244, 63, 94, 0.28),
+    inset 0 -2px 0 rgba(244, 63, 94, 0.4),
+    0 0 10px rgba(244, 63, 94, 0.12),
+    0 6px 14px rgba(190, 18, 60, 0.1);
+  animation: cosmetic-nameplate-sweep 5s ease-in-out infinite;
 }
 
 /* ── Shop card tier effects ──────────────────── */
@@ -1400,6 +1451,7 @@ textarea {
   .cosmetic-title-badge::after,
   .cosmetic-nameplate-goldline,
   .cosmetic-nameplate-royal-gold,
+  .cosmetic-nameplate-blood-ruby,
   .shop-card-epic,
   .shop-card-mythic,
   .shop-card-legendary,
