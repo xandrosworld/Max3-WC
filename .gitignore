@@ -40,3 +40,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# media & exports
+/exports/
+/music/
+
+# dev logs
+.next-dev.err.log
+.next-dev.out.log
+
+# documents
+*.pdf
