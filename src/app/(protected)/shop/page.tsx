@@ -448,17 +448,17 @@ function ShopItemCard({
       id={`item-${item.slug}`}
       className={`group relative scroll-mt-28 overflow-hidden rounded-2xl border-2 sm:rounded-3xl ${RARITY_CARD_RING[item.rarity] ?? "border-slate-200"} ${RARITY_CARD_BG[item.rarity] ?? "bg-white"} p-2.5 sm:p-4 shadow-md transition hover:-translate-y-1 hover:shadow-xl ${RARITY_CARD_SHADOW[item.rarity] ?? ""}`}
     >
-      <div className={`absolute inset-x-0 top-0 ${
+      <div className={`pointer-events-none absolute inset-x-0 top-0 ${
         item.rarity === "LEGENDARY" || item.rarity === "MYTHIC" ? "h-1.5" : item.rarity === "EPIC" ? "h-1.5" : "h-1"
       } bg-gradient-to-r ${RARITY_CARD_GRADIENT[item.rarity] ?? "from-slate-400 to-slate-300"}`} />
       {item.rarity === "LEGENDARY" && (
-        <div className="absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(251,191,36,0.12), transparent 50%)" }} />
+        <div className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(251,191,36,0.12), transparent 50%)" }} />
       )}
       {item.rarity === "MYTHIC" && (
-        <div className="absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(244,63,94,0.10), transparent 50%)" }} />
+        <div className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(244,63,94,0.10), transparent 50%)" }} />
       )}
       {item.rarity === "EPIC" && (
-        <div className="absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(139,92,246,0.10), transparent 50%)" }} />
+        <div className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(139,92,246,0.10), transparent 50%)" }} />
       )}
       <div className="relative flex items-start justify-between gap-2 sm:gap-3">
         <div className="min-w-0">
