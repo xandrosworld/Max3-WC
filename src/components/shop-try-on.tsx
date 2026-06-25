@@ -91,6 +91,10 @@ function emitTryOnRequest(item: ShopTryOnItem) {
   window.dispatchEvent(new CustomEvent<ShopTryOnItem>(SHOP_TRY_ON_EVENT, { detail: item }));
 }
 
+export function requestShopTryOn(item: ShopTryOnItem) {
+  emitTryOnRequest(item);
+}
+
 function emitTryOnState(cosmetics: ShopTryOnCosmetics) {
   window.dispatchEvent(
     new CustomEvent<ShopTryOnCosmetics>(SHOP_TRY_ON_STATE_EVENT, { detail: cosmetics }),

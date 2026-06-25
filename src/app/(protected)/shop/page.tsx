@@ -105,11 +105,32 @@ export default async function ShopPage({
     department: user.department,
   };
   const initialTryOnCosmetics = toTryOnCosmetics(data.equipped);
+  const guideDemoItem =
+    data.items.find(
+      (item) =>
+        item.slug === "frame-neon-storm" && data.equipped[item.type]?.id !== item.id,
+    ) ??
+    data.items.find(
+      (item) =>
+        item.type === ShopItemType.AVATAR_FRAME &&
+        item.rarity === "EPIC" &&
+        data.equipped[item.type]?.id !== item.id,
+    ) ??
+    data.items.find(
+      (item) =>
+        item.type === ShopItemType.AVATAR_FRAME &&
+        data.equipped[item.type]?.id !== item.id,
+    ) ??
+    data.items.find((item) => item.type === ShopItemType.AVATAR_FRAME) ??
+    data.items[0];
 
   return (
     <ShopTryOnProvider user={tryOnUser} initialCosmetics={initialTryOnCosmetics}>
       <div className="space-y-6" data-testid="shop-page">
-      <section className="relative overflow-hidden rounded-3xl border border-emerald-950/10 bg-slate-950 text-white shadow-xl shadow-emerald-950/15">
+      <section
+        className="relative overflow-hidden rounded-3xl border border-emerald-950/10 bg-slate-950 text-white shadow-xl shadow-emerald-950/15"
+        data-guide-target="shop-hero"
+      >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(52,211,153,0.28),transparent_28%),radial-gradient(circle_at_82%_8%,rgba(251,191,36,0.2),transparent_26%),linear-gradient(135deg,#052e2b,#08111f_62%,#111827)]" />
         <div className="relative grid gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center lg:py-7">
           <div className="min-w-0">
@@ -118,7 +139,13 @@ export default async function ShopPage({
                 <ShoppingBag size={14} />
                 CTOM Shop
               </p>
-              <ShopGuideTour />
+              {guideDemoItem && (
+                <ShopGuideTour
+                  demoItem={toTryOnItem(guideDemoItem)}
+                  priceCtom={guideDemoItem.priceCtom}
+                  priceLabel={formatCtom(guideDemoItem.priceCtom)}
+                />
+              )}
             </div>
             <h1 className="mt-4 text-3xl font-black leading-tight tracking-normal sm:text-4xl">
               Nâng cấp diện mạo, lên bảng là thấy chất riêng
@@ -172,25 +199,27 @@ export default async function ShopPage({
         <div className="min-w-0 space-y-5">
           <InventoryPanel data={data} />
 
-          <ShopCatalogTabs
-            tabs={SHOP_TYPE_ORDER.map((type) => ({
-              key: type,
-              label: SHOP_TYPE_SHORT_LABELS[type],
-              content: (
-                <CatalogSection
-                  type={type}
-                  items={data.items.filter((item) => item.type === type)}
-                  user={{
-                    image: tryOnUser.image,
-                    name: tryOnUser.name,
-                    department: tryOnUser.department,
-                  }}
-                  ownedItemIds={data.ownedItemIds}
-                  equipped={data.equipped}
-                />
-              ),
-            }))}
-          />
+          <div data-guide-target="shop-tabs">
+            <ShopCatalogTabs
+              tabs={SHOP_TYPE_ORDER.map((type) => ({
+                key: type,
+                label: SHOP_TYPE_SHORT_LABELS[type],
+                content: (
+                  <CatalogSection
+                    type={type}
+                    items={data.items.filter((item) => item.type === type)}
+                    user={{
+                      image: tryOnUser.image,
+                      name: tryOnUser.name,
+                      department: tryOnUser.department,
+                    }}
+                    ownedItemIds={data.ownedItemIds}
+                    equipped={data.equipped}
+                  />
+                ),
+              }))}
+            />
+          </div>
         </div>
 
         <aside className="min-w-0 space-y-5 lg:sticky lg:top-28 lg:self-start">
@@ -287,7 +316,11 @@ function HeroStat({ label, value }: { label: string; value: string }) {
 
 function InventoryPanel({ data }: { data: ShopPageData }) {
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-950/5 sm:p-5">
+    <section
+      id="shop-inventory"
+      className="rounded-3xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-950/5 sm:p-5"
+      data-guide-target="shop-inventory"
+    >
       <div className="flex items-end justify-between gap-2">
         <div>
           <p className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.16em] text-emerald-700">

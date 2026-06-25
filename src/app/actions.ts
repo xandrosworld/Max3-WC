@@ -1155,10 +1155,10 @@ export async function updateAutoFollowAction(
   };
 }
 
-function redirectToShop(params: Record<string, string>) {
+function redirectToShop(params: Record<string, string>, fallbackHash = "") {
   const targetItem = params.item;
   const search = new URLSearchParams(params);
-  const hash = targetItem ? `#item-${encodeURIComponent(targetItem)}` : "";
+  const hash = targetItem ? `#item-${encodeURIComponent(targetItem)}` : fallbackHash;
   redirect(`/shop?${search.toString()}${hash}`);
 }
 
@@ -1222,7 +1222,7 @@ export async function unequipShopItemAction(formData: FormData) {
 
   await unequipShopItem(user.id, type);
   revalidateShopSurfaces();
-  redirectToShop({ notice: "unequipped", type });
+  redirectToShop({ notice: "unequipped", type }, "#shop-inventory");
 }
 
 const changePasswordSchema = z.object({
