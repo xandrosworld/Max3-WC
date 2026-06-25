@@ -98,14 +98,14 @@ export function AppNav({
             {isShop && (
               <span className={`shop-nav-gem relative inline-flex shrink-0 ${active ? "shop-nav-gem-active text-amber-500" : "text-amber-200"}`}>
                 <Gem size={15} strokeWidth={2.5} aria-hidden="true" />
-                {active && (
-                  <Sparkles
-                    className="shop-nav-sparkle absolute -right-2 -top-2 text-amber-400"
-                    size={9}
-                    strokeWidth={3}
-                    aria-hidden="true"
-                  />
-                )}
+                <Sparkles
+                  className={`shop-nav-sparkle absolute -right-2 -top-2 ${
+                    active ? "shop-nav-sparkle-active text-amber-400" : "shop-nav-sparkle-idle text-amber-300/80"
+                  }`}
+                  size={9}
+                  strokeWidth={3}
+                  aria-hidden="true"
+                />
               </span>
             )}
             <span className="sm:hidden">{item.mobileLabel}</span>
