@@ -20,6 +20,7 @@ import {
   cosmeticNameplateClass,
 } from "@/components/cosmetic-avatar";
 import { ExpandableList } from "@/components/expandable-list";
+import { ShopCatalogTabs } from "@/components/shop-catalog-tabs";
 import { ShopPurchaseForm } from "@/components/shop-purchase-form";
 import { formatVietnamTime } from "@/lib/domain";
 import { requireUser } from "@/lib/session";
@@ -151,35 +152,25 @@ export default async function ShopPage({
         <div className="min-w-0 space-y-5">
           <InventoryPanel data={data} />
 
-          <nav
-            className="flex max-w-full gap-2 overflow-x-auto pb-1 sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:p-2 sm:shadow-sm sm:shadow-slate-950/5"
-            aria-label="Danh mục shop"
-          >
-            {SHOP_TYPE_ORDER.map((type) => (
-              <a
-                key={type}
-                href={`#shop-${type}`}
-                className="inline-flex min-h-11 shrink-0 items-center rounded-xl border-2 border-emerald-800 bg-white px-3.5 py-2 text-sm font-black text-slate-950 shadow-sm shadow-slate-950/5 hover:-translate-y-0.5"
-              >
-                {SHOP_TYPE_SHORT_LABELS[type]}
-              </a>
-            ))}
-          </nav>
-
-          {SHOP_TYPE_ORDER.map((type) => (
-            <CatalogSection
-              key={type}
-              type={type}
-              items={data.items.filter((item) => item.type === type)}
-              user={{
-                image: user.image,
-                name: user.name,
-                department: user.department,
-              }}
-              ownedItemIds={data.ownedItemIds}
-              equipped={data.equipped}
-            />
-          ))}
+          <ShopCatalogTabs
+            tabs={SHOP_TYPE_ORDER.map((type) => ({
+              key: type,
+              label: SHOP_TYPE_SHORT_LABELS[type],
+              content: (
+                <CatalogSection
+                  type={type}
+                  items={data.items.filter((item) => item.type === type)}
+                  user={{
+                    image: user.image,
+                    name: user.name,
+                    department: user.department,
+                  }}
+                  ownedItemIds={data.ownedItemIds}
+                  equipped={data.equipped}
+                />
+              ),
+            }))}
+          />
         </div>
 
         <aside className="min-w-0 space-y-5 lg:sticky lg:top-28 lg:self-start">
