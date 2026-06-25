@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -59,7 +60,14 @@ const SHOP_TYPE_ORDER: ShopCosmeticType[] = [
   "NAMEPLATE",
 ];
 
+const SHOP_TRY_ON_EVENT = "shop:try-on";
+const SHOP_TRY_ON_STATE_EVENT = "shop:try-on-state";
+
 const ShopTryOnContext = createContext<ShopTryOnContextValue | null>(null);
+
+function useOptionalShopTryOn() {
+  return useContext(ShopTryOnContext);
+}
 
 function useShopTryOn() {
   const value = useContext(ShopTryOnContext);
@@ -67,6 +75,26 @@ function useShopTryOn() {
     throw new Error("useShopTryOn must be used inside ShopTryOnProvider");
   }
   return value;
+}
+
+function scrollToTryOnPanel() {
+  const panel = document.getElementById("shop-try-on-panel");
+  if (!panel) return;
+
+  const headerOffset = 116;
+  const top = panel.getBoundingClientRect().top + window.scrollY - headerOffset;
+  window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  panel.focus({ preventScroll: true });
+}
+
+function emitTryOnRequest(item: ShopTryOnItem) {
+  window.dispatchEvent(new CustomEvent<ShopTryOnItem>(SHOP_TRY_ON_EVENT, { detail: item }));
+}
+
+function emitTryOnState(cosmetics: ShopTryOnCosmetics) {
+  window.dispatchEvent(
+    new CustomEvent<ShopTryOnCosmetics>(SHOP_TRY_ON_STATE_EVENT, { detail: cosmetics }),
+  );
 }
 
 export function ShopTryOnProvider({
@@ -87,11 +115,7 @@ export function ShopTryOnProvider({
   const setTryOn = useCallback((item: ShopTryOnItem) => {
     setTryOnCosmetics((current) => ({ ...current, [item.type]: item }));
 
-    window.setTimeout(() => {
-      document
-        .getElementById("shop-try-on-panel")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 30);
+    window.setTimeout(scrollToTryOnPanel, 30);
   }, []);
 
   const clearType = useCallback((type: ShopCosmeticType) => {
@@ -110,6 +134,21 @@ export function ShopTryOnProvider({
     (item: ShopTryOnItem) => tryOnCosmetics[item.type]?.id === item.id,
     [tryOnCosmetics],
   );
+
+  useEffect(() => {
+    const handleTryOnRequest = (event: Event) => {
+      const item = (event as CustomEvent<ShopTryOnItem>).detail;
+      if (!item?.id || !item.type) return;
+      setTryOn(item);
+    };
+
+    window.addEventListener(SHOP_TRY_ON_EVENT, handleTryOnRequest);
+    return () => window.removeEventListener(SHOP_TRY_ON_EVENT, handleTryOnRequest);
+  }, [setTryOn]);
+
+  useEffect(() => {
+    emitTryOnState(tryOnCosmetics);
+  }, [tryOnCosmetics]);
 
   const value = useMemo(
     () => ({
@@ -138,16 +177,35 @@ export function ShopTryOnProvider({
 }
 
 export function ShopTryOnButton({ item }: { item: ShopTryOnItem }) {
-  const { isTryingItem, setTryOn } = useShopTryOn();
-  const active = isTryingItem(item);
+  const tryOn = useOptionalShopTryOn();
+  const [fallbackActive, setFallbackActive] = useState(false);
+  const active = tryOn?.isTryingItem(item) ?? fallbackActive;
+
+  useEffect(() => {
+    const handleTryOnState = (event: Event) => {
+      const cosmetics = (event as CustomEvent<ShopTryOnCosmetics>).detail ?? {};
+      setFallbackActive(cosmetics[item.type]?.id === item.id);
+    };
+
+    window.addEventListener(SHOP_TRY_ON_STATE_EVENT, handleTryOnState);
+    return () => window.removeEventListener(SHOP_TRY_ON_STATE_EVENT, handleTryOnState);
+  }, [item.id, item.type]);
 
   return (
     <button
       type="button"
-      onClick={() => setTryOn(item)}
+      onClick={() => {
+        setFallbackActive(true);
+        if (tryOn) {
+          tryOn.setTryOn(item);
+          return;
+        }
+        emitTryOnRequest(item);
+      }}
+      aria-pressed={active}
       className={`flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-black shadow-sm ring-1 sm:min-h-11 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm ${
         active
-          ? "bg-amber-50 text-amber-800 ring-amber-200 shadow-amber-950/5"
+          ? "bg-amber-50 text-amber-800 ring-amber-300 shadow-amber-950/10"
           : "bg-white text-emerald-800 ring-emerald-200 hover:bg-emerald-50"
       }`}
       data-testid={`try-on-${item.slug}`}
@@ -173,6 +231,7 @@ export function ShopTryOnPanel() {
   return (
     <section
       id="shop-try-on-panel"
+      tabIndex={-1}
       className="overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/5"
       data-testid="shop-try-on-panel"
     >
