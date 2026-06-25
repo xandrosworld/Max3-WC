@@ -353,7 +353,7 @@ function CatalogSection({
 }
 
 const RARITY_CARD_GRADIENT: Record<string, string> = {
-  COMMON: "from-slate-400 via-slate-300 to-slate-400",
+  COMMON: "from-slate-300 via-slate-200 to-slate-300",
   RARE: "from-emerald-500 via-teal-400 to-emerald-500",
   EPIC: "from-violet-500 via-fuchsia-400 to-violet-500",
   LEGENDARY: "from-amber-400 via-yellow-300 to-orange-400",
@@ -361,16 +361,23 @@ const RARITY_CARD_GRADIENT: Record<string, string> = {
 
 const RARITY_CARD_RING: Record<string, string> = {
   COMMON: "border-slate-200",
-  RARE: "border-emerald-200",
-  EPIC: "border-violet-200",
-  LEGENDARY: "border-amber-200",
+  RARE: "border-emerald-300",
+  EPIC: "border-violet-300 shop-card-epic",
+  LEGENDARY: "border-amber-300 shop-card-legendary",
 };
 
 const RARITY_CARD_SHADOW: Record<string, string> = {
   COMMON: "hover:shadow-slate-950/8",
-  RARE: "hover:shadow-emerald-950/10",
-  EPIC: "hover:shadow-violet-950/12",
-  LEGENDARY: "hover:shadow-amber-950/15",
+  RARE: "shadow-emerald-500/8 hover:shadow-emerald-500/18",
+  EPIC: "shadow-violet-500/12 hover:shadow-violet-500/25",
+  LEGENDARY: "shadow-amber-500/20 hover:shadow-amber-500/35",
+};
+
+const RARITY_CARD_BG: Record<string, string> = {
+  COMMON: "bg-white",
+  RARE: "bg-gradient-to-br from-white via-white to-emerald-50/50",
+  EPIC: "bg-gradient-to-br from-white via-violet-50/30 to-fuchsia-50/40",
+  LEGENDARY: "bg-gradient-to-br from-amber-50/40 via-white to-yellow-50/50",
 };
 
 function ShopItemCard({
@@ -398,36 +405,62 @@ function ShopItemCard({
   return (
     <article
       id={`item-${item.slug}`}
-      className={`group relative scroll-mt-28 overflow-hidden rounded-3xl border ${RARITY_CARD_RING[item.rarity] ?? "border-slate-200"} bg-white p-4 shadow-sm shadow-slate-950/5 transition hover:-translate-y-0.5 hover:shadow-lg ${RARITY_CARD_SHADOW[item.rarity] ?? ""}`}
+      className={`group relative scroll-mt-28 overflow-hidden rounded-3xl border-2 ${RARITY_CARD_RING[item.rarity] ?? "border-slate-200"} ${RARITY_CARD_BG[item.rarity] ?? "bg-white"} p-4 shadow-md transition hover:-translate-y-1 hover:shadow-xl ${RARITY_CARD_SHADOW[item.rarity] ?? ""}`}
     >
-      <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${RARITY_CARD_GRADIENT[item.rarity] ?? "from-slate-400 to-slate-300"}`} />
-      <div className="flex items-start justify-between gap-3">
+      <div className={`absolute inset-x-0 top-0 ${
+        item.rarity === "LEGENDARY" ? "h-1.5" : item.rarity === "EPIC" ? "h-1.5" : "h-1"
+      } bg-gradient-to-r ${RARITY_CARD_GRADIENT[item.rarity] ?? "from-slate-400 to-slate-300"}`} />
+      {item.rarity === "LEGENDARY" && (
+        <div className="absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(251,191,36,0.12), transparent 50%)" }} />
+      )}
+      {item.rarity === "EPIC" && (
+        <div className="absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(139,92,246,0.10), transparent 50%)" }} />
+      )}
+      <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] ring-1 ${SHOP_RARITY_TONES[item.rarity]}`}>
+          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ring-1 ${
+            item.rarity === "LEGENDARY"
+              ? "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-900 ring-amber-300"
+              : item.rarity === "EPIC"
+                ? "bg-gradient-to-r from-violet-100 to-fuchsia-100 text-violet-900 ring-violet-300"
+                : SHOP_RARITY_TONES[item.rarity]
+          }`}>
+            {item.rarity === "LEGENDARY" && <Sparkles size={10} className="text-amber-600" />}
+            {item.rarity === "EPIC" && <Sparkles size={10} className="text-violet-600" />}
             {SHOP_RARITY_LABELS[item.rarity]}
           </span>
-          <h3 className="mt-2 text-lg font-black leading-tight text-slate-950">
+          <h3 className={`mt-2 text-lg font-black leading-tight ${
+            item.rarity === "LEGENDARY"
+              ? "bg-gradient-to-r from-amber-700 via-yellow-600 to-amber-700 bg-clip-text text-transparent"
+              : item.rarity === "EPIC"
+                ? "text-violet-950"
+                : "text-slate-950"
+          }`}>
             {item.name}
           </h3>
         </div>
         <span className={`rounded-2xl px-3 py-2 text-sm font-black tabular-nums ${
           item.rarity === "LEGENDARY"
-            ? "bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-amber-950 shadow-lg shadow-amber-500/20"
+            ? "bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-amber-950 shadow-lg shadow-amber-500/25 ring-1 ring-amber-400/40"
             : item.rarity === "EPIC"
-              ? "bg-gradient-to-r from-violet-700 to-purple-700 text-white shadow-lg shadow-violet-500/15"
-              : "bg-slate-950 text-white"
+              ? "bg-gradient-to-r from-violet-700 to-purple-700 text-white shadow-lg shadow-violet-500/20 ring-1 ring-violet-400/30"
+              : item.rarity === "RARE"
+                ? "bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md shadow-emerald-500/15"
+                : "bg-slate-800 text-slate-100"
         }`}>
           {formatCtom(item.priceCtom)}
         </span>
       </div>
 
       <div
-        className={`mt-4 rounded-2xl ${
+        className={`relative mt-4 rounded-2xl ${
           item.rarity === "LEGENDARY"
-            ? "bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),transparent_48%),linear-gradient(135deg,#1c1917,#1e1b4b_50%,#1c1917)]"
+            ? "bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.22),transparent_48%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.12),transparent_40%),linear-gradient(135deg,#1c1917,#292524_30%,#1c1917)] ring-1 ring-amber-500/20"
             : item.rarity === "EPIC"
-              ? "bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.16),transparent_48%),linear-gradient(135deg,#1e1b4b,#0f172a_50%,#1e1b4b)]"
-              : "bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.16),transparent_48%),linear-gradient(135deg,#f8fafc,#fff7ed)]"
+              ? "bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.20),transparent_48%),radial-gradient(circle_at_bottom_left,rgba(217,70,239,0.10),transparent_40%),linear-gradient(135deg,#1e1b4b,#0f172a_50%,#1e1b4b)] ring-1 ring-violet-500/20"
+              : item.rarity === "RARE"
+                ? "bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.18),transparent_48%),linear-gradient(135deg,#ecfdf5,#f0fdf4_50%,#ecfdf5)] ring-1 ring-emerald-200"
+                : "bg-[linear-gradient(135deg,#f8fafc,#f1f5f9)] ring-1 ring-slate-200"
         } ${avatarShowcase ? showcaseClass : "p-4"}`}
       >
         {avatarShowcase ? (
@@ -460,7 +493,9 @@ function ShopItemCard({
         )}
       </div>
 
-      <p className="mt-3 min-h-10 text-sm font-semibold leading-5 text-slate-600">
+      <p className={`mt-3 min-h-10 text-sm font-semibold leading-5 ${
+        item.rarity === "LEGENDARY" ? "text-amber-900/70" : item.rarity === "EPIC" ? "text-violet-900/60" : "text-slate-600"
+      }`}>
         {item.description}
       </p>
 
@@ -487,6 +522,7 @@ function ShopItemCard({
             itemSlug={item.slug}
             itemName={item.name}
             priceLabel={formatCtom(item.priceCtom)}
+            rarity={item.rarity}
           />
         )}
       </div>

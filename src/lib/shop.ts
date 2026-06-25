@@ -381,9 +381,9 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
   {
     slug: "nameplate-royal-gold",
     type: ShopItemType.NAMEPLATE,
-    rarity: ShopItemRarity.EPIC,
+    rarity: ShopItemRarity.LEGENDARY,
     name: "Bảng Tên Royal Gold",
-    description: "Nền vàng hoàng gia, viền gold sang trọng.",
+    description: "Nền vàng hoàng gia rực rỡ, viền gold sang trọng kèm hiệu ứng lấp lánh — xứng tầm huyền thoại.",
     priceCtom: 333_333,
     visualKey: "royal-gold",
     sortOrder: 425,

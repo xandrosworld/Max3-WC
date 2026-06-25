@@ -26,11 +26,13 @@ export function ShopPurchaseForm({
   itemSlug,
   itemName,
   priceLabel,
+  rarity = "COMMON",
 }: {
   itemId: string;
   itemSlug: string;
   itemName: string;
   priceLabel: string;
+  rarity?: string;
 }) {
   const [open, setOpen] = useState(false);
   const dialogTitleId = useId();
@@ -41,7 +43,15 @@ export function ShopPurchaseForm({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-black text-white shadow-lg shadow-emerald-950/15 hover:bg-emerald-800"
+        className={`flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-black shadow-lg ${
+          rarity === "LEGENDARY"
+            ? "bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-amber-950 shadow-amber-500/25 hover:from-amber-500 hover:via-yellow-400 hover:to-amber-500"
+            : rarity === "EPIC"
+              ? "bg-gradient-to-r from-violet-700 via-purple-600 to-violet-700 text-white shadow-violet-500/20 hover:from-violet-600 hover:via-purple-500 hover:to-violet-600"
+              : rarity === "RARE"
+                ? "bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-emerald-500/15 hover:from-emerald-600 hover:to-teal-600"
+                : "bg-emerald-700 text-white shadow-emerald-950/15 hover:bg-emerald-800"
+        }`}
         data-testid={`buy-${itemSlug}`}
       >
         <Gem size={16} />
