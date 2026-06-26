@@ -14,6 +14,7 @@ import {
   canUseHopeStar,
   choiceLabel,
   formatCurrency,
+  formatVietnamTime,
   formatHandicap,
   hasDrawChoice,
   isVoteLocked,
@@ -97,7 +98,7 @@ export default async function MatchesPage({
         orderBy: { settlementRevision: "desc" },
       },
       votes: {
-        select: { userId: true, choice: true, hopeStar: true, updatedAt: true },
+        select: { userId: true, choice: true, hopeStar: true, createdAt: true, updatedAt: true },
       },
     },
   });
@@ -794,14 +795,23 @@ function SettledMatchSummary({
       teamAScore: number;
       teamBScore: number;
       winningChoice: VoteChoice;
+      settledAt: Date;
     } | null;
   };
-  myVote: { choice: VoteChoice; hopeStar: boolean } | null;
+  myVote: { choice: VoteChoice; hopeStar: boolean; createdAt: Date } | null;
   autoFollowTargetName: string | null;
   followedVote: { choice: VoteChoice; hopeStar: boolean } | null;
 }) {
   if (!match.result) return null;
   const correct = myVote?.choice === match.result.winningChoice;
+  const autoFollowedVoteText = getAutoFollowedVoteText({
+    autoFollowTargetName,
+    followedVote,
+    myVote,
+    settledAt: match.result.settledAt,
+    teamA: match.teamA,
+    teamB: match.teamB,
+  });
   const missingVoteText = getMissingVoteText({
     autoFollowTargetName,
     followedVote,
@@ -820,6 +830,18 @@ function SettledMatchSummary({
           Cửa đúng:{" "}
           {choiceLabel(match.result.winningChoice, match.teamA, match.teamB)}
         </p>
+        {myVote && (
+          <p
+            className={`mt-1 text-xs font-bold ${
+              autoFollowedVoteText ? "text-amber-700" : "text-slate-500"
+            }`}
+          >
+            {autoFollowedVoteText ??
+              `Bạn đã chọn: ${choiceLabel(myVote.choice, match.teamA, match.teamB)}${
+                myVote.hopeStar ? " · Ngôi sao" : ""
+              }`}
+          </p>
+        )}
       </div>
       {myVote ? (
         <div
@@ -840,6 +862,35 @@ function SettledMatchSummary({
       )}
     </div>
   );
+}
+
+function getAutoFollowedVoteText({
+  autoFollowTargetName,
+  followedVote,
+  myVote,
+  settledAt,
+  teamA,
+  teamB,
+}: {
+  autoFollowTargetName: string | null;
+  followedVote: { choice: VoteChoice } | null;
+  myVote: { choice: VoteChoice; createdAt: Date } | null;
+  settledAt: Date;
+  teamA: string;
+  teamB: string;
+}) {
+  if (!autoFollowTargetName || !followedVote || !myVote) return null;
+  if (myVote.choice !== followedVote.choice) return null;
+
+  const copiedDuringSettlement =
+    Math.abs(myVote.createdAt.getTime() - settledAt.getTime()) <= 10_000;
+  if (!copiedDuringSettlement) return null;
+
+  return `Tự theo ${autoFollowTargetName}: ${choiceLabel(
+    myVote.choice,
+    teamA,
+    teamB,
+  )} · lúc ${formatVietnamTime(myVote.createdAt)}`;
 }
 
 function LockedMatchSummary({

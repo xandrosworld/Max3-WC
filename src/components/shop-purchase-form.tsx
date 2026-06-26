@@ -96,15 +96,15 @@ export function ShopPurchaseForm({
               <div className="mt-4 rounded-2xl bg-white/90 p-4 ring-1 ring-slate-200">
                 <p className="text-sm font-bold text-slate-500">Vật phẩm</p>
                 <p className="mt-1 text-lg font-black text-slate-950">{itemName}</p>
-                <p className="mt-3 text-sm font-bold text-slate-500">Giá</p>
+                <p className="mt-3 text-sm font-bold text-slate-500">Ghi nhận CTOM</p>
                 <p className="mt-1 text-xl font-black tabular-nums text-amber-700">
                   {priceLabel}
                 </p>
               </div>
 
               <p className="mt-3 text-xs font-semibold leading-5 text-slate-600">
-                CTOM là điểm trang trí riêng của Shop. Sau khi xác nhận, vật phẩm sẽ được mua
-                và tự trang bị ngay.
+                CTOM là điểm đóng góp riêng của Shop. Sau khi xác nhận, hệ thống sẽ cộng thêm CTOM
+                cho bạn, đưa món này vào tủ đồ và tự trang bị ngay.
               </p>
             </div>
 

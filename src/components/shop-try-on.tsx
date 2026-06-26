@@ -81,9 +81,9 @@ function scrollToTryOnPanel() {
   const panel = document.getElementById("shop-try-on-panel");
   if (!panel) return;
 
-  const headerOffset = 116;
-  const top = panel.getBoundingClientRect().top + window.scrollY - headerOffset;
-  window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  const preview = document.getElementById("shop-try-on-preview");
+  const target = window.innerWidth < 700 && preview ? preview : panel;
+  target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
   panel.focus({ preventScroll: true });
 }
 
@@ -236,7 +236,7 @@ export function ShopTryOnPanel() {
     <section
       id="shop-try-on-panel"
       tabIndex={-1}
-      className="overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/5"
+      className="scroll-mt-24 overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/5"
       data-testid="shop-try-on-panel"
     >
       <div className="grid gap-4 bg-[radial-gradient(circle_at_12%_0%,rgba(16,185,129,0.18),transparent_34%),linear-gradient(135deg,#ecfdf5,#ffffff_58%,#fff7ed)] p-4 sm:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] sm:p-5">
@@ -307,7 +307,10 @@ export function ShopTryOnPanel() {
           )}
         </div>
 
-        <div className="relative overflow-hidden rounded-3xl bg-slate-950 p-5 text-white shadow-xl shadow-slate-950/15">
+        <div
+          id="shop-try-on-preview"
+          className="relative scroll-mt-24 overflow-hidden rounded-3xl bg-slate-950 p-4 text-white shadow-xl shadow-slate-950/15 sm:p-5"
+        >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(16,185,129,0.34),transparent_38%),radial-gradient(circle_at_92%_18%,rgba(251,191,36,0.22),transparent_32%)]" />
           <div className="relative flex flex-col items-center text-center">
             <CosmeticPreviewAvatar

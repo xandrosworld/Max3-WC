@@ -144,6 +144,8 @@ export default async function ShopPage({
                   demoItem={toTryOnItem(guideDemoItem)}
                   priceCtom={guideDemoItem.priceCtom}
                   priceLabel={formatCtom(guideDemoItem.priceCtom)}
+                  currentCtom={data.totalCtom}
+                  hintStorageKey={`shop-guide-hint:${user.id}`}
                 />
               )}
             </div>
@@ -406,7 +408,7 @@ function CatalogSection({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-2 md:gap-3 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => (
           <ShopItemCard
             key={item.id}
@@ -473,13 +475,13 @@ function ShopItemCard({
     item.type === ShopItemType.AVATAR_AURA;
   const showcaseClass =
     item.type === ShopItemType.AVATAR_WINGS
-      ? "flex min-h-48 items-center justify-center px-4 py-7"
-      : "flex min-h-36 items-center justify-center px-4 py-5";
+      ? "flex min-h-36 items-center justify-center px-3 py-5 sm:min-h-48 sm:px-4 sm:py-7"
+      : "flex min-h-32 items-center justify-center px-3 py-4 sm:min-h-36 sm:px-4 sm:py-5";
 
   return (
     <article
       id={`item-${item.slug}`}
-      className={`group relative scroll-mt-28 overflow-hidden rounded-2xl border-2 sm:rounded-3xl ${RARITY_CARD_RING[item.rarity] ?? "border-slate-200"} ${RARITY_CARD_BG[item.rarity] ?? "bg-white"} p-2.5 sm:p-4 shadow-md transition hover:-translate-y-1 hover:shadow-xl ${RARITY_CARD_SHADOW[item.rarity] ?? ""}`}
+      className={`group relative scroll-mt-28 overflow-hidden rounded-2xl border-2 sm:rounded-3xl ${RARITY_CARD_RING[item.rarity] ?? "border-slate-200"} ${RARITY_CARD_BG[item.rarity] ?? "bg-white"} p-3 shadow-md transition hover:-translate-y-1 hover:shadow-xl sm:p-4 ${RARITY_CARD_SHADOW[item.rarity] ?? ""}`}
     >
       <div className={`pointer-events-none absolute inset-x-0 top-0 ${
         item.rarity === "LEGENDARY" || item.rarity === "MYTHIC" ? "h-1.5" : item.rarity === "EPIC" ? "h-1.5" : "h-1"
@@ -493,9 +495,9 @@ function ShopItemCard({
       {item.rarity === "EPIC" && (
         <div className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(139,92,246,0.10), transparent 50%)" }} />
       )}
-      <div className="relative flex items-start justify-between gap-2 sm:gap-3">
+      <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] sm:px-2.5 sm:py-1 sm:text-[10px] font-black uppercase tracking-[0.12em] ring-1 ${
+          <span className={`inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ring-1 ${
             item.rarity === "LEGENDARY"
               ? "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-900 ring-amber-300"
               : item.rarity === "MYTHIC"
@@ -509,7 +511,7 @@ function ShopItemCard({
             {item.rarity === "EPIC" && <Sparkles size={10} className="hidden sm:inline text-violet-600" />}
             {SHOP_RARITY_LABELS[item.rarity]}
           </span>
-          <h3 className={`mt-1.5 text-sm font-black leading-tight sm:mt-2 sm:text-lg ${
+          <h3 className={`mt-2 text-base font-black leading-tight sm:text-lg ${
             item.rarity === "LEGENDARY"
               ? "bg-gradient-to-r from-amber-700 via-yellow-600 to-amber-700 bg-clip-text text-transparent"
               : item.rarity === "MYTHIC"
@@ -521,7 +523,7 @@ function ShopItemCard({
             {item.name}
           </h3>
         </div>
-        <span className={`shrink-0 rounded-xl px-2 py-1.5 text-[11px] font-black tabular-nums sm:rounded-2xl sm:px-3 sm:py-2 sm:text-sm ${
+        <span className={`shrink-0 rounded-xl px-3 py-2 text-xs font-black tabular-nums sm:rounded-2xl sm:text-sm ${
           item.rarity === "LEGENDARY"
             ? "bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-amber-950 shadow-lg shadow-amber-500/25 ring-1 ring-amber-400/40"
             : item.rarity === "MYTHIC"
@@ -590,13 +592,13 @@ function ShopItemCard({
         )}
       </div>
 
-      <p className={`mt-2 line-clamp-2 text-xs font-semibold leading-4 sm:mt-3 sm:min-h-10 sm:text-sm sm:leading-5 ${
+      <p className={`mt-3 line-clamp-2 min-h-10 text-sm font-semibold leading-5 ${
         item.rarity === "LEGENDARY" ? "text-amber-900/70" : item.rarity === "MYTHIC" ? "text-rose-900/65" : item.rarity === "EPIC" ? "text-violet-900/60" : "text-slate-600"
       }`}>
         {item.description}
       </p>
 
-      <div className="mt-2 sm:mt-4">
+      <div className="mt-3 sm:mt-4">
         {isEquipped ? (
           <div className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-emerald-50 px-3 text-xs font-black text-emerald-800 ring-1 ring-emerald-100 sm:min-h-11 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm">
             <Check size={14} className="sm:h-4 sm:w-4" />

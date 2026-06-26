@@ -47,8 +47,8 @@ type GuideStep = {
 const GUIDE_STEPS: GuideStep[] = [
   {
     eyebrow: "Bước 1",
-    title: "Đây là tủ đồ CTOM",
-    body: "CTOM dùng riêng cho Shop. Bạn đổi diện mạo cho vui, không ảnh hưởng Belly trong giải đấu.",
+    title: "Đây là Shop CTOM",
+    body: "CTOM là điểm đóng góp riêng của Shop. Mua đồ trang trí sẽ ghi nhận thêm CTOM, tách riêng hoàn toàn với Belly giải đấu.",
     Icon: ShoppingBag,
     tone: "from-emerald-500 to-teal-400",
     durationMs: 3200,
@@ -75,7 +75,7 @@ const GUIDE_STEPS: GuideStep[] = [
   {
     eyebrow: "Bước 4",
     title: "Bấm Thử trước cho chắc",
-    body: "Cứ thử thoải mái. Bước này chỉ đổi preview trên màn hình, chưa mất CTOM.",
+    body: "Cứ thử thoải mái. Bước này chỉ đổi preview trên màn hình, chưa ghi nhận CTOM và chưa thêm vào tủ đồ.",
     Icon: WandSparkles,
     tone: "from-amber-500 to-orange-400",
     durationMs: 2600,
@@ -94,7 +94,7 @@ const GUIDE_STEPS: GuideStep[] = [
   {
     eyebrow: "Bước 6",
     title: "Ưng rồi mới chốt",
-    body: "Shop sẽ hiện bảng xác nhận như thế này: thấy rõ món, giá, CTOM trước và sau khi mua.",
+    body: "Shop sẽ hiện bảng xác nhận như thế này: thấy rõ món, mức CTOM được ghi nhận và tổng đóng góp sau khi mua.",
     Icon: CheckCircle2,
     tone: "from-rose-500 to-pink-400",
     durationMs: 4200,
@@ -108,7 +108,7 @@ const GUIDE_STEPS: GuideStep[] = [
   {
     eyebrow: "Xong rồi",
     title: "Mua xong là mặc lên người",
-    body: "Bạn có thể thử bao nhiêu món cũng được. Chỉ khi bấm mua thật thì CTOM mới được tính.",
+    body: "Bạn cứ thử thoải mái. Khi bấm mua thật, món đồ vào tủ và CTOM shop của bạn mới tăng.",
     Icon: PackageCheck,
     tone: "from-amber-400 to-yellow-300",
     durationMs: 5200,
@@ -124,10 +124,14 @@ export function ShopGuideTour({
   demoItem,
   priceCtom,
   priceLabel,
+  currentCtom,
+  hintStorageKey,
 }: {
   demoItem: ShopTryOnItem;
   priceCtom: number;
   priceLabel: string;
+  currentCtom: number;
+  hintStorageKey: string;
 }) {
   const [open, setOpen] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
@@ -135,14 +139,13 @@ export function ShopGuideTour({
   const [targetRect, setTargetRect] = useState<GuideRect | null>(null);
   const [cursorTap, setCursorTap] = useState(false);
   const [stepProgress, setStepProgress] = useState(0);
+  const [hintClickCount, setHintClickCount] = useState(2);
   const step = GUIDE_STEPS[stepIndex];
   const Icon = step.Icon;
   const isLast = stepIndex === GUIDE_STEPS.length - 1;
-  const balanceBefore = useMemo(
-    () => Math.max(120_000, Math.ceil((priceCtom * 3) / 1000) * 1000),
-    [priceCtom],
-  );
-  const balanceAfter = Math.max(0, balanceBefore - priceCtom);
+  const contributionBefore = Math.max(0, currentCtom);
+  const contributionAfter = contributionBefore + priceCtom;
+  const showHint = hintClickCount < 2;
 
   const money = useMemo(
     () => new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }),
@@ -158,6 +161,30 @@ export function ShopGuideTour({
     }
     return null;
   }, [demoItem.slug, step]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const savedCount = Number(window.localStorage.getItem(hintStorageKey) ?? "0");
+        setHintClickCount(Number.isFinite(savedCount) ? Math.max(0, savedCount) : 0);
+      } catch {
+        setHintClickCount(0);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [hintStorageKey]);
+
+  const rememberGuideClick = useCallback(() => {
+    setHintClickCount((current) => {
+      const next = Math.min(2, current + 1);
+      try {
+        window.localStorage.setItem(hintStorageKey, String(next));
+      } catch {
+        // Local storage can be unavailable in private contexts; the guide still works.
+      }
+      return next;
+    });
+  }, [hintStorageKey]);
 
   const updateTargetRect = useCallback(() => {
     const element = findTarget();
@@ -257,24 +284,44 @@ export function ShopGuideTour({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => {
-          setOpen(true);
-          setPaused(false);
-          setStepIndex(0);
-          setStepProgress(0);
-        }}
-        className="group inline-flex min-h-10 items-center gap-2 rounded-full bg-white px-3.5 text-sm font-black text-slate-950 shadow-lg shadow-black/10 ring-1 ring-white/40 transition hover:-translate-y-0.5 hover:bg-emerald-50"
-        data-testid="shop-guide-open"
-      >
-        <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-emerald-950 text-amber-200">
-          <Gem size={16} className="transition group-hover:scale-110" />
-          <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-amber-300 shadow-[0_0_14px_rgba(251,191,36,0.9)]" />
-          <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 animate-ping rounded-full bg-amber-300/70" />
-        </span>
-        Hướng dẫn Shop
-      </button>
+      <span className="relative inline-flex">
+        {showHint && (
+          <>
+            <span className="pointer-events-none absolute -inset-1 rounded-full bg-amber-300/20 blur-md" />
+            <span
+              className="pointer-events-none absolute -right-3 -top-4 z-10 flex h-8 w-8 animate-bounce items-center justify-center rounded-full bg-amber-300 text-emerald-950 shadow-lg shadow-amber-500/30 ring-2 ring-white"
+              data-testid="shop-guide-hint-arrow"
+            >
+              <ArrowLeft size={17} strokeWidth={3} />
+            </span>
+            <span className="pointer-events-none absolute -right-1 top-0 z-10 h-2.5 w-2.5 rounded-full bg-white shadow-[0_0_16px_rgba(255,255,255,0.95)]" />
+          </>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            rememberGuideClick();
+            setOpen(true);
+            setPaused(false);
+            setStepIndex(0);
+            setStepProgress(0);
+          }}
+          className={`group relative inline-flex min-h-10 items-center gap-2 overflow-hidden rounded-full bg-white px-3.5 text-sm font-black text-slate-950 shadow-lg shadow-black/10 ring-1 ring-white/40 transition hover:-translate-y-0.5 hover:bg-emerald-50 ${
+            showHint ? "shadow-amber-300/25 ring-amber-200" : ""
+          }`}
+          data-testid="shop-guide-open"
+        >
+          {showHint && (
+            <span className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 skew-x-[-18deg] animate-[shop-nav-sheen_2.4s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-amber-200/70 to-transparent" />
+          )}
+          <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-emerald-950 text-amber-200">
+            <Gem size={16} className="transition group-hover:scale-110" />
+            <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-amber-300 shadow-[0_0_14px_rgba(251,191,36,0.9)]" />
+            <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 animate-ping rounded-full bg-amber-300/70" />
+          </span>
+          Hướng dẫn Shop
+        </button>
+      </span>
 
       {open && (
         <div
@@ -317,8 +364,8 @@ export function ShopGuideTour({
             <DemoReceipt
               itemName={demoItem.name}
               priceLabel={priceLabel}
-              balanceBefore={money.format(balanceBefore)}
-              balanceAfter={money.format(balanceAfter)}
+              contributionBefore={money.format(contributionBefore)}
+              contributionAfter={money.format(contributionAfter)}
               settled={step.action === "done"}
             />
           )}
@@ -431,14 +478,14 @@ export function ShopGuideTour({
 function DemoReceipt({
   itemName,
   priceLabel,
-  balanceBefore,
-  balanceAfter,
+  contributionBefore,
+  contributionAfter,
   settled,
 }: {
   itemName: string;
   priceLabel: string;
-  balanceBefore: string;
-  balanceAfter: string;
+  contributionBefore: string;
+  contributionAfter: string;
   settled: boolean;
 }) {
   return (
@@ -454,13 +501,13 @@ function DemoReceipt({
         <p className="mt-1 text-sm font-bold text-slate-600">{itemName}</p>
       </div>
       <div className="space-y-3 p-5">
-        <ReceiptRow label="Đang có" value={`${balanceBefore} CTOM`} />
-        <ReceiptRow label="Trừ khi mua" value={`-${priceLabel}`} danger />
-        <ReceiptRow label="Còn lại" value={`${balanceAfter} CTOM`} strong />
+        <ReceiptRow label="Đã góp" value={`${contributionBefore} CTOM`} />
+        <ReceiptRow label="Món này ghi nhận" value={`+${priceLabel}`} strong />
+        <ReceiptRow label="Sau khi mua" value={`${contributionAfter} CTOM`} strong />
         <div className="relative mt-4 overflow-hidden rounded-2xl bg-emerald-800 px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-emerald-900/15">
           {settled ? "Đồ đã lên avatar" : "Xác nhận mua"}
           <span className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/15 px-2 py-1 text-[11px] text-emerald-50">
-            -{priceLabel}
+            +{priceLabel}
           </span>
         </div>
       </div>
