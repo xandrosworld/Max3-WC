@@ -1,4 +1,5 @@
 import { ShopItemType } from "@prisma/client";
+import { PhoenixFlameWings } from "@/components/phoenix-flame-wings";
 import type { EquippedCosmetics } from "@/lib/shop";
 
 const sizeClass = {
@@ -30,6 +31,7 @@ export function CosmeticAvatar({
   const frame = cosmetics?.[ShopItemType.AVATAR_FRAME]?.visualKey ?? "none";
   const wings = cosmetics?.[ShopItemType.AVATAR_WINGS]?.visualKey ?? "none";
   const aura = cosmetics?.[ShopItemType.AVATAR_AURA]?.visualKey ?? "none";
+  const hasPhoenixWings = wings === "phoenix-flame";
 
   return (
     <span
@@ -41,8 +43,12 @@ export function CosmeticAvatar({
     >
       <span className="cosmetic-avatar-aura" aria-hidden="true" />
       <span className="cosmetic-avatar-wings" aria-hidden="true">
-        <span />
-        <span />
+        {hasPhoenixWings ? <PhoenixFlameWings /> : (
+          <>
+            <span />
+            <span />
+          </>
+        )}
       </span>
       {image ? (
         // eslint-disable-next-line @next/next/no-img-element

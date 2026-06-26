@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { RotateCcw, Sparkles, WandSparkles, X } from "lucide-react";
+import { PhoenixFlameWings } from "@/components/phoenix-flame-wings";
 
 type ShopCosmeticType =
   | "AVATAR_FRAME"
@@ -352,6 +353,7 @@ function CosmeticPreviewAvatar({
   const frame = cosmetics.AVATAR_FRAME?.visualKey ?? "none";
   const wings = cosmetics.AVATAR_WINGS?.visualKey ?? "none";
   const aura = cosmetics.AVATAR_AURA?.visualKey ?? "none";
+  const hasPhoenixWings = wings === "phoenix-flame";
 
   return (
     <span
@@ -364,8 +366,12 @@ function CosmeticPreviewAvatar({
     >
       <span className="cosmetic-avatar-aura" aria-hidden="true" />
       <span className="cosmetic-avatar-wings" aria-hidden="true">
-        <span />
-        <span />
+        {hasPhoenixWings ? <PhoenixFlameWings /> : (
+          <>
+            <span />
+            <span />
+          </>
+        )}
       </span>
       {image ? (
         // eslint-disable-next-line @next/next/no-img-element
