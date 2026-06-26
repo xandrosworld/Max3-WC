@@ -790,6 +790,8 @@ function SettledMatchSummary({
   match: {
     teamA: string;
     teamB: string;
+    handicap: number;
+    handicappedTeam: "TEAM_A" | "TEAM_B" | null;
     contributionAmount: number;
     result: {
       teamAScore: number;
@@ -826,6 +828,14 @@ function SettledMatchSummary({
           Kết quả 90 phút: {match.teamA} {match.result.teamAScore}-
           {match.result.teamBScore} {match.teamB}
         </p>
+        <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
+          <span className="rounded-lg bg-amber-50 px-2.5 py-1.5 text-amber-900 ring-1 ring-amber-100">
+            Chấp: {formatHandicap(match)}
+          </span>
+          <span className="rounded-lg bg-white px-2.5 py-1.5 text-slate-600 ring-1 ring-slate-200">
+            Đóng góp {formatCurrency(match.contributionAmount)}
+          </span>
+        </div>
         <p className="mt-1 text-xs font-semibold text-slate-600">
           Cửa đúng:{" "}
           {choiceLabel(match.result.winningChoice, match.teamA, match.teamB)}
