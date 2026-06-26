@@ -384,6 +384,7 @@ function CatalogSection({
 }) {
   const meta = SHOP_SECTION_META[type];
   const Icon = meta.Icon;
+  const sortedItems = [...items].sort(compareShopItems);
 
   return (
     <section id={`shop-${type}`} className="scroll-mt-28">
@@ -403,13 +404,13 @@ function CatalogSection({
             </div>
           </div>
           <span className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-black ring-1 shadow-sm ${meta.countClass}`}>
-            {items.length} món
+            {sortedItems.length} món
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {items.map((item) => (
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-2">
+        {sortedItems.map((item) => (
           <ShopItemCard
             key={item.id}
             item={item}
@@ -420,6 +421,24 @@ function CatalogSection({
         ))}
       </div>
     </section>
+  );
+}
+
+const RARITY_SORT_ORDER: Record<string, number> = {
+  COMMON: 10,
+  RARE: 20,
+  EPIC: 30,
+  MYTHIC: 40,
+  LEGENDARY: 50,
+};
+
+function compareShopItems(a: ShopItem, b: ShopItem) {
+  return (
+    (RARITY_SORT_ORDER[a.rarity] ?? 999) -
+      (RARITY_SORT_ORDER[b.rarity] ?? 999) ||
+    a.priceCtom - b.priceCtom ||
+    a.sortOrder - b.sortOrder ||
+    a.name.localeCompare(b.name, "vi")
   );
 }
 
@@ -475,13 +494,13 @@ function ShopItemCard({
     item.type === ShopItemType.AVATAR_AURA;
   const showcaseClass =
     item.type === ShopItemType.AVATAR_WINGS
-      ? "flex min-h-36 items-center justify-center px-3 py-5 sm:min-h-48 sm:px-4 sm:py-7"
-      : "flex min-h-32 items-center justify-center px-3 py-4 sm:min-h-36 sm:px-4 sm:py-5";
+      ? "flex min-h-36 items-center justify-center px-3 py-5 sm:min-h-44 sm:px-4 sm:py-6 xl:min-h-0 xl:px-3 xl:py-4"
+      : "flex min-h-32 items-center justify-center px-3 py-4 sm:min-h-36 sm:px-4 sm:py-5 xl:min-h-0 xl:px-3 xl:py-4";
 
   return (
     <article
       id={`item-${item.slug}`}
-      className={`group relative scroll-mt-28 overflow-hidden rounded-2xl border-2 sm:rounded-3xl ${RARITY_CARD_RING[item.rarity] ?? "border-slate-200"} ${RARITY_CARD_BG[item.rarity] ?? "bg-white"} p-3 shadow-md transition hover:-translate-y-1 hover:shadow-xl sm:p-4 ${RARITY_CARD_SHADOW[item.rarity] ?? ""}`}
+      className={`group relative scroll-mt-28 overflow-hidden rounded-2xl border-2 sm:rounded-3xl ${RARITY_CARD_RING[item.rarity] ?? "border-slate-200"} ${RARITY_CARD_BG[item.rarity] ?? "bg-white"} p-3 shadow-md transition hover:-translate-y-1 hover:shadow-xl sm:p-4 xl:grid xl:min-h-[210px] xl:grid-cols-[132px_minmax(0,1fr)] xl:grid-rows-[auto_minmax(0,1fr)_auto] xl:gap-x-4 xl:gap-y-3 ${RARITY_CARD_SHADOW[item.rarity] ?? ""}`}
     >
       <div className={`pointer-events-none absolute inset-x-0 top-0 ${
         item.rarity === "LEGENDARY" || item.rarity === "MYTHIC" ? "h-1.5" : item.rarity === "EPIC" ? "h-1.5" : "h-1"
@@ -495,9 +514,9 @@ function ShopItemCard({
       {item.rarity === "EPIC" && (
         <div className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(139,92,246,0.10), transparent 50%)" }} />
       )}
-      <div className="relative flex items-start justify-between gap-3">
+      <div className="relative flex items-start justify-between gap-3 xl:col-start-2 xl:row-start-1">
         <div className="min-w-0">
-          <span className={`inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ring-1 ${
+          <span className={`inline-flex max-w-full items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ring-1 ${
             item.rarity === "LEGENDARY"
               ? "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-900 ring-amber-300"
               : item.rarity === "MYTHIC"
@@ -511,7 +530,7 @@ function ShopItemCard({
             {item.rarity === "EPIC" && <Sparkles size={10} className="hidden sm:inline text-violet-600" />}
             {SHOP_RARITY_LABELS[item.rarity]}
           </span>
-          <h3 className={`mt-2 text-base font-black leading-tight sm:text-lg ${
+          <h3 className={`mt-2 line-clamp-2 text-base font-black leading-tight sm:text-lg xl:text-[17px] ${
             item.rarity === "LEGENDARY"
               ? "bg-gradient-to-r from-amber-700 via-yellow-600 to-amber-700 bg-clip-text text-transparent"
               : item.rarity === "MYTHIC"
@@ -523,7 +542,7 @@ function ShopItemCard({
             {item.name}
           </h3>
         </div>
-        <span className={`shrink-0 rounded-xl px-3 py-2 text-xs font-black tabular-nums sm:rounded-2xl sm:text-sm ${
+        <span className={`shrink-0 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-black tabular-nums sm:rounded-2xl sm:text-sm ${
           item.rarity === "LEGENDARY"
             ? "bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-amber-950 shadow-lg shadow-amber-500/25 ring-1 ring-amber-400/40"
             : item.rarity === "MYTHIC"
@@ -539,7 +558,7 @@ function ShopItemCard({
       </div>
 
       <div
-        className={`relative mt-3 rounded-xl sm:mt-4 sm:rounded-2xl ${
+        className={`relative mt-3 overflow-hidden rounded-xl sm:mt-4 sm:rounded-2xl xl:col-start-1 xl:row-span-3 xl:row-start-1 xl:mt-0 xl:h-full ${
           avatarShowcase
             ? (item.rarity === "LEGENDARY"
                 ? "bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.22),transparent_48%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.12),transparent_40%),linear-gradient(135deg,#1c1917,#292524_30%,#1c1917)] ring-1 ring-amber-500/20"
@@ -559,17 +578,17 @@ function ShopItemCard({
                     : item.rarity === "RARE"
                       ? "bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_48%),linear-gradient(135deg,#ecfdf5,#f0fdf4_50%,#ecfdf5)] ring-1 ring-emerald-200"
                       : "bg-[linear-gradient(135deg,#f8fafc,#f1f5f9)] ring-1 ring-slate-200")
-        } ${avatarShowcase ? showcaseClass : "p-3 sm:p-4"}`}
+        } ${avatarShowcase ? showcaseClass : "p-3 sm:p-4 xl:p-3"}`}
       >
         {avatarShowcase ? (
           <CosmeticAvatar
             image={user.image}
             name={user.name}
             cosmetics={previewCosmetics}
-            size={item.type === ShopItemType.AVATAR_WINGS ? "xl" : "lg"}
+            size="lg"
           />
         ) : (
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex h-full items-center gap-3 sm:gap-4 xl:flex-col xl:justify-center xl:gap-2 xl:text-center">
             <CosmeticAvatar
               image={user.image}
               name={user.name}
@@ -578,10 +597,10 @@ function ShopItemCard({
               className="sm:!w-auto sm:!h-auto"
             />
             <div className="min-w-0">
-              <p className={`text-sm font-black leading-tight sm:text-base text-slate-950 ${cosmeticNameplateClass(previewCosmetics)}`}>
+              <p className={`line-clamp-2 text-sm font-black leading-tight text-slate-950 sm:text-base xl:text-xs ${cosmeticNameplateClass(previewCosmetics)}`}>
                 {user.name}
               </p>
-              <p className="mt-0.5 text-[11px] font-semibold text-slate-500 sm:mt-1 sm:text-xs">
+              <p className="mt-0.5 line-clamp-1 text-[11px] font-semibold text-slate-500 sm:mt-1 sm:text-xs xl:text-[10px]">
                 {user.department || "Chưa có đơn vị"}
               </p>
               <div className="mt-1.5 sm:mt-2">
@@ -592,13 +611,13 @@ function ShopItemCard({
         )}
       </div>
 
-      <p className={`mt-3 line-clamp-2 min-h-10 text-sm font-semibold leading-5 ${
+      <p className={`mt-3 line-clamp-2 min-h-10 text-sm font-semibold leading-5 xl:col-start-2 xl:row-start-2 xl:mt-0 xl:min-h-0 ${
         item.rarity === "LEGENDARY" ? "text-amber-900/70" : item.rarity === "MYTHIC" ? "text-rose-900/65" : item.rarity === "EPIC" ? "text-violet-900/60" : "text-slate-600"
       }`}>
         {item.description}
       </p>
 
-      <div className="mt-3 sm:mt-4">
+      <div className="mt-3 sm:mt-4 xl:col-start-2 xl:row-start-3 xl:mt-0">
         {isEquipped ? (
           <div className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-emerald-50 px-3 text-xs font-black text-emerald-800 ring-1 ring-emerald-100 sm:min-h-11 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm">
             <Check size={14} className="sm:h-4 sm:w-4" />
