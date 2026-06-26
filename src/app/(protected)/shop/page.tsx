@@ -530,34 +530,21 @@ function ShopItemCard({
       {item.rarity === "EPIC" && (
         <div className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(139,92,246,0.10), transparent 50%)" }} />
       )}
-      <div className="relative flex items-start justify-between gap-3 lg:col-start-2 lg:row-start-1">
-        <div className="min-w-0">
-          <span className={`inline-flex max-w-full items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ring-1 ${
-            isLegendary
-              ? "shop-card-legendary-badge bg-gradient-to-r from-amber-200 via-yellow-100 to-orange-200 text-amber-950 ring-amber-400"
-              : item.rarity === "MYTHIC"
-                ? "bg-gradient-to-r from-rose-100 to-pink-100 text-rose-900 ring-rose-300"
-                : item.rarity === "EPIC"
-                  ? "bg-gradient-to-r from-violet-100 to-fuchsia-100 text-violet-900 ring-violet-300"
-                  : SHOP_RARITY_TONES[item.rarity]
-          }`}>
-            {isLegendary && <Sparkles size={10} className="hidden sm:inline text-amber-700" />}
-            {item.rarity === "MYTHIC" && <Sparkles size={10} className="hidden sm:inline text-rose-600" />}
-            {item.rarity === "EPIC" && <Sparkles size={10} className="hidden sm:inline text-violet-600" />}
-            {SHOP_RARITY_LABELS[item.rarity]}
-          </span>
-          <h3 className={`mt-2 break-words text-base font-black leading-tight sm:text-lg xl:text-[17px] ${
-            isLegendary
-              ? "shop-card-legendary-title bg-gradient-to-r from-amber-800 via-yellow-600 to-orange-700 bg-clip-text text-transparent"
-              : item.rarity === "MYTHIC"
-                ? "bg-gradient-to-r from-rose-700 via-pink-600 to-rose-700 bg-clip-text text-transparent"
-                : item.rarity === "EPIC"
-                  ? "text-violet-950"
-                  : "text-slate-950"
-          }`}>
-            {item.name}
-          </h3>
-        </div>
+      <div className="relative flex min-w-0 flex-wrap items-start justify-between gap-x-3 gap-y-2 lg:col-start-2 lg:row-start-1">
+        <span className={`inline-flex max-w-full shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ring-1 ${
+          isLegendary
+            ? "shop-card-legendary-badge bg-gradient-to-r from-amber-200 via-yellow-100 to-orange-200 text-amber-950 ring-amber-400"
+            : item.rarity === "MYTHIC"
+              ? "bg-gradient-to-r from-rose-100 to-pink-100 text-rose-900 ring-rose-300"
+              : item.rarity === "EPIC"
+                ? "bg-gradient-to-r from-violet-100 to-fuchsia-100 text-violet-900 ring-violet-300"
+                : SHOP_RARITY_TONES[item.rarity]
+        }`}>
+          {isLegendary && <Sparkles size={10} className="hidden sm:inline text-amber-700" />}
+          {item.rarity === "MYTHIC" && <Sparkles size={10} className="hidden sm:inline text-rose-600" />}
+          {item.rarity === "EPIC" && <Sparkles size={10} className="hidden sm:inline text-violet-600" />}
+          {SHOP_RARITY_LABELS[item.rarity]}
+        </span>
         <span className={`shrink-0 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-black tabular-nums sm:rounded-2xl sm:text-sm ${
           isLegendary
             ? "shop-card-legendary-price bg-gradient-to-r from-amber-700 via-yellow-400 to-orange-600 text-amber-950 shadow-lg shadow-amber-500/30 ring-1 ring-yellow-200/70"
@@ -571,6 +558,17 @@ function ShopItemCard({
         }`}>
           {formatCtom(item.priceCtom)}
         </span>
+        <h3 className={`basis-full break-words text-base font-black leading-tight sm:text-lg xl:text-[17px] ${
+          isLegendary
+            ? "shop-card-legendary-title bg-gradient-to-r from-amber-800 via-yellow-600 to-orange-700 bg-clip-text text-transparent"
+            : item.rarity === "MYTHIC"
+              ? "bg-gradient-to-r from-rose-700 via-pink-600 to-rose-700 bg-clip-text text-transparent"
+              : item.rarity === "EPIC"
+                ? "text-violet-950"
+                : "text-slate-950"
+        }`}>
+          {item.name}
+        </h3>
       </div>
 
       <div
