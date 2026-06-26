@@ -197,7 +197,7 @@ export default async function ShopPage({
 
       <ShopTryOnPanel />
 
-      <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-5">
           <InventoryPanel data={data} />
 
@@ -224,7 +224,7 @@ export default async function ShopPage({
           </div>
         </div>
 
-        <aside className="min-w-0 space-y-5 lg:sticky lg:top-28 lg:self-start">
+        <aside className="min-w-0 space-y-5 2xl:sticky 2xl:top-28 2xl:self-start">
           <RecentTransactions rows={data.recentTransactions} />
         </aside>
       </section>
@@ -409,7 +409,7 @@ function CatalogSection({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {sortedItems.map((item) => (
           <ShopItemCard
             key={item.id}
@@ -447,7 +447,7 @@ const RARITY_CARD_GRADIENT: Record<string, string> = {
   RARE: "from-emerald-500 via-teal-400 to-emerald-500",
   EPIC: "from-violet-500 via-fuchsia-400 to-violet-500",
   MYTHIC: "from-rose-500 via-pink-400 to-rose-500",
-  LEGENDARY: "from-amber-400 via-yellow-300 to-orange-400",
+  LEGENDARY: "from-amber-500 via-yellow-200 to-orange-500",
 };
 
 const RARITY_CARD_RING: Record<string, string> = {
@@ -455,7 +455,7 @@ const RARITY_CARD_RING: Record<string, string> = {
   RARE: "border-emerald-300",
   EPIC: "border-violet-300 shop-card-epic",
   MYTHIC: "border-rose-300 shop-card-mythic",
-  LEGENDARY: "border-amber-300 shop-card-legendary",
+  LEGENDARY: "border-amber-400 shop-card-legendary",
 };
 
 const RARITY_CARD_SHADOW: Record<string, string> = {
@@ -471,7 +471,7 @@ const RARITY_CARD_BG: Record<string, string> = {
   RARE: "bg-gradient-to-br from-white via-white to-emerald-50/50",
   EPIC: "bg-gradient-to-br from-white via-violet-50/30 to-fuchsia-50/40",
   MYTHIC: "bg-gradient-to-br from-white via-rose-50/30 to-pink-50/40",
-  LEGENDARY: "bg-gradient-to-br from-amber-50/40 via-white to-yellow-50/50",
+  LEGENDARY: "bg-[radial-gradient(circle_at_18%_0%,rgba(255,247,237,0.96),transparent_34%),radial-gradient(circle_at_88%_15%,rgba(251,191,36,0.34),transparent_32%),linear-gradient(135deg,#fff7ed,#fffbeb_44%,#fef3c7)]",
 };
 
 function ShopItemCard({
@@ -488,25 +488,41 @@ function ShopItemCard({
   const previewCosmetics: EquippedCosmetics = { [item.type]: item };
   const isEquipped = equipped[item.type]?.id === item.id;
   const tryOnItem = toTryOnItem(item);
+  const isLegendary = item.rarity === "LEGENDARY";
+  const isWings = item.type === ShopItemType.AVATAR_WINGS;
   const avatarShowcase =
     item.type === ShopItemType.AVATAR_FRAME ||
-    item.type === ShopItemType.AVATAR_WINGS ||
+    isWings ||
     item.type === ShopItemType.AVATAR_AURA;
   const showcaseClass =
-    item.type === ShopItemType.AVATAR_WINGS
-      ? "flex min-h-36 items-center justify-center px-3 py-5 sm:min-h-44 sm:px-4 sm:py-6 xl:min-h-0 xl:px-3 xl:py-4"
-      : "flex min-h-32 items-center justify-center px-3 py-4 sm:min-h-36 sm:px-4 sm:py-5 xl:min-h-0 xl:px-3 xl:py-4";
+    isLegendary && isWings
+      ? "shop-wing-stage shop-legendary-wings-showcase flex h-[14.5rem] min-h-[14.5rem] items-center justify-center px-5 py-7 sm:h-[16rem] sm:min-h-[16rem] sm:px-6 sm:py-8 lg:h-full lg:min-h-0 lg:px-5 lg:py-6 xl:px-6"
+      : isLegendary
+        ? "flex h-[12.5rem] min-h-[12.5rem] items-center justify-center px-4 py-6 sm:h-[14rem] sm:min-h-[14rem] sm:px-5 sm:py-7 lg:h-full lg:min-h-0 lg:px-5 lg:py-6"
+        : isWings
+      ? "shop-wing-stage flex h-36 min-h-36 items-center justify-center px-4 py-5 sm:h-44 sm:min-h-44 sm:px-5 sm:py-6 lg:h-full lg:min-h-0 lg:px-4 lg:py-4"
+      : "flex h-32 min-h-32 items-center justify-center px-3 py-4 sm:h-36 sm:min-h-36 sm:px-4 sm:py-5 lg:h-full lg:min-h-0 lg:px-3 lg:py-4";
+  const cardLayoutClass = isLegendary && isWings
+    ? "shop-item-card-legendary shop-item-card-wings lg:grid lg:min-h-[300px] lg:grid-cols-[minmax(260px,360px)_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:gap-x-6 lg:gap-y-4 xl:grid-cols-[minmax(320px,400px)_minmax(0,1fr)] xl:gap-x-7"
+    : isLegendary
+    ? "shop-item-card-legendary lg:grid lg:min-h-[260px] lg:grid-cols-[minmax(220px,280px)_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:gap-x-6 lg:gap-y-4"
+    : isWings
+      ? "shop-item-card-wings lg:grid lg:min-h-[230px] lg:grid-cols-[minmax(176px,210px)_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:gap-x-5 lg:gap-y-3"
+    : "lg:grid lg:min-h-[210px] lg:grid-cols-[132px_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:gap-x-4 lg:gap-y-3";
 
   return (
     <article
       id={`item-${item.slug}`}
-      className={`group relative scroll-mt-28 overflow-hidden rounded-2xl border-2 sm:rounded-3xl ${RARITY_CARD_RING[item.rarity] ?? "border-slate-200"} ${RARITY_CARD_BG[item.rarity] ?? "bg-white"} p-3 shadow-md transition hover:-translate-y-1 hover:shadow-xl sm:p-4 xl:grid xl:min-h-[210px] xl:grid-cols-[132px_minmax(0,1fr)] xl:grid-rows-[auto_minmax(0,1fr)_auto] xl:gap-x-4 xl:gap-y-3 ${RARITY_CARD_SHADOW[item.rarity] ?? ""}`}
+      data-shop-rarity={item.rarity}
+      data-shop-type={item.type}
+      data-visual-key={item.visualKey}
+      className={`group relative scroll-mt-28 overflow-hidden rounded-2xl border-2 sm:rounded-3xl ${RARITY_CARD_RING[item.rarity] ?? "border-slate-200"} ${RARITY_CARD_BG[item.rarity] ?? "bg-white"} p-3 shadow-md transition hover:-translate-y-1 hover:shadow-xl sm:p-4 ${cardLayoutClass} ${RARITY_CARD_SHADOW[item.rarity] ?? ""} ${isLegendary ? "shop-card-legendary-premium lg:col-span-2" : ""}`}
     >
       <div className={`pointer-events-none absolute inset-x-0 top-0 ${
         item.rarity === "LEGENDARY" || item.rarity === "MYTHIC" ? "h-1.5" : item.rarity === "EPIC" ? "h-1.5" : "h-1"
       } bg-gradient-to-r ${RARITY_CARD_GRADIENT[item.rarity] ?? "from-slate-400 to-slate-300"}`} />
-      {item.rarity === "LEGENDARY" && (
-        <div className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(251,191,36,0.12), transparent 50%)" }} />
+      {isLegendary && (
+        <div className="pointer-events-none absolute inset-0 rounded-3xl opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(251,191,36,0.18), transparent 48%)" }} />
       )}
       {item.rarity === "MYTHIC" && (
         <div className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(244,63,94,0.10), transparent 50%)" }} />
@@ -514,25 +530,25 @@ function ShopItemCard({
       {item.rarity === "EPIC" && (
         <div className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(139,92,246,0.10), transparent 50%)" }} />
       )}
-      <div className="relative flex items-start justify-between gap-3 xl:col-start-2 xl:row-start-1">
+      <div className="relative flex items-start justify-between gap-3 lg:col-start-2 lg:row-start-1">
         <div className="min-w-0">
           <span className={`inline-flex max-w-full items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ring-1 ${
-            item.rarity === "LEGENDARY"
-              ? "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-900 ring-amber-300"
+            isLegendary
+              ? "shop-card-legendary-badge bg-gradient-to-r from-amber-200 via-yellow-100 to-orange-200 text-amber-950 ring-amber-400"
               : item.rarity === "MYTHIC"
                 ? "bg-gradient-to-r from-rose-100 to-pink-100 text-rose-900 ring-rose-300"
                 : item.rarity === "EPIC"
                   ? "bg-gradient-to-r from-violet-100 to-fuchsia-100 text-violet-900 ring-violet-300"
                   : SHOP_RARITY_TONES[item.rarity]
           }`}>
-            {item.rarity === "LEGENDARY" && <Sparkles size={10} className="hidden sm:inline text-amber-600" />}
+            {isLegendary && <Sparkles size={10} className="hidden sm:inline text-amber-700" />}
             {item.rarity === "MYTHIC" && <Sparkles size={10} className="hidden sm:inline text-rose-600" />}
             {item.rarity === "EPIC" && <Sparkles size={10} className="hidden sm:inline text-violet-600" />}
             {SHOP_RARITY_LABELS[item.rarity]}
           </span>
-          <h3 className={`mt-2 line-clamp-2 text-base font-black leading-tight sm:text-lg xl:text-[17px] ${
-            item.rarity === "LEGENDARY"
-              ? "bg-gradient-to-r from-amber-700 via-yellow-600 to-amber-700 bg-clip-text text-transparent"
+          <h3 className={`mt-2 break-words text-base font-black leading-tight sm:text-lg xl:text-[17px] ${
+            isLegendary
+              ? "shop-card-legendary-title bg-gradient-to-r from-amber-800 via-yellow-600 to-orange-700 bg-clip-text text-transparent"
               : item.rarity === "MYTHIC"
                 ? "bg-gradient-to-r from-rose-700 via-pink-600 to-rose-700 bg-clip-text text-transparent"
                 : item.rarity === "EPIC"
@@ -543,8 +559,8 @@ function ShopItemCard({
           </h3>
         </div>
         <span className={`shrink-0 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-black tabular-nums sm:rounded-2xl sm:text-sm ${
-          item.rarity === "LEGENDARY"
-            ? "bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-amber-950 shadow-lg shadow-amber-500/25 ring-1 ring-amber-400/40"
+          isLegendary
+            ? "shop-card-legendary-price bg-gradient-to-r from-amber-700 via-yellow-400 to-orange-600 text-amber-950 shadow-lg shadow-amber-500/30 ring-1 ring-yellow-200/70"
             : item.rarity === "MYTHIC"
               ? "bg-gradient-to-r from-rose-700 via-pink-600 to-rose-700 text-white shadow-lg shadow-rose-500/20 ring-1 ring-rose-400/30"
               : item.rarity === "EPIC"
@@ -558,9 +574,9 @@ function ShopItemCard({
       </div>
 
       <div
-        className={`relative mt-3 overflow-hidden rounded-xl sm:mt-4 sm:rounded-2xl xl:col-start-1 xl:row-span-3 xl:row-start-1 xl:mt-0 xl:h-full ${
+        className={`relative mt-3 overflow-hidden rounded-xl sm:mt-4 sm:rounded-2xl lg:col-start-1 lg:row-span-3 lg:row-start-1 lg:mt-0 lg:h-full lg:min-h-0 ${
           avatarShowcase
-            ? (item.rarity === "LEGENDARY"
+            ? (isLegendary
                 ? "bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.22),transparent_48%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.12),transparent_40%),linear-gradient(135deg,#1c1917,#292524_30%,#1c1917)] ring-1 ring-amber-500/20"
                 : item.rarity === "MYTHIC"
                   ? "bg-[radial-gradient(circle_at_top,rgba(244,63,94,0.20),transparent_48%),radial-gradient(circle_at_bottom_left,rgba(236,72,153,0.10),transparent_40%),linear-gradient(135deg,#1c1017,#2a1520_30%,#1c1017)] ring-1 ring-rose-500/20"
@@ -569,7 +585,7 @@ function ShopItemCard({
                     : item.rarity === "RARE"
                       ? "bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.18),transparent_48%),linear-gradient(135deg,#ecfdf5,#f0fdf4_50%,#ecfdf5)] ring-1 ring-emerald-200"
                       : "bg-[linear-gradient(135deg,#f8fafc,#f1f5f9)] ring-1 ring-slate-200")
-            : (item.rarity === "LEGENDARY"
+            : (isLegendary
                 ? "bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.14),transparent_50%),linear-gradient(135deg,#fffbeb,#fef3c7_50%,#fffbeb)] ring-1 ring-amber-200"
                 : item.rarity === "MYTHIC"
                   ? "bg-[radial-gradient(circle_at_top_left,rgba(244,63,94,0.10),transparent_50%),linear-gradient(135deg,#fff1f2,#ffe4e6_50%,#fff1f2)] ring-1 ring-rose-200"
@@ -578,23 +594,39 @@ function ShopItemCard({
                     : item.rarity === "RARE"
                       ? "bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_48%),linear-gradient(135deg,#ecfdf5,#f0fdf4_50%,#ecfdf5)] ring-1 ring-emerald-200"
                       : "bg-[linear-gradient(135deg,#f8fafc,#f1f5f9)] ring-1 ring-slate-200")
-        } ${avatarShowcase ? showcaseClass : "p-3 sm:p-4 xl:p-3"}`}
+        } ${avatarShowcase ? showcaseClass : "p-3 sm:p-4 lg:p-3"} ${isLegendary ? "shop-card-legendary-stage" : ""}`}
       >
+        {isLegendary && (
+          <>
+            <span className="shop-legendary-stage-aura" aria-hidden="true" />
+            <span className="shop-legendary-stage-beam" aria-hidden="true" />
+            <span className="shop-legendary-stage-sparks" aria-hidden="true" />
+          </>
+        )}
+        {isWings && (
+          <>
+            <span className="shop-wing-depth" aria-hidden="true" />
+            <span className="shop-wing-trail" aria-hidden="true" />
+            <span className="shop-wing-particles" aria-hidden="true" />
+            <span className="shop-wing-flash" aria-hidden="true" />
+          </>
+        )}
         {avatarShowcase ? (
           <CosmeticAvatar
             image={user.image}
             name={user.name}
             cosmetics={previewCosmetics}
-            size="lg"
+            size={isLegendary ? "xl" : "lg"}
+            className={`${isWings ? "shop-wing-avatar" : ""} ${isLegendary ? "shop-legendary-avatar" : ""}`}
           />
         ) : (
-          <div className="flex h-full items-center gap-3 sm:gap-4 xl:flex-col xl:justify-center xl:gap-2 xl:text-center">
+          <div className={`relative z-10 flex h-full items-center gap-3 sm:gap-4 xl:flex-col xl:justify-center xl:gap-2 xl:text-center ${isLegendary ? "shop-legendary-profile-preview" : ""}`}>
             <CosmeticAvatar
               image={user.image}
               name={user.name}
               cosmetics={previewCosmetics}
-              size="md"
-              className="sm:!w-auto sm:!h-auto"
+              size={isLegendary ? "lg" : "md"}
+              className={`${isLegendary ? "shop-legendary-avatar" : ""} sm:!h-auto sm:!w-auto`}
             />
             <div className="min-w-0">
               <p className={`line-clamp-2 text-sm font-black leading-tight text-slate-950 sm:text-base xl:text-xs ${cosmeticNameplateClass(previewCosmetics)}`}>
@@ -611,13 +643,13 @@ function ShopItemCard({
         )}
       </div>
 
-      <p className={`mt-3 line-clamp-2 min-h-10 text-sm font-semibold leading-5 xl:col-start-2 xl:row-start-2 xl:mt-0 xl:min-h-0 ${
-        item.rarity === "LEGENDARY" ? "text-amber-900/70" : item.rarity === "MYTHIC" ? "text-rose-900/65" : item.rarity === "EPIC" ? "text-violet-900/60" : "text-slate-600"
+      <p className={`mt-3 break-words px-14 text-sm font-semibold leading-5 sm:px-0 lg:col-start-2 lg:row-start-2 lg:mt-0 ${
+        isLegendary ? "text-amber-950/80" : item.rarity === "MYTHIC" ? "text-rose-900/65" : item.rarity === "EPIC" ? "text-violet-900/60" : "text-slate-600"
       }`}>
         {item.description}
       </p>
 
-      <div className="mt-3 sm:mt-4 xl:col-start-2 xl:row-start-3 xl:mt-0">
+      <div className="mt-3 sm:mt-4 lg:col-start-2 lg:row-start-3 lg:mt-0">
         {isEquipped ? (
           <div className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-emerald-50 px-3 text-xs font-black text-emerald-800 ring-1 ring-emerald-100 sm:min-h-11 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm">
             <Check size={14} className="sm:h-4 sm:w-4" />
