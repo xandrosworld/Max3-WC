@@ -41,6 +41,7 @@ type GuideStep = {
   tone: string;
   durationMs: number;
   selectors: (slug: string) => string[];
+  mobilePlacement?: "top" | "bottom";
   action?: "try" | "receipt" | "done";
 };
 
@@ -61,7 +62,10 @@ const GUIDE_STEPS: GuideStep[] = [
     Icon: Sparkles,
     tone: "from-sky-500 to-cyan-400",
     durationMs: 3200,
-    selectors: () => ['[data-guide-target="shop-tabs"]'],
+    selectors: () => [
+      '[data-guide-target="shop-tabs-nav"]',
+      '[data-guide-target="shop-tabs"]',
+    ],
   },
   {
     eyebrow: "Bước 3",
@@ -71,6 +75,7 @@ const GUIDE_STEPS: GuideStep[] = [
     tone: "from-violet-500 to-fuchsia-400",
     durationMs: 3300,
     selectors: (slug) => [`#item-${slug}`],
+    mobilePlacement: "top",
   },
   {
     eyebrow: "Bước 4",
@@ -80,6 +85,7 @@ const GUIDE_STEPS: GuideStep[] = [
     tone: "from-amber-500 to-orange-400",
     durationMs: 2600,
     selectors: (slug) => [`[data-testid="try-on-${slug}"]`, `#item-${slug}`],
+    mobilePlacement: "top",
     action: "try",
   },
   {
@@ -89,7 +95,12 @@ const GUIDE_STEPS: GuideStep[] = [
     Icon: Sparkles,
     tone: "from-emerald-500 to-lime-400",
     durationMs: 3400,
-    selectors: () => ['#shop-try-on-panel'],
+    selectors: () => [
+      '[data-guide-target="shop-try-on-avatar"]',
+      '[data-guide-target="shop-try-on-preview"]',
+      '#shop-try-on-panel',
+    ],
+    mobilePlacement: "top",
   },
   {
     eyebrow: "Bước 6",
@@ -278,7 +289,8 @@ export function ShopGuideTour({
   }, [demoItem, open, step.action, stepIndex]);
 
   const spotlightStyle = getSpotlightStyle(targetRect);
-  const calloutStyle = getCalloutStyle(targetRect);
+  const calloutStyle = getCalloutStyle(targetRect, step.mobilePlacement);
+  const receiptStyle = getReceiptStyle(calloutStyle);
   const cursorStyle = getCursorStyle(targetRect);
   const showReceipt = step.action === "receipt" || step.action === "done";
 
@@ -367,12 +379,14 @@ export function ShopGuideTour({
               contributionBefore={money.format(contributionBefore)}
               contributionAfter={money.format(contributionAfter)}
               settled={step.action === "done"}
+              style={receiptStyle}
             />
           )}
 
           <div
             className="pointer-events-auto absolute z-[93] w-[min(420px,calc(100vw-24px))] overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-950/30 transition-all duration-500"
             style={calloutStyle}
+            data-testid="shop-guide-callout"
           >
             <div className={`h-1.5 bg-gradient-to-r ${step.tone}`} />
             <div className="p-4 sm:p-5">
@@ -481,32 +495,38 @@ function DemoReceipt({
   contributionBefore,
   contributionAfter,
   settled,
+  style,
 }: {
   itemName: string;
   priceLabel: string;
   contributionBefore: string;
   contributionAfter: string;
   settled: boolean;
+  style: CSSProperties;
 }) {
   return (
-    <div className="pointer-events-none fixed left-1/2 top-1/2 z-[91] w-[min(360px,calc(100vw-28px))] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-2xl shadow-slate-950/35">
-      <div className="bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_45%),linear-gradient(135deg,#f8fafc,#fff7ed)] p-5">
+    <div
+      className="pointer-events-none fixed z-[91] w-[min(360px,calc(100vw-28px))] overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-2xl shadow-slate-950/35 transition-all duration-500"
+      style={style}
+      data-testid="shop-guide-receipt"
+    >
+      <div className="bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_45%),linear-gradient(135deg,#f8fafc,#fff7ed)] p-4 sm:p-5">
         <p className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-emerald-800 ring-1 ring-emerald-100">
           <Gem size={13} />
           Cảnh hướng dẫn
         </p>
-        <h3 className="mt-3 text-2xl font-black leading-tight text-slate-950">
+        <h3 className="mt-2 text-xl font-black leading-tight text-slate-950 sm:mt-3 sm:text-2xl">
           {settled ? "Đã trang bị xong" : "Mua & trang bị"}
         </h3>
         <p className="mt-1 text-sm font-bold text-slate-600">{itemName}</p>
       </div>
-      <div className="space-y-3 p-5">
+      <div className="space-y-2.5 p-4 sm:space-y-3 sm:p-5">
         <ReceiptRow label="Đã góp" value={`${contributionBefore} CTOM`} />
         <ReceiptRow label="Món này ghi nhận" value={`+${priceLabel}`} strong />
         <ReceiptRow label="Sau khi mua" value={`${contributionAfter} CTOM`} strong />
-        <div className="relative mt-4 overflow-hidden rounded-2xl bg-emerald-800 px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-emerald-900/15">
+        <div className="mt-3 flex items-center justify-between gap-2 overflow-hidden rounded-2xl bg-emerald-800 px-3 py-2.5 text-sm font-black text-white shadow-lg shadow-emerald-900/15 sm:mt-4 sm:px-4 sm:py-3">
           {settled ? "Đồ đã lên avatar" : "Xác nhận mua"}
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/15 px-2 py-1 text-[11px] text-emerald-50">
+          <span className="shrink-0 rounded-full bg-white/15 px-2 py-1 text-[11px] text-emerald-50">
             +{priceLabel}
           </span>
         </div>
@@ -561,7 +581,62 @@ function getCursorStyle(rect: GuideRect | null): CSSProperties | undefined {
   };
 }
 
-function getCalloutStyle(rect: GuideRect | null): CSSProperties {
+function getReceiptStyle(calloutStyle: CSSProperties): CSSProperties {
+  if (typeof window === "undefined") {
+    return {
+      left: "50%",
+      top: "50%",
+      transform: "translate(-50%, -50%)",
+    };
+  }
+
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const isMobile = viewportWidth < 760;
+  const width = Math.min(360, viewportWidth - 28);
+
+  if (isMobile) {
+    return {
+      left: "50%",
+      top: Math.max(12, Math.min(28, viewportHeight * 0.04)),
+      width,
+      transform: "translateX(-50%)",
+    };
+  }
+
+  const calloutWidth =
+    typeof calloutStyle.width === "number"
+      ? calloutStyle.width
+      : Math.min(420, viewportWidth - 32);
+  const calloutLeft =
+    typeof calloutStyle.left === "number"
+      ? calloutStyle.left
+      : typeof calloutStyle.right === "number"
+        ? viewportWidth - calloutStyle.right - calloutWidth
+        : 16;
+  const calloutRight = calloutLeft + calloutWidth;
+  const gap = 24;
+  const canFitRight = viewportWidth - calloutRight - gap >= width + 16;
+  const canFitLeft = calloutLeft - gap >= width + 16;
+  const left = canFitRight
+    ? calloutRight + gap
+    : canFitLeft
+      ? calloutLeft - gap - width
+      : calloutLeft < viewportWidth / 2
+        ? viewportWidth - width - 16
+        : 16;
+
+  return {
+    left,
+    top: Math.max(72, Math.min((viewportHeight - 340) / 2, viewportHeight - 360)),
+    width,
+  };
+}
+
+function getCalloutStyle(
+  rect: GuideRect | null,
+  mobilePlacement: "top" | "bottom" = "bottom",
+): CSSProperties {
   if (typeof window === "undefined" || !rect) {
     return { left: 12, bottom: 16 };
   }
@@ -569,7 +644,13 @@ function getCalloutStyle(rect: GuideRect | null): CSSProperties {
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
   const isMobile = viewportWidth < 760;
-  if (isMobile) return { left: 12, right: 12, bottom: 14 };
+  if (isMobile) {
+    if (mobilePlacement === "top") {
+      return { left: 12, right: 12, top: 14 };
+    }
+
+    return { left: 12, right: 12, bottom: 14 };
+  }
 
   const width = Math.min(420, viewportWidth - 32);
   const placeRight = rect.left + rect.width / 2 < viewportWidth / 2;

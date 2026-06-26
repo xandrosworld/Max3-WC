@@ -17,6 +17,7 @@ export function ShopCatalogTabs({
     <div>
       <nav
         className="flex max-w-full gap-1.5 overflow-x-auto pb-1 sm:gap-2 sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:p-2 sm:shadow-sm sm:shadow-slate-950/5"
+        data-guide-target="shop-tabs-nav"
         aria-label="Danh mục shop"
       >
         {tabs.map((tab) => (

@@ -310,6 +310,7 @@ export function ShopTryOnPanel() {
         <div
           id="shop-try-on-preview"
           className="relative scroll-mt-24 overflow-hidden rounded-3xl bg-slate-950 p-4 text-white shadow-xl shadow-slate-950/15 sm:p-5"
+          data-guide-target="shop-try-on-preview"
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(16,185,129,0.34),transparent_38%),radial-gradient(circle_at_92%_18%,rgba(251,191,36,0.22),transparent_32%)]" />
           <div className="relative flex flex-col items-center text-center">
@@ -359,6 +360,7 @@ function CosmeticPreviewAvatar({
       data-wings={wings}
       data-aura={aura}
       data-effect-intensity="full"
+      data-guide-target="shop-try-on-avatar"
     >
       <span className="cosmetic-avatar-aura" aria-hidden="true" />
       <span className="cosmetic-avatar-wings" aria-hidden="true">
