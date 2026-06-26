@@ -58,7 +58,11 @@ export async function getLeaderboard() {
         status: "SETTLED",
         result: { isNot: null },
       },
-      orderBy: [{ kickoffAt: "desc" }, { id: "desc" }],
+      orderBy: [
+        { result: { settledAt: "desc" } },
+        { kickoffAt: "desc" },
+        { id: "desc" },
+      ],
       select: {
         id: true,
         result: { select: { winningChoice: true } },

@@ -32,6 +32,23 @@ describe("getLeaderboard", () => {
     expect(prismaMock.match.findMany).toHaveBeenCalled();
   });
 
+  it("orders settled matches by settlement time for current streaks", async () => {
+    prismaMock.user.findMany.mockResolvedValue([]);
+    prismaMock.match.findMany.mockResolvedValue([]);
+
+    await getLeaderboard();
+
+    expect(prismaMock.match.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [
+          { result: { settledAt: "desc" } },
+          { kickoffAt: "desc" },
+          { id: "desc" },
+        ],
+      }),
+    );
+  });
+
   it("counts settled matches without a user vote as missed", async () => {
     prismaMock.user.findMany.mockResolvedValue([
       {
