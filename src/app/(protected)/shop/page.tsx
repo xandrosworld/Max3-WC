@@ -657,9 +657,12 @@ function ShopItemCard({
 
 function CtomLeaderboard({ rows }: { rows: ShopPageData["leaderboard"] }) {
   const leaderRows = rows.map((row) => (
-    <div key={row.id} className="flex items-center gap-2.5 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
+    <div
+      key={row.id}
+      className="grid min-h-[4.5rem] grid-cols-[2rem_5.75rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1 px-3 py-2.5 sm:grid-cols-[2.25rem_6.75rem_minmax(0,1fr)_auto] sm:gap-x-3 sm:px-4 sm:py-3"
+    >
       <div
-        className={`flex h-8 min-w-8 items-center justify-center rounded-xl text-xs font-black sm:h-9 sm:min-w-9 sm:rounded-2xl sm:text-sm ${
+        className={`flex h-8 w-8 items-center justify-center rounded-xl text-xs font-black sm:h-9 sm:w-9 sm:rounded-2xl sm:text-sm ${
           row.rank === 1
             ? "bg-amber-300 text-amber-950"
             : row.rank === 2
@@ -671,13 +674,16 @@ function CtomLeaderboard({ rows }: { rows: ShopPageData["leaderboard"] }) {
       >
         #{row.rank}
       </div>
-      <CosmeticAvatar
-        image={row.image}
-        name={row.name}
-        cosmetics={row.cosmetics}
-        size="sm"
-      />
-      <div className="min-w-0 flex-1">
+      <div className="relative flex h-14 min-w-0 items-center justify-center overflow-visible sm:h-16">
+        <CosmeticAvatar
+          image={row.image}
+          name={row.name}
+          cosmetics={row.cosmetics}
+          size="sm"
+          effectIntensity="compact"
+        />
+      </div>
+      <div className="relative z-10 min-w-0">
         <p className={`truncate text-sm font-black text-slate-950 ${cosmeticNameplateClass(row.cosmetics)}`}>
           {row.name}
         </p>
@@ -685,7 +691,7 @@ function CtomLeaderboard({ rows }: { rows: ShopPageData["leaderboard"] }) {
           {row.itemCount} món
         </p>
       </div>
-      <p className="text-xs font-black tabular-nums text-emerald-800 sm:text-sm">
+      <p className="relative z-10 col-span-2 col-start-2 text-xs font-black tabular-nums text-emerald-800 sm:col-auto sm:text-sm">
         {formatCtom(row.totalCtom)}
       </p>
     </div>
