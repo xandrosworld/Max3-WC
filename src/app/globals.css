@@ -1633,6 +1633,10 @@ textarea {
   overflow: hidden;
 }
 
+.shop-card-legendary-premium[data-visual-key="phoenix-flame"] .shop-phoenix-wing-showcase {
+  overflow: visible;
+}
+
 .shop-card-legendary-badge {
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.5),
@@ -2295,8 +2299,8 @@ textarea {
   inset: auto;
   left: 50%;
   top: 50%;
-  width: calc(var(--avatar-size) * 5.35);
-  height: calc(var(--avatar-size) * 5.35);
+  width: calc(var(--avatar-size) * 4.75);
+  height: calc(var(--avatar-size) * 4.75);
   filter:
     drop-shadow(0 16px 22px rgba(127, 29, 29, 0.34))
     drop-shadow(0 0 22px rgba(251, 191, 36, 0.42));
@@ -2320,12 +2324,12 @@ textarea {
 @media (max-width: 767px) {
   .shop-card-legendary-stage .cosmetic-avatar[data-wings="phoenix-flame"] .cosmetic-avatar-wings,
   .shop-card-legendary-premium[data-visual-key="phoenix-flame"] .cosmetic-avatar[data-wings="phoenix-flame"] .cosmetic-avatar-wings {
-    width: calc(var(--avatar-size) * 5);
-    height: calc(var(--avatar-size) * 5);
+    width: calc(var(--avatar-size) * 4.45);
+    height: calc(var(--avatar-size) * 4.45);
   }
 
   .shop-card-legendary-premium[data-visual-key="phoenix-flame"] .shop-legendary-avatar {
-    --avatar-size: 5.15rem;
+    --avatar-size: 5rem;
   }
 }
 

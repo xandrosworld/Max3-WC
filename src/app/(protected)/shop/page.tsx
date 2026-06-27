@@ -167,7 +167,7 @@ export default async function ShopPage({
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/12 bg-white/10 p-4 shadow-2xl shadow-black/20 backdrop-blur">
+          <div className="hidden rounded-3xl border border-white/12 bg-white/10 p-4 shadow-2xl shadow-black/20 backdrop-blur lg:block">
             <div className="flex items-center gap-4">
               <CosmeticAvatar
                 image={user.image}
@@ -490,12 +490,15 @@ function ShopItemCard({
   const tryOnItem = toTryOnItem(item);
   const isLegendary = item.rarity === "LEGENDARY";
   const isWings = item.type === ShopItemType.AVATAR_WINGS;
+  const isPhoenixLegendaryWing = isLegendary && isWings && item.visualKey === "phoenix-flame";
   const avatarShowcase =
     item.type === ShopItemType.AVATAR_FRAME ||
     isWings ||
     item.type === ShopItemType.AVATAR_AURA;
   const showcaseClass =
-    isLegendary && isWings
+    isPhoenixLegendaryWing
+      ? "shop-wing-stage shop-legendary-wings-showcase shop-phoenix-wing-showcase flex h-[18rem] min-h-[18rem] items-center justify-center px-4 py-8 sm:h-[18.5rem] sm:min-h-[18.5rem] sm:px-6 sm:py-9 lg:h-full lg:min-h-[21rem] lg:px-6 lg:py-8 xl:px-7"
+      : isLegendary && isWings
       ? "shop-wing-stage shop-legendary-wings-showcase flex h-[14.5rem] min-h-[14.5rem] items-center justify-center px-5 py-7 sm:h-[16rem] sm:min-h-[16rem] sm:px-6 sm:py-8 lg:h-full lg:min-h-0 lg:px-5 lg:py-6 xl:px-6"
       : isLegendary
         ? "flex h-[12.5rem] min-h-[12.5rem] items-center justify-center px-4 py-6 sm:h-[14rem] sm:min-h-[14rem] sm:px-5 sm:py-7 lg:h-full lg:min-h-0 lg:px-5 lg:py-6"
@@ -572,7 +575,7 @@ function ShopItemCard({
       </div>
 
       <div
-        className={`relative mt-3 overflow-hidden rounded-xl sm:mt-4 sm:rounded-2xl lg:col-start-1 lg:row-span-3 lg:row-start-1 lg:mt-0 lg:h-full lg:min-h-0 ${
+        className={`relative mt-3 ${isPhoenixLegendaryWing ? "overflow-visible" : "overflow-hidden"} rounded-xl sm:mt-4 sm:rounded-2xl lg:col-start-1 lg:row-span-3 lg:row-start-1 lg:mt-0 lg:h-full lg:min-h-0 ${
           avatarShowcase
             ? (isLegendary
                 ? "bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.22),transparent_48%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.12),transparent_40%),linear-gradient(135deg,#1c1917,#292524_30%,#1c1917)] ring-1 ring-amber-500/20"
