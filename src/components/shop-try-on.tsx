@@ -232,6 +232,7 @@ export function ShopTryOnPanel() {
   } = useShopTryOn();
   const tryOnCount = Object.keys(tryOnCosmetics).length;
   const hasTryOn = tryOnCount > 0;
+  const hasPhoenixWings = previewCosmetics.AVATAR_WINGS?.visualKey === "phoenix-flame";
 
   return (
     <section
@@ -310,16 +311,19 @@ export function ShopTryOnPanel() {
 
         <div
           id="shop-try-on-preview"
-          className="relative scroll-mt-24 overflow-hidden rounded-3xl bg-slate-950 p-4 text-white shadow-xl shadow-slate-950/15 sm:p-5"
+          className={`relative scroll-mt-24 overflow-hidden rounded-3xl bg-slate-950 p-4 text-white shadow-xl shadow-slate-950/15 sm:p-5 ${hasPhoenixWings ? "shop-try-on-preview-phoenix" : ""}`}
           data-guide-target="shop-try-on-preview"
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(16,185,129,0.34),transparent_38%),radial-gradient(circle_at_92%_18%,rgba(251,191,36,0.22),transparent_32%)]" />
           <div className="relative flex flex-col items-center text-center">
-            <CosmeticPreviewAvatar
-              image={user.image}
-              name={user.name}
-              cosmetics={previewCosmetics}
-            />
+            <div className={hasPhoenixWings ? "shop-try-on-avatar-stage" : ""}>
+              <CosmeticPreviewAvatar
+                image={user.image}
+                name={user.name}
+                cosmetics={previewCosmetics}
+              />
+            </div>
+            <div className={hasPhoenixWings ? "shop-try-on-preview-caption" : ""}>
             <p
               className={`mt-4 max-w-full text-2xl font-black leading-tight ${cosmeticNameplateClass(previewCosmetics)}`}
             >
@@ -332,6 +336,7 @@ export function ShopTryOnPanel() {
             <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-emerald-100 ring-1 ring-white/15">
               <Sparkles size={13} />
               {hasTryOn ? `${tryOnCount} món đang thử` : "Diện mạo hiện tại"}
+            </div>
             </div>
           </div>
         </div>
