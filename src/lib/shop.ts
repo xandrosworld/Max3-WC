@@ -7,7 +7,7 @@ import {
 import { prisma } from "./prisma";
 
 export const SHOP_TYPE_LABELS: Record<ShopItemType, string> = {
-  AVATAR_FRAME: "Khung avatar",
+  AVATAR_FRAME: "Viền BXH",
   AVATAR_WINGS: "Cánh avatar",
   AVATAR_AURA: "Hào quang",
   TITLE: "Danh hiệu",
@@ -15,7 +15,7 @@ export const SHOP_TYPE_LABELS: Record<ShopItemType, string> = {
 };
 
 export const SHOP_TYPE_SHORT_LABELS: Record<ShopItemType, string> = {
-  AVATAR_FRAME: "Khung",
+  AVATAR_FRAME: "Viền",
   AVATAR_WINGS: "Cánh",
   AVATAR_AURA: "Aura",
   TITLE: "Danh hiệu",
@@ -65,14 +65,14 @@ type CatalogItem = {
 };
 
 export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
-  /* ── Avatar Frames ─────────────────────────────────────── */
+  /* ── Ranking Row Frames ────────────────────────────────── */
   {
     slug: "frame-silver-jade",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.COMMON,
-    name: "Khung Bạch Ngọc",
-    description: "Viền bạc nhẹ phối ngọc xanh, sang trọng mà kiềm chế.",
-    priceCtom: 15_555,
+    name: "Viền Bạch Ngọc",
+    description: "Bạc ngọc mỏng, sạch mắt, chạy nhẹ quanh hàng.",
+    priceCtom: 11_111,
     visualKey: "silver-jade",
     sortOrder: 5,
   },
@@ -80,9 +80,9 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     slug: "frame-emerald-glory",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.RARE,
-    name: "Khung Lục Bảo",
-    description: "Viền xanh sạch, sáng rõ trên mọi bảng xếp hạng.",
-    priceCtom: 32_000,
+    name: "Viền Lục Bảo",
+    description: "Xanh ngọc sáng, nổi bật mà vẫn gọn.",
+    priceCtom: 22_222,
     visualKey: "emerald-glory",
     sortOrder: 10,
   },
@@ -90,9 +90,9 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     slug: "frame-celestial-halo",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.RARE,
-    name: "Khung Thiên Giới",
-    description: "Vòng hào quang trắng xanh bao quanh, nhẹ nhàng mà linh thiêng.",
-    priceCtom: 38_000,
+    name: "Viền Thiên Giới",
+    description: "Sao xanh trắng nhấp nháy quanh dòng xếp hạng.",
+    priceCtom: 28_888,
     visualKey: "celestial-halo",
     sortOrder: 15,
   },
@@ -100,9 +100,9 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     slug: "frame-neon-storm",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.EPIC,
-    name: "Khung Sấm Neon",
-    description: "Viền điện xanh tím, hợp người thích nổi bật vừa đủ.",
-    priceCtom: 48_000,
+    name: "Viền Sấm Neon",
+    description: "Điện tím xanh quét quanh viền, nhìn phát biết sử thi.",
+    priceCtom: 39_999,
     visualKey: "neon-storm",
     sortOrder: 20,
   },
@@ -110,9 +110,9 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     slug: "frame-royal-violet",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.EPIC,
-    name: "Khung Hoàng Gia",
-    description: "Tông tím vàng, nhìn có khí chất chủ tịch.",
-    priceCtom: 52_000,
+    name: "Viền Hoàng Gia",
+    description: "Tím vàng sang, có ánh kim chạy quanh khung.",
+    priceCtom: 49_999,
     visualKey: "royal-violet",
     sortOrder: 30,
   },
@@ -120,9 +120,9 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     slug: "frame-dragon-crest",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.EPIC,
-    name: "Khung Rồng Vương",
-    description: "Viền đỏ vàng uy nghi, hoa văn rồng cuộn quanh khung.",
-    priceCtom: 58_000,
+    name: "Viền Rồng Vương",
+    description: "Vảy đỏ vàng chạy quanh hàng, khí chất rồng vương.",
+    priceCtom: 55_555,
     visualKey: "dragon-crest",
     sortOrder: 35,
   },
@@ -130,9 +130,9 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     slug: "frame-ancient-divine",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.MYTHIC,
-    name: "Khung Cổ Thần",
-    description: "Viền cổ xưa phát sáng đỏ hồng, hoa văn thượng cổ bao quanh.",
-    priceCtom: 82_000,
+    name: "Viền Cổ Thần",
+    description: "Rune đỏ hồng thức tỉnh quanh viền, chất cổ thần rõ rệt.",
+    priceCtom: 55_555,
     visualKey: "ancient-divine",
     sortOrder: 37,
   },
@@ -140,9 +140,9 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     slug: "frame-sunfire-legend",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.LEGENDARY,
-    name: "Khung Thái Dương",
-    description: "Ánh vàng cam mạnh, dành cho người muốn đứng giữa sân khấu.",
-    priceCtom: 168_888,
+    name: "Viền Thái Dương",
+    description: "Lửa mặt trời chạy bốn cạnh, sáng nhất bảng.",
+    priceCtom: 99_999,
     visualKey: "sunfire-legend",
     sortOrder: 40,
   },
@@ -152,8 +152,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.AVATAR_WINGS,
     rarity: ShopItemRarity.RARE,
     name: "Cánh Băng Giá",
-    description: "Mảnh pha lê xanh nhạt, shimmer lạnh như gió đông.",
-    priceCtom: 25_000,
+    description: "Pha lê lạnh, sáng trong và sắc cạnh.",
+    priceCtom: 22_222,
     visualKey: "frost-crystal",
     sortOrder: 105,
   },
@@ -162,8 +162,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.AVATAR_WINGS,
     rarity: ShopItemRarity.RARE,
     name: "Cánh Thiên Thần",
-    description: "Lông trắng xanh vỗ mềm, sáng mà không che mặt.",
-    priceCtom: 20_000,
+    description: "Cánh trắng xanh mềm, nhẹ mà nổi.",
+    priceCtom: 18_888,
     visualKey: "angel-soft",
     sortOrder: 102,
   },
@@ -172,8 +172,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.AVATAR_WINGS,
     rarity: ShopItemRarity.EPIC,
     name: "Cánh Lôi Điện",
-    description: "Tia sét giật từng nhịp, cạnh sắc và mạnh mẽ.",
-    priceCtom: 45_000,
+    description: "Sét vàng giật nhịp, sắc và mạnh.",
+    priceCtom: 39_999,
     visualKey: "thunder-bolt",
     sortOrder: 115,
   },
@@ -182,8 +182,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.AVATAR_WINGS,
     rarity: ShopItemRarity.EPIC,
     name: "Cánh Ác Quỷ",
-    description: "Màng tím đỏ, nhịp vỗ gắt và có gai nhọn.",
-    priceCtom: 48_000,
+    description: "Màng tím đỏ, vỗ gắt và gai góc.",
+    priceCtom: 42_222,
     visualKey: "demon-night",
     sortOrder: 120,
   },
@@ -192,8 +192,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.AVATAR_WINGS,
     rarity: ShopItemRarity.EPIC,
     name: "Cánh Rồng",
-    description: "Màng cánh lớn đỏ đen, vỗ chậm đầy uy lực.",
-    priceCtom: 55_000,
+    description: "Cánh đỏ đen lớn, chậm mà uy lực.",
+    priceCtom: 49_999,
     visualKey: "dragon-scale",
     sortOrder: 125,
   },
@@ -202,8 +202,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.AVATAR_WINGS,
     rarity: ShopItemRarity.MYTHIC,
     name: "Cánh Thiên Hà",
-    description: "Sao và tinh vân bao quanh, vũ trụ nằm trên đôi cánh.",
-    priceCtom: 78_888,
+    description: "Tinh vân và sao phủ quanh đôi cánh.",
+    priceCtom: 55_555,
     visualKey: "galaxy-nebula",
     sortOrder: 128,
   },
@@ -212,8 +212,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.AVATAR_WINGS,
     rarity: ShopItemRarity.LEGENDARY,
     name: "Cánh Phượng Hoàng",
-    description: "Lông lửa bung rộng, có nhịp cháy nhẹ cực nổi.",
-    priceCtom: 168_888,
+    description: "Lửa phượng bung rộng, nhìn là biết huyền thoại.",
+    priceCtom: 99_999,
     visualKey: "phoenix-flame",
     sortOrder: 130,
   },
@@ -223,8 +223,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.AVATAR_AURA,
     rarity: ShopItemRarity.RARE,
     name: "Aura Phép Rune",
-    description: "Vòng rune cổ xưa xoay chậm, toả sáng xanh dịu.",
-    priceCtom: 28_000,
+    description: "Vòng rune xanh xoay chậm, bí ẩn vừa đủ.",
+    priceCtom: 24_999,
     visualKey: "rune-circle",
     sortOrder: 205,
   },
@@ -233,8 +233,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.AVATAR_AURA,
     rarity: ShopItemRarity.COMMON,
     name: "Aura Ánh Nhẹ",
-    description: "Hào quang mỏng, đẹp kín đáo cho người thích gọn.",
-    priceCtom: 18_000,
+    description: "Ánh mỏng sạch, hợp người thích tinh tế.",
+    priceCtom: 11_111,
     visualKey: "clean-light",
     sortOrder: 202,
   },
@@ -243,8 +243,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.AVATAR_AURA,
     rarity: ShopItemRarity.EPIC,
     name: "Aura Lửa Cháy",
-    description: "Lửa cháy quanh avatar, nóng bỏng nhưng không che mặt.",
-    priceCtom: 42_000,
+    description: "Vòng lửa nóng quanh avatar, nổi mà không rối.",
+    priceCtom: 39_999,
     visualKey: "inferno-ring",
     sortOrder: 215,
   },
@@ -253,8 +253,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.AVATAR_AURA,
     rarity: ShopItemRarity.EPIC,
     name: "Aura Nhịp Vàng",
-    description: "Ánh vàng nhấp nhẹ quanh avatar, đủ sang mà không lố.",
-    priceCtom: 38_000,
+    description: "Ánh vàng nhấp nhẹ, sang mà gọn.",
+    priceCtom: 35_555,
     visualKey: "golden-pulse",
     sortOrder: 212,
   },
@@ -263,8 +263,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.AVATAR_AURA,
     rarity: ShopItemRarity.EPIC,
     name: "Aura Bóng Tối",
-    description: "Bóng đêm tím đen lan toả, bí ẩn và đe doạ.",
-    priceCtom: 50_000,
+    description: "Vầng tím đen lan nhẹ, bí ẩn hơn hẳn.",
+    priceCtom: 49_999,
     visualKey: "shadow-void",
     sortOrder: 225,
   },
@@ -273,8 +273,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.AVATAR_AURA,
     rarity: ShopItemRarity.MYTHIC,
     name: "Aura Quỹ Đạo",
-    description: "Vòng sáng xoay quanh avatar, dành cho bộ sưu tập xịn.",
-    priceCtom: 78_000,
+    description: "Vòng sáng xoay quanh, cảm giác sưu tầm xịn.",
+    priceCtom: 55_555,
     visualKey: "cosmic-orbit",
     sortOrder: 230,
   },
@@ -283,8 +283,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.AVATAR_AURA,
     rarity: ShopItemRarity.LEGENDARY,
     name: "Aura Vương Giả",
-    description: "Ánh vàng kim rực rỡ, hạt sáng orbit và beam xoay.",
-    priceCtom: 168_888,
+    description: "Ánh vàng kim orbit, bật chất huyền thoại.",
+    priceCtom: 99_999,
     visualKey: "royal-radiance",
     sortOrder: 235,
   },
@@ -294,8 +294,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.TITLE,
     rarity: ShopItemRarity.COMMON,
     name: "Nhà Tài Trợ",
-    description: "Danh hiệu dành cho người bắt đầu đóng góp shop.",
-    priceCtom: 15_000,
+    description: "Dấu mốc đầu tiên của người góp shop.",
+    priceCtom: 11_111,
     visualKey: "supporter",
     sortOrder: 305,
   },
@@ -304,8 +304,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.TITLE,
     rarity: ShopItemRarity.RARE,
     name: "Nhà Sưu Tầm CTOM",
-    description: "Danh hiệu nhỏ gọn cho người bắt đầu nâng cấp hồ sơ.",
-    priceCtom: 30_000,
+    description: "Badge xanh gọn cho người bắt đầu lên đồ.",
+    priceCtom: 22_222,
     visualKey: "ctom-founder",
     sortOrder: 310,
   },
@@ -315,7 +315,7 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     rarity: ShopItemRarity.RARE,
     name: "Đại Gia CTOM",
     description: "Gắn lên tên là biết dân chơi CTOM chính hiệu.",
-    priceCtom: 35_000,
+    priceCtom: 29_999,
     visualKey: "big-spender",
     sortOrder: 315,
   },
@@ -324,8 +324,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.TITLE,
     rarity: ShopItemRarity.EPIC,
     name: "Huyền Thoại CTOM",
-    description: "Danh hiệu tím vàng cho người đã chinh phục shop.",
-    priceCtom: 52_000,
+    description: "Tím vàng nổi bật, đúng chất người chinh phục shop.",
+    priceCtom: 39_999,
     visualKey: "ctom-legend",
     sortOrder: 318,
   },
@@ -334,8 +334,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.TITLE,
     rarity: ShopItemRarity.EPIC,
     name: "Thần Tài CTOM",
-    description: "Đỏ vàng rực rỡ, xứng danh thần tài của cộng đồng.",
-    priceCtom: 58_000,
+    description: "Đỏ vàng rực rỡ, gọi may mắn lên tên.",
+    priceCtom: 49_999,
     visualKey: "fortune-god",
     sortOrder: 319,
   },
@@ -344,20 +344,20 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.TITLE,
     rarity: ShopItemRarity.MYTHIC,
     name: "Bậc Thầy CTOM",
-    description: "Danh hiệu hồng đỏ cổ xưa, dành cho người thực sự đam mê sưu tầm.",
-    priceCtom: 78_000,
+    description: "Rune cổ đỏ hồng cho dân sưu tầm cứng.",
+    priceCtom: 55_555,
     visualKey: "ancient-master",
-    sortOrder: 319,
+    sortOrder: 325,
   },
   {
     slug: "title-shop-chairman",
     type: ShopItemType.TITLE,
     rarity: ShopItemRarity.LEGENDARY,
     name: "Chủ Tịch Shop",
-    description: "Danh hiệu nghe là biết đã đầu tư cho diện mạo.",
-    priceCtom: 168_888,
+    description: "Danh hiệu vàng kim, đứng đâu cũng ra chủ tịch.",
+    priceCtom: 99_999,
     visualKey: "shop-chairman",
-    sortOrder: 320,
+    sortOrder: 330,
   },
   /* ── Nameplates ────────────────────────────────────────── */
   {
@@ -365,8 +365,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.NAMEPLATE,
     rarity: ShopItemRarity.COMMON,
     name: "Bảng Tên Neon Glow",
-    description: "Gạch chân neon xanh sáng, đơn giản mà nổi bật.",
-    priceCtom: 18_000,
+    description: "Gạch neon xanh, gọn mà sáng.",
+    priceCtom: 11_111,
     visualKey: "neon-underline",
     sortOrder: 405,
   },
@@ -375,8 +375,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.NAMEPLATE,
     rarity: ShopItemRarity.RARE,
     name: "Bảng Tên Green Flash",
-    description: "Nền tên xanh sáng, dễ đọc trên cả desktop và điện thoại.",
-    priceCtom: 25_000,
+    description: "Nền xanh sáng, dễ đọc trên mọi màn hình.",
+    priceCtom: 22_222,
     visualKey: "green-flash",
     sortOrder: 410,
   },
@@ -385,8 +385,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.NAMEPLATE,
     rarity: ShopItemRarity.RARE,
     name: "Bảng Tên Cyber Edge",
-    description: "Viền cyber tím xanh, chữ sáng rõ trên mọi nền.",
-    priceCtom: 38_000,
+    description: "Viền cyber tím xanh, sắc hơn rõ rệt.",
+    priceCtom: 33_333,
     visualKey: "cyber-edge",
     sortOrder: 415,
   },
@@ -396,7 +396,7 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     rarity: ShopItemRarity.EPIC,
     name: "Bảng Tên Goldline",
     description: "Đường vàng tinh gọn, thêm chất VIP mà không rối mắt.",
-    priceCtom: 45_000,
+    priceCtom: 39_999,
     visualKey: "goldline",
     sortOrder: 420,
   },
@@ -405,8 +405,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.NAMEPLATE,
     rarity: ShopItemRarity.MYTHIC,
     name: "Bảng Tên Huyết Ngọc",
-    description: "Chữ sáng đỏ hồng rực rỡ, viền ngọc tối mà huyền bí.",
-    priceCtom: 78_000,
+    description: "Đỏ hồng huyền bí, nổi bật kiểu thượng cổ.",
+    priceCtom: 55_555,
     visualKey: "blood-ruby",
     sortOrder: 422,
   },
@@ -415,8 +415,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     type: ShopItemType.NAMEPLATE,
     rarity: ShopItemRarity.LEGENDARY,
     name: "Bảng Tên Royal Gold",
-    description: "Nền vàng hoàng gia rực rỡ, viền gold sang trọng kèm hiệu ứng lấp lánh — xứng tầm huyền thoại.",
-    priceCtom: 168_888,
+    description: "Vàng hoàng gia lấp lánh, khác hẳn phần còn lại.",
+    priceCtom: 99_999,
     visualKey: "royal-gold",
     sortOrder: 425,
   },
@@ -560,46 +560,62 @@ export async function getShopPageData(userId: string) {
   };
 }
 
-export async function purchaseShopItem(userId: string, itemId: string) {
-  return prisma.$transaction(async (tx) => {
-    const item = await tx.shopItem.findFirst({
-      where: { id: itemId, isActive: true },
-    });
-    if (!item) throw new Error("Không tìm thấy vật phẩm trong shop.");
+export async function purchaseShopItems(userId: string, itemIds: string[]) {
+  const uniqueItemIds = Array.from(new Set(itemIds.filter(Boolean)));
+  if (uniqueItemIds.length === 0) return [];
 
-    const existing = await tx.userShopItem.findUnique({
-      where: { userId_itemId: { userId, itemId } },
-      include: { item: true },
-    });
-    if (existing) {
-      await tx.userCosmeticEquip.upsert({
-        where: { userId_type: { userId, type: existing.item.type } },
-        update: { itemId, equippedAt: new Date() },
-        create: { userId, type: existing.item.type, itemId },
+  return prisma.$transaction(async (tx) => {
+    const results: Array<{ item: ShopItem; purchased: boolean }> = [];
+
+    for (const itemId of uniqueItemIds) {
+      const item = await tx.shopItem.findFirst({
+        where: { id: itemId, isActive: true },
       });
-      return { item, purchased: false };
+      if (!item) throw new Error("Không tìm thấy vật phẩm trong shop.");
+
+      const existing = await tx.userShopItem.findUnique({
+        where: { userId_itemId: { userId, itemId } },
+        include: { item: true },
+      });
+      if (existing) {
+        await tx.userCosmeticEquip.upsert({
+          where: { userId_type: { userId, type: existing.item.type } },
+          update: { itemId, equippedAt: new Date() },
+          create: { userId, type: existing.item.type, itemId },
+        });
+        results.push({ item, purchased: false });
+        continue;
+      }
+
+      await tx.userShopItem.create({
+        data: { userId, itemId },
+      });
+      await tx.ctomTransaction.create({
+        data: {
+          userId,
+          itemId,
+          amount: item.priceCtom,
+          type: CtomTransactionType.PURCHASE,
+          note: `Mua ${item.name}`,
+        },
+      });
+      await tx.userCosmeticEquip.upsert({
+        where: { userId_type: { userId, type: item.type } },
+        update: { itemId, equippedAt: new Date() },
+        create: { userId, type: item.type, itemId },
+      });
+
+      results.push({ item, purchased: true });
     }
 
-    await tx.userShopItem.create({
-      data: { userId, itemId },
-    });
-    await tx.ctomTransaction.create({
-      data: {
-        userId,
-        itemId,
-        amount: item.priceCtom,
-        type: CtomTransactionType.PURCHASE,
-        note: `Mua ${item.name}`,
-      },
-    });
-    await tx.userCosmeticEquip.upsert({
-      where: { userId_type: { userId, type: item.type } },
-      update: { itemId, equippedAt: new Date() },
-      create: { userId, type: item.type, itemId },
-    });
-
-    return { item, purchased: true };
+    return results;
   });
+}
+
+export async function purchaseShopItem(userId: string, itemId: string) {
+  const [result] = await purchaseShopItems(userId, [itemId]);
+  if (!result) throw new Error("Không tìm thấy vật phẩm trong shop.");
+  return result;
 }
 
 export async function equipShopItem(userId: string, itemId: string) {

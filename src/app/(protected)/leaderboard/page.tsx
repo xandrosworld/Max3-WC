@@ -4,6 +4,7 @@ import {
   CosmeticAvatar,
   CosmeticTitleBadge,
   cosmeticNameplateClass,
+  cosmeticRowFrameClass,
 } from "@/components/cosmetic-avatar";
 import { LeaderboardMediaHints } from "@/components/leaderboard-media-hints";
 import { formatCurrency } from "@/lib/domain";
@@ -182,7 +183,7 @@ export default async function LeaderboardPage({
           --rank-accent: #10b981;
           --rank-glow: rgba(16, 185, 129, 0.18);
         }
-        .elite-row::after {
+        .elite-row:not(.desktop-leaderboard-row)::after {
           content: "";
           position: absolute;
           inset: 0;
@@ -817,6 +818,14 @@ function LeaderboardSection({
           "Ngôi sao sai",
           "Góp quỹ",
         ];
+  const desktopGridStyle =
+    mode === "contribution"
+      ? { gridTemplateColumns: "4.9rem minmax(14rem,1fr) minmax(6.2rem,0.55fr) minmax(8.8rem,0.65fr)" }
+      : {
+          gridTemplateColumns:
+            "4.9rem minmax(16rem,1.55fr) minmax(3.8rem,0.52fr) minmax(3.3rem,0.46fr) minmax(3.5rem,0.48fr) minmax(3.3rem,0.46fr) minmax(7.1rem,0.78fr) minmax(4.4rem,0.5fr) minmax(5.6rem,0.58fr) minmax(8rem,0.72fr)",
+        };
+  const desktopCellClass = "px-3 py-3";
 
   return (
     <section className="leaderboard-stage overflow-hidden rounded-3xl border border-emerald-950/10 bg-white shadow-lg shadow-emerald-950/5">
@@ -842,17 +851,19 @@ function LeaderboardSection({
       </div>
 
       <div className="hidden md:block">
-        <table className="w-full text-sm">
-          <thead className="bg-emerald-950 text-left text-white">
-            <tr>
-              {tableHeaders.map((title) => (
-                <th key={title} className="px-4 py-3 font-bold">
-                  {title}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
+        <div role="table" className="text-sm">
+          <div
+            role="row"
+            className="grid items-center bg-emerald-950 text-left text-white"
+            style={desktopGridStyle}
+          >
+            {tableHeaders.map((title) => (
+              <div key={title} role="columnheader" className="px-4 py-3 font-bold">
+                {title}
+              </div>
+            ))}
+          </div>
+          <div role="rowgroup" className="space-y-1.5 p-1.5">
             {rows.map((row, index) => {
               const visual = getRankVisual(row.displayRank, mode);
               const rowBg =
@@ -863,16 +874,18 @@ function LeaderboardSection({
                     : "bg-white";
 
               return (
-                <tr
+                <div
                   key={row.id}
-                  className={`border-t border-slate-100 transition hover:bg-emerald-50/40 ${
+                  role="row"
+                  className={`desktop-leaderboard-row grid min-h-[5.5rem] items-center border border-slate-100 transition hover:bg-emerald-50/40 ${
                     row.displayRank <= 3 ? `elite-row ${visual.rankClass}` : ""
-                  } ${rowBg}`}
+                  } ${rowBg} ${cosmeticRowFrameClass(row.cosmetics)}`}
+                  style={desktopGridStyle}
                 >
-                  <td className="px-4 py-3">
+                  <div role="cell" className={desktopCellClass}>
                     <RankBadge rank={row.displayRank} mode={mode} />
-                  </td>
-                  <td className="px-4 py-3">
+                  </div>
+                  <div role="cell" className={desktopCellClass}>
                     <div className="flex min-w-0 items-center gap-3">
                       <Avatar
                         image={row.image}
@@ -887,39 +900,39 @@ function LeaderboardSection({
                       </div>
                       {row.displayRank === 1 && <TopWinnerGif variant="desktop" mode={mode} />}
                     </div>
-                  </td>
+                  </div>
                   {mode === "contribution" ? (
                     <>
-                      <td className="px-4 py-3 font-semibold tabular-nums text-emerald-900">
+                      <div role="cell" className={`${desktopCellClass} font-semibold tabular-nums text-emerald-900`}>
                         {row.voted}
-                      </td>
-                      <td className="px-4 py-3">
+                      </div>
+                      <div role="cell" className={desktopCellClass}>
                         <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 font-black tabular-nums text-amber-700 ring-1 ring-amber-100">
                           {formatCurrency(row.loss)}
                         </span>
-                      </td>
+                      </div>
                     </>
                   ) : (
                     <>
-                      <td className="px-4 py-3 font-semibold tabular-nums">{row.voted}</td>
-                      <td className="px-4 py-3 font-semibold tabular-nums text-amber-700">{row.missed}</td>
-                      <td className="px-4 py-3 font-black tabular-nums text-emerald-700">{row.correct}</td>
-                      <td className="px-4 py-3 font-semibold tabular-nums text-red-700">{row.wrong}</td>
-                      <td className="px-4 py-3">
+                      <div role="cell" className={`${desktopCellClass} font-semibold tabular-nums`}>{row.voted}</div>
+                      <div role="cell" className={`${desktopCellClass} font-semibold tabular-nums text-amber-700`}>{row.missed}</div>
+                      <div role="cell" className={`${desktopCellClass} font-black tabular-nums text-emerald-700`}>{row.correct}</div>
+                      <div role="cell" className={`${desktopCellClass} font-semibold tabular-nums text-red-700`}>{row.wrong}</div>
+                      <div role="cell" className={desktopCellClass}>
                         <AccuracyCell value={row.accuracy} rank={row.displayRank} mode={mode} />
-                      </td>
-                      <td className="px-4 py-3 font-semibold tabular-nums">{row.hopeStarUsed}</td>
-                      <td className="px-4 py-3 font-semibold tabular-nums text-amber-700">{row.hopeStarWrong}</td>
-                      <td className="px-4 py-3 font-black tabular-nums text-amber-700">
+                      </div>
+                      <div role="cell" className={`${desktopCellClass} font-semibold tabular-nums`}>{row.hopeStarUsed}</div>
+                      <div role="cell" className={`${desktopCellClass} font-semibold tabular-nums text-amber-700`}>{row.hopeStarWrong}</div>
+                      <div role="cell" className={`${desktopCellClass} font-black tabular-nums text-amber-700`}>
                         {formatCurrency(row.loss)}
-                      </td>
+                      </div>
                     </>
                   )}
-                </tr>
+                </div>
               );
             })}
-          </tbody>
-        </table>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -1174,9 +1187,16 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
     mode === "prediction" ? String(row.correct) : formatCurrency(row.loss);
   const showInlineWinnerGif = row.displayRank === 1 && mode === "contribution";
   const showFloatingWinnerGif = row.displayRank === 1 && !showInlineWinnerGif;
+  const rowFrameKey = row.cosmetics?.AVATAR_FRAME?.visualKey;
 
   return (
-    <article className={`relative overflow-hidden rounded-2xl border p-3 shadow-sm active:scale-[0.99] ${row.displayRank <= 3 ? `elite-card ${visual.rankClass}` : ""} ${visual.cardClass}`}>
+    <article className={`relative overflow-hidden rounded-2xl border p-3 shadow-sm active:scale-[0.99] ${row.displayRank <= 3 ? `elite-card ${visual.rankClass}` : ""} ${visual.cardClass} ${rowFrameKey ? `mobile-card-has-cosmetic-frame cosmetic-row-frame-${rowFrameKey}` : ""}`}>
+      {rowFrameKey && (
+        <span
+          className={`mobile-cosmetic-frame-art cosmetic-row-frame-${rowFrameKey}`}
+          aria-hidden="true"
+        />
+      )}
       {row.displayRank <= 3 && (
         <span
           className={`rank-pulse pointer-events-none absolute right-2 top-2 h-14 w-14 rounded-full ${visual.haloClass}`}
@@ -1184,18 +1204,21 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
         />
       )}
       {showFloatingWinnerGif && <TopWinnerGif variant="mobile" mode={mode} />}
-      <div className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-        <div className="flex flex-col items-center gap-2">
-          <RankBadge rank={row.displayRank} mode={mode} compact />
-          <Avatar
-            image={row.image}
-            name={row.name}
-            rank={row.displayRank}
-            mode={mode}
-            cosmetics={row.cosmetics}
-          />
-        </div>
-        <div className="min-w-0 pt-0.5">
+      <div className="relative grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2.5">
+        <div className="flex min-w-0 items-start gap-2.5 pr-1">
+          <div className="relative flex min-h-[4.85rem] w-[5.35rem] shrink-0 items-center justify-center pt-5">
+            <div className="absolute left-0 top-0 z-30">
+              <RankBadge rank={row.displayRank} mode={mode} compact />
+            </div>
+            <Avatar
+              image={row.image}
+              name={row.name}
+              rank={row.displayRank}
+              mode={mode}
+              cosmetics={row.cosmetics}
+            />
+          </div>
+          <div className="min-w-0 pt-1">
             <PlayerIdentity row={row} variant="mobile" />
             <p className="mt-0.5 text-[11px] font-bold leading-snug text-slate-400">
               {mode === "prediction"
@@ -1205,6 +1228,7 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
             {!showInlineWinnerGif && (
               <PlayerStatusBadges row={row} mode={mode} />
             )}
+          </div>
         </div>
         <MobilePrimaryBadge
           label={primaryLabel}
@@ -1439,6 +1463,7 @@ function Avatar({
         className="relative z-10"
         coreClassName={avatarClass}
         effectIntensity="compact"
+        showAvatarFrame={false}
       />
     </span>
   );

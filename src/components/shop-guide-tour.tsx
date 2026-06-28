@@ -58,7 +58,7 @@ const GUIDE_STEPS: GuideStep[] = [
   {
     eyebrow: "Bước 2",
     title: "Chọn nhóm đồ muốn xem",
-    body: "Khung, cánh, aura, danh hiệu hay bảng tên đều nằm ở đây. Cứ lướt như chọn skin trong game.",
+    body: "Viền BXH, cánh, aura, danh hiệu hay bảng tên đều nằm ở đây. Cứ lướt như chọn skin trong game.",
     Icon: Sparkles,
     tone: "from-sky-500 to-cyan-400",
     durationMs: 3200,
@@ -70,7 +70,7 @@ const GUIDE_STEPS: GuideStep[] = [
   {
     eyebrow: "Bước 3",
     title: "Nhìn món nào hợp mắt trước",
-    body: "Mỗi món có giá và hiệu ứng riêng. Món càng xịn thì càng nổi bật trên avatar và bảng xếp hạng.",
+    body: "Mỗi món có giá và hiệu ứng riêng. Món càng xịn thì càng nổi bật trên diện mạo và bảng xếp hạng.",
     Icon: Gem,
     tone: "from-violet-500 to-fuchsia-400",
     durationMs: 3300,
@@ -90,7 +90,7 @@ const GUIDE_STEPS: GuideStep[] = [
   },
   {
     eyebrow: "Bước 5",
-    title: "Avatar đổi ngay ở phòng thử",
+    title: "Phòng thử đổi ngay",
     body: "Ưng thì giữ món đó trong đầu, chưa ưng thì quay lại thử món khác. Không phải mua vội.",
     Icon: Sparkles,
     tone: "from-emerald-500 to-lime-400",
@@ -525,7 +525,7 @@ function DemoReceipt({
         <ReceiptRow label="Món này ghi nhận" value={`+${priceLabel}`} strong />
         <ReceiptRow label="Sau khi mua" value={`${contributionAfter} CTOM`} strong />
         <div className="mt-3 flex items-center justify-between gap-2 overflow-hidden rounded-2xl bg-emerald-800 px-3 py-2.5 text-sm font-black text-white shadow-lg shadow-emerald-900/15 sm:mt-4 sm:px-4 sm:py-3">
-          {settled ? "Đồ đã lên avatar" : "Xác nhận mua"}
+          {settled ? "Đồ đã lên diện mạo" : "Xác nhận mua"}
           <span className="shrink-0 rounded-full bg-white/15 px-2 py-1 text-[11px] text-emerald-50">
             +{priceLabel}
           </span>

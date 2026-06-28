@@ -1,4 +1,5 @@
 import { ShopItemType } from "@prisma/client";
+import { CosmeticWings } from "@/components/cosmetic-wings";
 import { PhoenixFlameWings } from "@/components/phoenix-flame-wings";
 import type { EquippedCosmetics } from "@/lib/shop";
 
@@ -18,6 +19,7 @@ export function CosmeticAvatar({
   className = "",
   coreClassName = "",
   effectIntensity = "full",
+  showAvatarFrame = false,
 }: {
   image: string | null;
   name: string;
@@ -26,9 +28,12 @@ export function CosmeticAvatar({
   className?: string;
   coreClassName?: string;
   effectIntensity?: "full" | "compact" | "minimal";
+  showAvatarFrame?: boolean;
 }) {
   const initial = name.trim().charAt(0).toUpperCase() || "U";
-  const frame = cosmetics?.[ShopItemType.AVATAR_FRAME]?.visualKey ?? "none";
+  const frame = showAvatarFrame
+    ? cosmetics?.[ShopItemType.AVATAR_FRAME]?.visualKey ?? "none"
+    : "none";
   const wings = cosmetics?.[ShopItemType.AVATAR_WINGS]?.visualKey ?? "none";
   const aura = cosmetics?.[ShopItemType.AVATAR_AURA]?.visualKey ?? "none";
   const hasPhoenixWings = wings === "phoenix-flame";
@@ -43,12 +48,7 @@ export function CosmeticAvatar({
     >
       <span className="cosmetic-avatar-aura" aria-hidden="true" />
       <span className="cosmetic-avatar-wings" aria-hidden="true">
-        {hasPhoenixWings ? <PhoenixFlameWings /> : (
-          <>
-            <span />
-            <span />
-          </>
-        )}
+        {hasPhoenixWings ? <PhoenixFlameWings /> : <CosmeticWings visualKey={wings} />}
       </span>
       {image ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -90,4 +90,9 @@ export function CosmeticTitleBadge({
 export function cosmeticNameplateClass(cosmetics?: EquippedCosmetics) {
   const nameplate = cosmetics?.[ShopItemType.NAMEPLATE];
   return nameplate ? `cosmetic-nameplate cosmetic-nameplate-${nameplate.visualKey}` : "";
+}
+
+export function cosmeticRowFrameClass(cosmetics?: EquippedCosmetics) {
+  const frame = cosmetics?.[ShopItemType.AVATAR_FRAME];
+  return frame ? `cosmetic-row-frame cosmetic-row-frame-${frame.visualKey}` : "";
 }

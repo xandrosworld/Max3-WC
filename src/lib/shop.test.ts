@@ -43,7 +43,7 @@ const item = {
   slug: "frame-emerald-glory",
   type: ShopItemType.AVATAR_FRAME,
   rarity: ShopItemRarity.RARE,
-  name: "Khung Lục Bảo",
+  name: "Viền Lục Bảo",
   description: "Viền xanh sạch.",
   priceCtom: 32_000,
   visualKey: "emerald-glory",
@@ -76,7 +76,7 @@ describe("shop purchases", () => {
         itemId: item.id,
         amount: 32_000,
         type: CtomTransactionType.PURCHASE,
-        note: "Mua Khung Lục Bảo",
+        note: "Mua Viền Lục Bảo",
       },
     });
     expect(txMock.userCosmeticEquip.upsert).toHaveBeenCalledWith(

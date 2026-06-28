@@ -9,7 +9,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { RotateCcw, Sparkles, WandSparkles, X } from "lucide-react";
+import { useFormStatus } from "react-dom";
+import { Gem, RotateCcw, Sparkles, WandSparkles, X } from "lucide-react";
+import { purchaseShopItemsAction } from "@/app/actions";
+import { CosmeticWings } from "@/components/cosmetic-wings";
 import { PhoenixFlameWings } from "@/components/phoenix-flame-wings";
 
 type ShopCosmeticType =
@@ -26,6 +29,8 @@ export type ShopTryOnItem = {
   rarity: string;
   name: string;
   visualKey: string;
+  priceCtom?: number;
+  owned?: boolean;
 };
 
 export type ShopTryOnCosmetics = Partial<Record<ShopCosmeticType, ShopTryOnItem>>;
@@ -46,7 +51,7 @@ type ShopTryOnContextValue = {
 };
 
 const SHOP_TYPE_LABELS: Record<ShopCosmeticType, string> = {
-  AVATAR_FRAME: "Khung",
+  AVATAR_FRAME: "Viền BXH",
   AVATAR_WINGS: "Cánh",
   AVATAR_AURA: "Aura",
   TITLE: "Danh hiệu",
@@ -233,6 +238,11 @@ export function ShopTryOnPanel() {
   const tryOnCount = Object.keys(tryOnCosmetics).length;
   const hasTryOn = tryOnCount > 0;
   const hasPhoenixWings = previewCosmetics.AVATAR_WINGS?.visualKey === "phoenix-flame";
+  const hasRowFrame = Boolean(previewCosmetics.AVATAR_FRAME);
+  const tryOnItems = SHOP_TYPE_ORDER.flatMap((type) => {
+    const item = tryOnCosmetics[type];
+    return item ? [item] : [];
+  });
 
   return (
     <section
@@ -252,7 +262,7 @@ export function ShopTryOnPanel() {
           </h2>
           <p className="mt-2 max-w-xl text-sm font-semibold leading-6 text-slate-600">
             Bấm <span className="font-black text-emerald-800">Thử</span> trên card vật phẩm
-            để xem lên avatar ra sao. Mặc thử không tốn CTOM và không ghi vào tủ đồ.
+            để xem diện mạo và hàng xếp hạng đổi ra sao. Mặc thử không tốn CTOM và không ghi vào tủ đồ.
           </p>
 
           <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
@@ -297,6 +307,8 @@ export function ShopTryOnPanel() {
             })}
           </div>
 
+          {hasTryOn && <ShopTryOnCheckout items={tryOnItems} />}
+
           {hasTryOn && (
             <button
               type="button"
@@ -338,6 +350,14 @@ export function ShopTryOnPanel() {
               {hasTryOn ? `${tryOnCount} món đang thử` : "Diện mạo hiện tại"}
             </div>
             </div>
+            {hasRowFrame && (
+              <TryOnFramePreview
+                image={user.image}
+                name={user.name}
+                department={user.department}
+                cosmetics={previewCosmetics}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -345,38 +365,109 @@ export function ShopTryOnPanel() {
   );
 }
 
+function formatCtom(amount: number) {
+  return `${new Intl.NumberFormat("vi-VN", {
+    maximumFractionDigits: 0,
+  }).format(amount)} CTOM`;
+}
+
+function TryOnCheckoutSubmit({ disabled }: { disabled: boolean }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={disabled || pending}
+      className="shop-action-button inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-black text-white shadow-lg shadow-emerald-950/12 hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
+      data-testid="buy-try-on-items"
+    >
+      <Gem size={15} />
+      {pending ? "Đang mua..." : "Mua đồ đang thử"}
+    </button>
+  );
+}
+
+function ShopTryOnCheckout({ items }: { items: ShopTryOnItem[] }) {
+  const purchasableItems = items.filter((item) => !item.owned);
+  const totalCtom = purchasableItems.reduce(
+    (sum, item) => sum + (item.priceCtom ?? 0),
+    0,
+  );
+  const canBuy = purchasableItems.length > 0;
+  const summary =
+    purchasableItems.length === 1
+      ? purchasableItems[0].name
+      : `${purchasableItems.length} món đang thử`;
+
+  return (
+    <form
+      action={purchaseShopItemsAction}
+      className="mt-4 rounded-2xl border border-emerald-100 bg-white/85 p-3 shadow-sm shadow-emerald-950/5"
+      data-testid="try-on-checkout"
+    >
+      {purchasableItems.map((item) => (
+        <input key={item.id} type="hidden" name="itemIds" value={item.id} />
+      ))}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-emerald-700">
+            <Gem size={13} />
+            Ưng diện mạo này?
+          </p>
+          {canBuy ? (
+            <>
+              <p className="mt-1 truncate text-sm font-black text-slate-950">
+                Mua {summary} để mặc luôn
+              </p>
+              <p className="mt-0.5 text-xs font-bold text-slate-500">
+                Ghi nhận thêm <span className="font-black text-amber-700">{formatCtom(totalCtom)}</span>
+              </p>
+            </>
+          ) : (
+            <p className="mt-1 text-sm font-black text-slate-600">
+              Đồ đang thử đã nằm trong tủ của bạn.
+            </p>
+          )}
+        </div>
+        <TryOnCheckoutSubmit disabled={!canBuy} />
+      </div>
+    </form>
+  );
+}
+
 function CosmeticPreviewAvatar({
   image,
   name,
   cosmetics,
+  sizeClass = "cosmetic-avatar-xl",
+  effectIntensity = "full",
+  guideTarget = true,
 }: {
   image: string | null;
   name: string;
   cosmetics: ShopTryOnCosmetics;
+  sizeClass?: string;
+  effectIntensity?: "full" | "compact" | "minimal";
+  guideTarget?: boolean;
 }) {
   const initial = name.trim().charAt(0).toUpperCase() || "U";
-  const frame = cosmetics.AVATAR_FRAME?.visualKey ?? "none";
+  const frame = "none";
   const wings = cosmetics.AVATAR_WINGS?.visualKey ?? "none";
   const aura = cosmetics.AVATAR_AURA?.visualKey ?? "none";
   const hasPhoenixWings = wings === "phoenix-flame";
 
   return (
     <span
-      className="cosmetic-avatar cosmetic-avatar-xl"
+      className={`cosmetic-avatar ${sizeClass}`}
       data-frame={frame}
       data-wings={wings}
       data-aura={aura}
-      data-effect-intensity="full"
-      data-guide-target="shop-try-on-avatar"
+      data-effect-intensity={effectIntensity}
+      data-guide-target={guideTarget ? "shop-try-on-avatar" : undefined}
     >
       <span className="cosmetic-avatar-aura" aria-hidden="true" />
       <span className="cosmetic-avatar-wings" aria-hidden="true">
-        {hasPhoenixWings ? <PhoenixFlameWings /> : (
-          <>
-            <span />
-            <span />
-          </>
-        )}
+        {hasPhoenixWings ? <PhoenixFlameWings /> : <CosmeticWings visualKey={wings} />}
       </span>
       {image ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -395,6 +486,41 @@ function CosmeticPreviewAvatar({
   );
 }
 
+function TryOnFramePreview({
+  image,
+  name,
+  department,
+  cosmetics,
+}: {
+  image: string | null;
+  name: string;
+  department: string;
+  cosmetics: ShopTryOnCosmetics;
+}) {
+  return (
+    <div className={`shop-try-on-frame-preview ${tryOnRowFrameClass(cosmetics)}`}>
+      <div className="shop-frame-preview-rank">#8</div>
+      <CosmeticPreviewAvatar
+        image={image}
+        name={name}
+        cosmetics={cosmetics}
+        sizeClass="cosmetic-avatar-sm"
+        effectIntensity="minimal"
+        guideTarget={false}
+      />
+      <div className="min-w-0 text-left">
+        <p className={`truncate text-sm font-black text-slate-950 ${cosmeticNameplateClass(cosmetics)}`}>
+          {name}
+        </p>
+        <p className="truncate text-[11px] font-semibold text-slate-500">
+          {department || "Chưa có đơn vị"}
+        </p>
+      </div>
+      <div className="shop-frame-preview-score">72</div>
+    </div>
+  );
+}
+
 function CosmeticPreviewTitle({ cosmetics }: { cosmetics: ShopTryOnCosmetics }) {
   const title = cosmetics.TITLE;
   if (!title) return null;
@@ -409,4 +535,9 @@ function CosmeticPreviewTitle({ cosmetics }: { cosmetics: ShopTryOnCosmetics }) 
 function cosmeticNameplateClass(cosmetics: ShopTryOnCosmetics) {
   const nameplate = cosmetics.NAMEPLATE;
   return nameplate ? `cosmetic-nameplate cosmetic-nameplate-${nameplate.visualKey}` : "";
+}
+
+function tryOnRowFrameClass(cosmetics: ShopTryOnCosmetics) {
+  const frame = cosmetics.AVATAR_FRAME;
+  return frame ? `cosmetic-row-frame cosmetic-row-frame-${frame.visualKey}` : "";
 }

@@ -129,7 +129,7 @@ export function ShopPurchaseForm({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-black shadow-lg sm:min-h-11 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm ${
+        className={`shop-action-button flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-black shadow-lg sm:min-h-11 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm ${
           rarity === "LEGENDARY"
             ? "bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-amber-950 shadow-amber-500/25 hover:from-amber-500 hover:via-yellow-400 hover:to-amber-500"
             : rarity === "MYTHIC"

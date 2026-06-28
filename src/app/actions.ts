@@ -34,6 +34,7 @@ import { settleMatch } from "@/lib/settlement";
 import {
   equipShopItem,
   purchaseShopItem,
+  purchaseShopItems,
   unequipShopItem,
 } from "@/lib/shop";
 import {
@@ -1192,6 +1193,51 @@ export async function purchaseShopItemAction(formData: FormData) {
   }
 
   redirectToShop(redirectParams);
+}
+
+export async function purchaseShopItemsAction(formData: FormData) {
+  const user = await requireUser();
+  const itemIds = Array.from(
+    new Set(
+      formData
+        .getAll("itemIds")
+        .map((value) => String(value).trim())
+        .filter(Boolean),
+    ),
+  );
+  let redirectParams: Record<string, string>;
+
+  if (itemIds.length === 0) {
+    redirectToShop(
+      {
+        notice: "error",
+        message: "Chưa có vật phẩm nào đang thử để mua.",
+      },
+      "#shop-try-on-panel",
+    );
+  }
+
+  try {
+    const results = await purchaseShopItems(user.id, itemIds);
+    revalidateShopSurfaces();
+    const purchasedCount = results.filter((result) => result.purchased).length;
+    redirectParams = {
+      notice: purchasedCount > 0 ? "purchased" : "equipped",
+    };
+    if (results.length === 1) {
+      redirectParams.item = results[0].item.slug;
+    }
+  } catch (error) {
+    redirectParams = {
+      notice: "error",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Không thể mua vật phẩm lúc này.",
+    };
+  }
+
+  redirectToShop(redirectParams, "#shop-try-on-panel");
 }
 
 export async function equipShopItemAction(formData: FormData) {

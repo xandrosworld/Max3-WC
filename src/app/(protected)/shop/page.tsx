@@ -18,8 +18,10 @@ import {
   CosmeticAvatar,
   CosmeticTitleBadge,
   cosmeticNameplateClass,
+  cosmeticRowFrameClass,
 } from "@/components/cosmetic-avatar";
 import { ExpandableList } from "@/components/expandable-list";
+import { ShopActionBurst } from "@/components/shop-action-burst";
 import { ShopCatalogTabs } from "@/components/shop-catalog-tabs";
 import { ShopGuideTour } from "@/components/shop-guide-tour";
 import { ShopPurchaseForm } from "@/components/shop-purchase-form";
@@ -99,6 +101,8 @@ export default async function ShopPage({
   const equippedCount = Object.values(data.equipped).filter(Boolean).length;
   const myCtomRank = data.leaderboard.find((row) => row.id === user.id)?.rank;
   const notice = getNotice(params);
+  const actionNotice = getActionNotice(params);
+  const actionItemName = getActionItemName(params, data.items);
   const tryOnUser = {
     image: user.image,
     name: user.name,
@@ -127,10 +131,11 @@ export default async function ShopPage({
   return (
     <ShopTryOnProvider user={tryOnUser} initialCosmetics={initialTryOnCosmetics}>
       <div className="space-y-6" data-testid="shop-page">
-      <section
-        className="relative overflow-hidden rounded-3xl border border-emerald-950/10 bg-slate-950 text-white shadow-xl shadow-emerald-950/15"
-        data-guide-target="shop-hero"
-      >
+        <ShopActionBurst variant={actionNotice} itemName={actionItemName} />
+        <section
+          className="relative overflow-hidden rounded-3xl border border-emerald-950/10 bg-slate-950 text-white shadow-xl shadow-emerald-950/15"
+          data-guide-target="shop-hero"
+        >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(52,211,153,0.28),transparent_28%),radial-gradient(circle_at_82%_8%,rgba(251,191,36,0.2),transparent_26%),linear-gradient(135deg,#052e2b,#08111f_62%,#111827)]" />
         <div className="relative grid gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center lg:py-7">
           <div className="min-w-0">
@@ -174,6 +179,7 @@ export default async function ShopPage({
                 name={user.name}
                 cosmetics={data.equipped}
                 size="xl"
+                showAvatarFrame={false}
               />
               <div className="min-w-0">
                 <p className={`text-xl font-black leading-tight ${cosmeticNameplateClass(data.equipped)}`}>
@@ -234,7 +240,9 @@ export default async function ShopPage({
 }
 
 function toTryOnItem(
-  item: Pick<ShopItem, "id" | "slug" | "type" | "rarity" | "name" | "visualKey">,
+  item: Pick<ShopItem, "id" | "slug" | "type" | "rarity" | "name" | "visualKey"> &
+    Partial<Pick<ShopItem, "priceCtom">>,
+  options: { owned?: boolean } = {},
 ): ShopTryOnItem {
   return {
     id: item.id,
@@ -243,6 +251,8 @@ function toTryOnItem(
     rarity: item.rarity,
     name: item.name,
     visualKey: item.visualKey,
+    priceCtom: item.priceCtom,
+    owned: options.owned,
   };
 }
 
@@ -283,6 +293,21 @@ function getNotice(params: Record<string, string | string[] | undefined>) {
     return { tone: "danger" as const, message };
   }
   return null;
+}
+
+function getActionNotice(
+  params: Record<string, string | string[] | undefined>,
+): "purchased" | "equipped" | null {
+  const notice = typeof params.notice === "string" ? params.notice : "";
+  return notice === "purchased" || notice === "equipped" ? notice : null;
+}
+
+function getActionItemName(
+  params: Record<string, string | string[] | undefined>,
+  items: ShopItem[],
+) {
+  const slug = typeof params.item === "string" ? params.item : "";
+  return items.find((item) => item.slug === slug)?.name;
 }
 
 function Notice({
@@ -487,16 +512,19 @@ function ShopItemCard({
 }) {
   const previewCosmetics: EquippedCosmetics = { [item.type]: item };
   const isEquipped = equipped[item.type]?.id === item.id;
-  const tryOnItem = toTryOnItem(item);
   const isLegendary = item.rarity === "LEGENDARY";
   const isWings = item.type === ShopItemType.AVATAR_WINGS;
+  const isFrame = item.type === ShopItemType.AVATAR_FRAME;
+  const isCompactCatalog = !isWings;
+  const tryOnItem = toTryOnItem(item, { owned });
   const isPhoenixLegendaryWing = isLegendary && isWings && item.visualKey === "phoenix-flame";
   const avatarShowcase =
-    item.type === ShopItemType.AVATAR_FRAME ||
     isWings ||
     item.type === ShopItemType.AVATAR_AURA;
   const showcaseClass =
-    isPhoenixLegendaryWing
+    isCompactCatalog
+      ? "flex h-full min-h-[7.25rem] items-center justify-center px-2 py-2 lg:h-full lg:min-h-0 lg:px-3 lg:py-4"
+      : isPhoenixLegendaryWing
       ? "shop-wing-stage shop-legendary-wings-showcase shop-phoenix-wing-showcase flex h-[18rem] min-h-[18rem] items-center justify-center px-4 py-8 sm:h-[18.5rem] sm:min-h-[18.5rem] sm:px-6 sm:py-9 lg:h-full lg:min-h-[21rem] lg:px-6 lg:py-8 xl:px-7"
       : isLegendary && isWings
       ? "shop-wing-stage shop-legendary-wings-showcase flex h-[14.5rem] min-h-[14.5rem] items-center justify-center px-5 py-7 sm:h-[16rem] sm:min-h-[16rem] sm:px-6 sm:py-8 lg:h-full lg:min-h-0 lg:px-5 lg:py-6 xl:px-6"
@@ -508,10 +536,10 @@ function ShopItemCard({
   const cardLayoutClass = isLegendary && isWings
     ? "shop-item-card-legendary shop-item-card-wings lg:grid lg:min-h-[300px] lg:grid-cols-[minmax(260px,360px)_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:gap-x-6 lg:gap-y-4 xl:grid-cols-[minmax(320px,400px)_minmax(0,1fr)] xl:gap-x-7"
     : isLegendary
-    ? "shop-item-card-legendary lg:grid lg:min-h-[260px] lg:grid-cols-[minmax(220px,280px)_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:gap-x-6 lg:gap-y-4"
+    ? "shop-item-card-compact shop-item-card-legendary grid grid-cols-[minmax(6.9rem,34%)_minmax(0,1fr)] grid-rows-[auto_auto_auto] gap-x-2.5 gap-y-2 lg:grid lg:min-h-[260px] lg:grid-cols-[minmax(220px,280px)_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:gap-x-6 lg:gap-y-4"
     : isWings
       ? "shop-item-card-wings lg:grid lg:min-h-[230px] lg:grid-cols-[minmax(176px,210px)_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:gap-x-5 lg:gap-y-3"
-    : "lg:grid lg:min-h-[210px] lg:grid-cols-[132px_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:gap-x-4 lg:gap-y-3";
+    : "shop-item-card-compact grid grid-cols-[minmax(6.75rem,33%)_minmax(0,1fr)] grid-rows-[auto_auto_auto] gap-x-2.5 gap-y-2 lg:grid lg:min-h-[210px] lg:grid-cols-[132px_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:gap-x-4 lg:gap-y-3";
 
   return (
     <article
@@ -519,8 +547,9 @@ function ShopItemCard({
       data-shop-rarity={item.rarity}
       data-shop-type={item.type}
       data-visual-key={item.visualKey}
-      className={`group relative scroll-mt-28 overflow-hidden rounded-2xl border-2 sm:rounded-3xl ${RARITY_CARD_RING[item.rarity] ?? "border-slate-200"} ${RARITY_CARD_BG[item.rarity] ?? "bg-white"} p-3 shadow-md transition hover:-translate-y-1 hover:shadow-xl sm:p-4 ${cardLayoutClass} ${RARITY_CARD_SHADOW[item.rarity] ?? ""} ${isLegendary ? "shop-card-legendary-premium lg:col-span-2" : ""}`}
+      className={`group relative scroll-mt-28 overflow-hidden rounded-2xl border-2 sm:rounded-3xl ${RARITY_CARD_RING[item.rarity] ?? "border-slate-200"} ${RARITY_CARD_BG[item.rarity] ?? "bg-white"} ${isCompactCatalog ? "p-2.5 sm:p-4" : "p-3 sm:p-4"} shadow-md transition hover:-translate-y-1 hover:shadow-xl ${cardLayoutClass} ${RARITY_CARD_SHADOW[item.rarity] ?? ""} ${isLegendary ? "shop-card-legendary-premium lg:col-span-2" : ""}`}
     >
+      <span className="shop-card-border-beam" aria-hidden="true" />
       <div className={`pointer-events-none absolute inset-x-0 top-0 ${
         item.rarity === "LEGENDARY" || item.rarity === "MYTHIC" ? "h-1.5" : item.rarity === "EPIC" ? "h-1.5" : "h-1"
       } bg-gradient-to-r ${RARITY_CARD_GRADIENT[item.rarity] ?? "from-slate-400 to-slate-300"}`} />
@@ -533,8 +562,8 @@ function ShopItemCard({
       {item.rarity === "EPIC" && (
         <div className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{ background: "radial-gradient(circle at 50% 0%, rgba(139,92,246,0.10), transparent 50%)" }} />
       )}
-      <div className="relative flex min-w-0 flex-wrap items-start justify-between gap-x-3 gap-y-2 lg:col-start-2 lg:row-start-1">
-        <span className={`inline-flex max-w-full shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ring-1 ${
+      <div className={`relative flex min-w-0 flex-wrap items-start justify-between gap-x-2 gap-y-1 lg:col-start-2 lg:row-start-1 ${isCompactCatalog ? "col-start-2 row-start-1 self-start" : ""}`}>
+        <span className={`inline-flex max-w-full shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] ring-1 sm:px-2.5 sm:py-1 sm:text-[10px] ${
           isLegendary
             ? "shop-card-legendary-badge bg-gradient-to-r from-amber-200 via-yellow-100 to-orange-200 text-amber-950 ring-amber-400"
             : item.rarity === "MYTHIC"
@@ -548,7 +577,7 @@ function ShopItemCard({
           {item.rarity === "EPIC" && <Sparkles size={10} className="hidden sm:inline text-violet-600" />}
           {SHOP_RARITY_LABELS[item.rarity]}
         </span>
-        <span className={`shrink-0 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-black tabular-nums sm:rounded-2xl sm:text-sm ${
+        <span className={`shrink-0 whitespace-nowrap rounded-xl px-2 py-1.5 text-[11px] font-black tabular-nums sm:rounded-2xl sm:px-3 sm:py-2 sm:text-sm ${
           isLegendary
             ? "shop-card-legendary-price bg-gradient-to-r from-amber-700 via-yellow-400 to-orange-600 text-amber-950 shadow-lg shadow-amber-500/30 ring-1 ring-yellow-200/70"
             : item.rarity === "MYTHIC"
@@ -561,7 +590,7 @@ function ShopItemCard({
         }`}>
           {formatCtom(item.priceCtom)}
         </span>
-        <h3 className={`basis-full break-words text-base font-black leading-tight sm:text-lg xl:text-[17px] ${
+        <h3 className={`basis-full break-words text-[15px] font-black leading-tight sm:text-lg xl:text-[17px] ${isCompactCatalog ? "line-clamp-2" : ""} ${
           isLegendary
             ? "shop-card-legendary-title bg-gradient-to-r from-amber-800 via-yellow-600 to-orange-700 bg-clip-text text-transparent"
             : item.rarity === "MYTHIC"
@@ -575,7 +604,7 @@ function ShopItemCard({
       </div>
 
       <div
-        className={`relative mt-3 ${isPhoenixLegendaryWing ? "overflow-visible" : "overflow-hidden"} rounded-xl sm:mt-4 sm:rounded-2xl lg:col-start-1 lg:row-span-3 lg:row-start-1 lg:mt-0 lg:h-full lg:min-h-0 ${
+        className={`relative ${isCompactCatalog ? "col-start-1 row-span-3 row-start-1 mt-0 min-h-[7.25rem] self-stretch" : "mt-3 sm:mt-4"} ${isPhoenixLegendaryWing ? "overflow-visible" : "overflow-hidden"} rounded-xl sm:rounded-2xl lg:col-start-1 lg:row-span-3 lg:row-start-1 lg:mt-0 lg:h-full lg:min-h-0 ${
           avatarShowcase
             ? (isLegendary
                 ? "bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.22),transparent_48%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.12),transparent_40%),linear-gradient(135deg,#1c1917,#292524_30%,#1c1917)] ring-1 ring-amber-500/20"
@@ -595,7 +624,7 @@ function ShopItemCard({
                     : item.rarity === "RARE"
                       ? "bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_48%),linear-gradient(135deg,#ecfdf5,#f0fdf4_50%,#ecfdf5)] ring-1 ring-emerald-200"
                       : "bg-[linear-gradient(135deg,#f8fafc,#f1f5f9)] ring-1 ring-slate-200")
-        } ${avatarShowcase ? showcaseClass : "p-3 sm:p-4 lg:p-3"} ${isLegendary ? "shop-card-legendary-stage" : ""}`}
+        } ${avatarShowcase ? showcaseClass : isCompactCatalog ? "p-2 lg:p-3" : "p-3 sm:p-4 lg:p-3"} ${isFrame ? "shop-row-frame-preview-stage" : ""} ${isLegendary ? "shop-card-legendary-stage" : ""}`}
       >
         {isLegendary && (
           <>
@@ -612,28 +641,35 @@ function ShopItemCard({
             <span className="shop-wing-flash" aria-hidden="true" />
           </>
         )}
-        {avatarShowcase ? (
+        {isFrame ? (
+          <ShopFramePreview
+            user={user}
+            cosmetics={previewCosmetics}
+            item={item}
+            compact={isCompactCatalog}
+          />
+        ) : avatarShowcase ? (
           <CosmeticAvatar
             image={user.image}
             name={user.name}
             cosmetics={previewCosmetics}
-            size={isLegendary ? "xl" : "lg"}
+            size={isCompactCatalog ? "md" : isLegendary ? "xl" : "lg"}
             className={`${isWings ? "shop-wing-avatar" : ""} ${isLegendary ? "shop-legendary-avatar" : ""}`}
           />
         ) : (
-          <div className={`relative z-10 flex h-full items-center gap-3 sm:gap-4 xl:flex-col xl:justify-center xl:gap-2 xl:text-center ${isLegendary ? "shop-legendary-profile-preview" : ""}`}>
+          <div className={`relative z-10 flex h-full items-center gap-2 sm:gap-4 xl:flex-col xl:justify-center xl:gap-2 xl:text-center ${isCompactCatalog ? "justify-center text-center lg:text-left xl:text-center" : ""} ${isLegendary ? "shop-legendary-profile-preview" : ""}`}>
             <CosmeticAvatar
               image={user.image}
               name={user.name}
               cosmetics={previewCosmetics}
-              size={isLegendary ? "lg" : "md"}
+              size={isCompactCatalog ? "sm" : isLegendary ? "lg" : "md"}
               className={`${isLegendary ? "shop-legendary-avatar" : ""} sm:!h-auto sm:!w-auto`}
             />
             <div className="min-w-0">
-              <p className={`line-clamp-2 text-sm font-black leading-tight text-slate-950 sm:text-base xl:text-xs ${cosmeticNameplateClass(previewCosmetics)}`}>
+              <p className={`line-clamp-2 text-xs font-black leading-tight text-slate-950 sm:text-base xl:text-xs ${cosmeticNameplateClass(previewCosmetics)}`}>
                 {user.name}
               </p>
-              <p className="mt-0.5 line-clamp-1 text-[11px] font-semibold text-slate-500 sm:mt-1 sm:text-xs xl:text-[10px]">
+              <p className={`mt-0.5 line-clamp-1 text-[10px] font-semibold text-slate-500 sm:mt-1 sm:text-xs xl:text-[10px] ${isCompactCatalog ? "hidden lg:block" : ""}`}>
                 {user.department || "Chưa có đơn vị"}
               </p>
               <div className="mt-1.5 sm:mt-2">
@@ -644,13 +680,13 @@ function ShopItemCard({
         )}
       </div>
 
-      <p className={`mt-3 break-words px-14 text-sm font-semibold leading-5 sm:px-0 lg:col-start-2 lg:row-start-2 lg:mt-0 ${
+      <p className={`${isCompactCatalog ? "col-start-2 row-start-2 mt-0 line-clamp-2 px-0 text-xs leading-4" : "mt-3 px-14 text-sm leading-5 sm:px-0"} break-words font-semibold lg:col-start-2 lg:row-start-2 lg:mt-0 lg:line-clamp-none lg:text-sm lg:leading-5 ${
         isLegendary ? "text-amber-950/80" : item.rarity === "MYTHIC" ? "text-rose-900/65" : item.rarity === "EPIC" ? "text-violet-900/60" : "text-slate-600"
       }`}>
         {item.description}
       </p>
 
-      <div className="mt-3 sm:mt-4 lg:col-start-2 lg:row-start-3 lg:mt-0">
+      <div className={`${isCompactCatalog ? "col-start-2 row-start-3 mt-0" : "mt-3 sm:mt-4"} lg:col-start-2 lg:row-start-3 lg:mt-0`}>
         {isEquipped ? (
           <div className="flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-emerald-50 px-3 text-xs font-black text-emerald-800 ring-1 ring-emerald-100 sm:min-h-11 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm">
             <Check size={14} className="sm:h-4 sm:w-4" />
@@ -663,7 +699,7 @@ function ShopItemCard({
             <form action={equipShopItemAction}>
               <input type="hidden" name="itemId" value={item.id} />
               <button
-                className="flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-slate-950 px-3 text-xs font-black text-white shadow-lg shadow-slate-950/10 hover:bg-emerald-800 sm:min-h-11 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm"
+                className="shop-action-button flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-slate-950 px-3 text-xs font-black text-white shadow-lg shadow-slate-950/10 hover:bg-emerald-800 sm:min-h-11 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-sm"
                 data-testid={`equip-${item.slug}`}
               >
                 <Sparkles size={14} className="sm:h-4 sm:w-4" />
@@ -688,11 +724,48 @@ function ShopItemCard({
   );
 }
 
+function ShopFramePreview({
+  user,
+  cosmetics,
+  item,
+  compact = false,
+}: {
+  user: { image: string | null; name: string; department: string };
+  cosmetics: EquippedCosmetics;
+  item: ShopItem;
+  compact?: boolean;
+}) {
+  return (
+    <div className={`shop-frame-preview-row ${compact ? "shop-frame-preview-row-compact" : ""} ${cosmeticRowFrameClass(cosmetics)}`}>
+      <div className="shop-frame-preview-rank">
+        #{item.rarity === "LEGENDARY" ? "1" : item.rarity === "MYTHIC" ? "3" : "8"}
+      </div>
+      <CosmeticAvatar
+        image={user.image}
+        name={user.name}
+        cosmetics={cosmetics}
+        size="sm"
+        effectIntensity="minimal"
+        showAvatarFrame={false}
+      />
+      <div className="min-w-0">
+        <p className={`truncate text-sm font-black text-slate-950 ${cosmeticNameplateClass(cosmetics)}`}>
+          {user.name}
+        </p>
+        <p className="truncate text-[11px] font-semibold text-slate-500">
+          {user.department || "Chưa có đơn vị"}
+        </p>
+      </div>
+      <div className="shop-frame-preview-score">72</div>
+    </div>
+  );
+}
+
 function CtomLeaderboard({ rows }: { rows: ShopPageData["leaderboard"] }) {
   const leaderRows = rows.map((row) => (
     <div
       key={row.id}
-      className="grid min-h-[4.5rem] grid-cols-[2rem_5.75rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1 px-3 py-2.5 sm:grid-cols-[2.25rem_6.75rem_minmax(0,1fr)_auto] sm:gap-x-3 sm:px-4 sm:py-3"
+      className={`grid min-h-[4.5rem] grid-cols-[2rem_5.75rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1 px-3 py-2.5 sm:grid-cols-[2.25rem_6.75rem_minmax(0,1fr)_auto] sm:gap-x-3 sm:px-4 sm:py-3 ${cosmeticRowFrameClass(row.cosmetics)}`}
     >
       <div
         className={`flex h-8 w-8 items-center justify-center rounded-xl text-xs font-black sm:h-9 sm:w-9 sm:rounded-2xl sm:text-sm ${
@@ -714,6 +787,7 @@ function CtomLeaderboard({ rows }: { rows: ShopPageData["leaderboard"] }) {
           cosmetics={row.cosmetics}
           size="sm"
           effectIntensity="compact"
+          showAvatarFrame={false}
         />
       </div>
       <div className="relative z-10 min-w-0">

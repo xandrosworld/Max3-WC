@@ -76,6 +76,7 @@ function ProfileAvatar({
       size="sm"
       effectIntensity="compact"
       coreClassName="ring-2 ring-emerald-300/60"
+      showAvatarFrame={false}
     />
   );
 }
