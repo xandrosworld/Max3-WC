@@ -4338,3 +4338,64 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
     animation: cosmetic-phoenix-sprite-strip 1.35s steps(11, end) infinite !important;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .shop-wing-stage .cosmetic-wing-side,
+  .shop-try-on-avatar-stage .cosmetic-wing-side,
+  .shop-card-legendary-stage .cosmetic-wing-side {
+    animation: cosmetic-svg-wing-soft-flap 3.2s ease-in-out infinite !important;
+  }
+
+  .shop-wing-stage .cosmetic-wing-right,
+  .shop-try-on-avatar-stage .cosmetic-wing-right,
+  .shop-card-legendary-stage .cosmetic-wing-right {
+    animation-delay: -0.12s !important;
+  }
+
+  .shop-wing-stage .cosmetic-wings-frost-crystal .cosmetic-wing-side,
+  .shop-try-on-avatar-stage .cosmetic-wings-frost-crystal .cosmetic-wing-side,
+  .shop-card-legendary-stage .cosmetic-wings-frost-crystal .cosmetic-wing-side {
+    animation-name: cosmetic-svg-wing-crystal-flap !important;
+    animation-duration: 3.8s !important;
+  }
+
+  .shop-wing-stage .cosmetic-wings-thunder-bolt .cosmetic-wing-side,
+  .shop-try-on-avatar-stage .cosmetic-wings-thunder-bolt .cosmetic-wing-side,
+  .shop-card-legendary-stage .cosmetic-wings-thunder-bolt .cosmetic-wing-side {
+    animation-name: cosmetic-svg-wing-thunder-flap !important;
+    animation-duration: 1.65s !important;
+  }
+
+  .shop-wing-stage .cosmetic-wings-demon-night .cosmetic-wing-side,
+  .shop-try-on-avatar-stage .cosmetic-wings-demon-night .cosmetic-wing-side,
+  .shop-card-legendary-stage .cosmetic-wings-demon-night .cosmetic-wing-side {
+    animation-name: cosmetic-svg-wing-demon-flap !important;
+    animation-duration: 2.15s !important;
+  }
+
+  .shop-wing-stage .cosmetic-wings-dragon-scale .cosmetic-wing-side,
+  .shop-try-on-avatar-stage .cosmetic-wings-dragon-scale .cosmetic-wing-side,
+  .shop-card-legendary-stage .cosmetic-wings-dragon-scale .cosmetic-wing-side {
+    animation-name: cosmetic-svg-wing-heavy-flap !important;
+    animation-duration: 4s !important;
+  }
+
+  .shop-wing-stage .cosmetic-wings-galaxy-nebula .cosmetic-wing-side,
+  .shop-try-on-avatar-stage .cosmetic-wings-galaxy-nebula .cosmetic-wing-side,
+  .shop-card-legendary-stage .cosmetic-wings-galaxy-nebula .cosmetic-wing-side {
+    animation-name: cosmetic-svg-wing-nebula-flap !important;
+    animation-duration: 4.8s !important;
+  }
+
+  .shop-wing-stage .cosmetic-avatar[data-wings="phoenix-flame"] .cosmetic-phoenix-sprite,
+  .shop-try-on-avatar-stage .cosmetic-avatar[data-wings="phoenix-flame"] .cosmetic-phoenix-sprite,
+  .shop-card-legendary-stage .cosmetic-avatar[data-wings="phoenix-flame"] .cosmetic-phoenix-sprite {
+    animation: cosmetic-phoenix-sprite-lift 1.35s linear infinite !important;
+  }
+
+  .shop-wing-stage .cosmetic-avatar[data-wings="phoenix-flame"] .cosmetic-phoenix-sprite::before,
+  .shop-try-on-avatar-stage .cosmetic-avatar[data-wings="phoenix-flame"] .cosmetic-phoenix-sprite::before,
+  .shop-card-legendary-stage .cosmetic-avatar[data-wings="phoenix-flame"] .cosmetic-phoenix-sprite::before {
+    animation: cosmetic-phoenix-sprite-strip 1.35s steps(11, end) infinite !important;
+  }
+}
