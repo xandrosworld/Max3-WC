@@ -4286,3 +4286,55 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
     animation: none !important;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .leaderboard-stage .cosmetic-wing-side {
+    animation: cosmetic-svg-wing-soft-flap 3.2s ease-in-out infinite !important;
+  }
+
+  .leaderboard-stage .cosmetic-wing-right {
+    animation-delay: -0.12s !important;
+  }
+
+  .leaderboard-stage .cosmetic-wings-frost-crystal .cosmetic-wing-side {
+    animation-name: cosmetic-svg-wing-crystal-flap !important;
+    animation-duration: 3.8s !important;
+  }
+
+  .leaderboard-stage .cosmetic-wings-thunder-bolt .cosmetic-wing-side {
+    animation-name: cosmetic-svg-wing-thunder-flap !important;
+    animation-duration: 1.65s !important;
+  }
+
+  .leaderboard-stage .cosmetic-wings-demon-night .cosmetic-wing-side {
+    animation-name: cosmetic-svg-wing-demon-flap !important;
+    animation-duration: 2.15s !important;
+  }
+
+  .leaderboard-stage .cosmetic-wings-dragon-scale .cosmetic-wing-side {
+    animation-name: cosmetic-svg-wing-heavy-flap !important;
+    animation-duration: 4s !important;
+  }
+
+  .leaderboard-stage .cosmetic-wings-galaxy-nebula .cosmetic-wing-side {
+    animation-name: cosmetic-svg-wing-nebula-flap !important;
+    animation-duration: 4.8s !important;
+  }
+
+  .leaderboard-stage .cosmetic-avatar[data-wings="angel-soft"] .cosmetic-avatar-wings span,
+  .leaderboard-stage .cosmetic-avatar[data-wings="frost-crystal"] .cosmetic-avatar-wings span {
+    animation: cosmetic-angel-flap 3.2s ease-in-out infinite !important;
+  }
+
+  .leaderboard-stage .cosmetic-avatar[data-wings="demon-night"] .cosmetic-avatar-wings span {
+    animation: cosmetic-demon-flap 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+  }
+
+  .leaderboard-stage .cosmetic-avatar[data-wings="phoenix-flame"] .cosmetic-phoenix-sprite {
+    animation: cosmetic-phoenix-sprite-lift 1.35s linear infinite !important;
+  }
+
+  .leaderboard-stage .cosmetic-avatar[data-wings="phoenix-flame"] .cosmetic-phoenix-sprite::before {
+    animation: cosmetic-phoenix-sprite-strip 1.35s steps(11, end) infinite !important;
+  }
+}
