@@ -6,6 +6,7 @@ import {
   cosmeticNameplateClass,
   cosmeticRowFrameClass,
 } from "@/components/cosmetic-avatar";
+import { AnimationVisibility } from "@/components/animation-visibility";
 import { LeaderboardMediaHints } from "@/components/leaderboard-media-hints";
 import { formatCurrency } from "@/lib/domain";
 import { getLeaderboard } from "@/lib/leaderboard";
@@ -671,6 +672,64 @@ export default async function LeaderboardPage({
           background: linear-gradient(90deg, transparent, rgba(255,255,255,0.75), transparent);
           animation: wcBarSweep 3.2s ease-in-out infinite;
         }
+        @media (max-width: 767px) {
+          .leaderboard-animation-visibility[data-in-view="false"],
+          .leaderboard-animation-visibility[data-in-view="false"] *,
+          .leaderboard-animation-visibility[data-in-view="false"]::before,
+          .leaderboard-animation-visibility[data-in-view="false"]::after,
+          .leaderboard-animation-visibility[data-in-view="false"] *::before,
+          .leaderboard-animation-visibility[data-in-view="false"] *::after {
+            animation-play-state: paused !important;
+          }
+          .leaderboard-stage .elite-card {
+            contain: layout paint;
+          }
+          .leaderboard-stage .elite-card::after,
+          .leaderboard-stage .rank-badge-elite::after,
+          .leaderboard-stage .accuracy-sweep::after {
+            animation-duration: 7.2s;
+            opacity: 0.56;
+          }
+          .leaderboard-stage .rank-pulse {
+            animation-duration: 4.8s !important;
+            opacity: 0.58;
+          }
+          .leaderboard-stage .avatar-glow {
+            animation-duration: 4.8s;
+            opacity: 0.68;
+          }
+          .leaderboard-stage .avatar-ring {
+            animation-duration: 6.8s;
+            filter: none;
+            opacity: 0.34;
+          }
+          .leaderboard-stage .avatar-lightning-svg {
+            animation-duration: 1.25s;
+            filter: drop-shadow(0 0 5px currentColor);
+            opacity: 0.72;
+          }
+          .leaderboard-stage .electric-runner {
+            animation-duration: 1.45s, 1.2s;
+          }
+          .leaderboard-stage .electric-runner-hot,
+          .leaderboard-stage .electric-runner-extra,
+          .leaderboard-stage .avatar-zap-c,
+          .leaderboard-stage .avatar-zap-d {
+            display: none;
+          }
+          .leaderboard-stage .avatar-zap {
+            animation-duration: 3.4s;
+            filter: none;
+          }
+          .leaderboard-stage .rank-tag-elite,
+          .leaderboard-stage .win-streak-badge {
+            animation-duration: 5.8s;
+          }
+          .leaderboard-stage .rank-tag-elite::after,
+          .leaderboard-stage .win-streak-badge::before {
+            animation-duration: 7.4s;
+          }
+        }
         @media (prefers-reduced-motion: reduce) {
           .rank-pulse,
           .elite-row::after,
@@ -846,7 +905,9 @@ function LeaderboardSection({
 
       <div className="space-y-3 p-3 md:hidden">
         {rows.map((row) => (
-          <MobileCard key={row.id} row={row} mode={mode} />
+          <AnimationVisibility key={row.id} className="leaderboard-animation-visibility">
+            <MobileCard row={row} mode={mode} />
+          </AnimationVisibility>
         ))}
       </div>
 
@@ -1185,8 +1246,8 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
   const primaryLabel = mode === "prediction" ? "Đúng" : "Góp quỹ";
   const primaryValue =
     mode === "prediction" ? String(row.correct) : formatCurrency(row.loss);
-  const showInlineWinnerGif = row.displayRank === 1 && mode === "contribution";
-  const showFloatingWinnerGif = row.displayRank === 1 && !showInlineWinnerGif;
+  const showInlineWinnerGif = row.displayRank === 1;
+  const showFloatingWinnerGif = false;
   const rowFrameKey = row.cosmetics?.AVATAR_FRAME?.visualKey;
 
   return (
@@ -1225,9 +1286,7 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
                 ? `${row.accuracy.toFixed(0)}% chính xác`
                 : `${row.voted} lượt dự đoán`}
             </p>
-            {!showInlineWinnerGif && (
-              <PlayerStatusBadges row={row} mode={mode} />
-            )}
+            {!showInlineWinnerGif && <PlayerStatusBadges row={row} mode={mode} />}
           </div>
         </div>
         <MobilePrimaryBadge
@@ -1239,7 +1298,7 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
       </div>
 
       {showInlineWinnerGif && (
-        <div className="relative mt-2.5 flex min-w-0 items-center justify-between gap-2 pl-[4.4rem]">
+        <div className="relative z-10 mt-2.5 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 pl-[4.4rem] max-[390px]:pl-0">
           <div className="min-w-0">
             <RankTag rank={row.displayRank} mode={mode} />
           </div>
@@ -1283,6 +1342,7 @@ function TopWinnerGif({
         ? "top-winner-gif top-winner-gif-inline"
         : "top-winner-gif";
   const media = getTopWinnerMedia(mode);
+  const eager = variant === "desktop";
 
   return (
     <div className={className} aria-hidden="true">
@@ -1290,9 +1350,9 @@ function TopWinnerGif({
       <img
         src={media.gif}
         alt=""
-        loading="eager"
+        loading={eager ? "eager" : "lazy"}
         decoding="async"
-        fetchPriority="high"
+        fetchPriority={eager ? "high" : "low"}
       />
     </div>
   );
