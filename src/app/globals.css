@@ -2019,6 +2019,65 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
   }
 }
 
+@keyframes row-skin-sunfire-sheen {
+  0%,
+  58%,
+  100% {
+    background-position: -140% 0;
+    opacity: 0;
+  }
+  70% {
+    opacity: 0.52;
+  }
+  86% {
+    background-position: 170% 0;
+    opacity: 0;
+  }
+}
+
+@keyframes row-skin-sunfire-sparkle {
+  0%,
+  100% {
+    opacity: 0.34;
+    background-position: 0 0, 0 0, 0 0, 0 0;
+  }
+  45% {
+    opacity: 0.76;
+    background-position: 0 0, 0 0, 0 0, 0 0;
+  }
+  70% {
+    opacity: 0.48;
+  }
+}
+
+@keyframes row-skin-ancient-pulse {
+  0%,
+  100% {
+    opacity: 0.24;
+    background-position: 0 0, 100% 0, 0 0;
+  }
+  50% {
+    opacity: 0.56;
+    background-position: 18px 0, calc(100% - 18px) 0, 0 0;
+  }
+}
+
+@keyframes row-skin-ancient-glint {
+  0%,
+  62%,
+  100% {
+    background-position: -130% 0;
+    opacity: 0;
+  }
+  76% {
+    opacity: 0.32;
+  }
+  90% {
+    background-position: 160% 0;
+    opacity: 0;
+  }
+}
+
 /* Row background skins: formerly frame items, now calm leaderboard backgrounds. */
 .cosmetic-row-frame {
   --row-skin-bg:
@@ -2148,6 +2207,84 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
   content: none !important;
   display: none !important;
   animation: none !important;
+}
+
+.cosmetic-row-frame-ancient-divine:not(tr)::before,
+.leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame-ancient-divine::before,
+.leaderboard-stage .mobile-card-has-cosmetic-frame.cosmetic-row-frame-ancient-divine::before,
+.shop-frame-preview-row.cosmetic-row-frame-ancient-divine::before,
+.shop-try-on-frame-preview.cosmetic-row-frame-ancient-divine::before {
+  content: "" !important;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block !important;
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 34px, rgba(159, 18, 57, 0.16) 34px 36px, transparent 36px 68px),
+    radial-gradient(circle at 20% 22%, rgba(255, 228, 230, 0.5) 0 2px, transparent 5px),
+    radial-gradient(circle at 82% 72%, rgba(244, 63, 94, 0.34), transparent 28%);
+  background-size: 68px 100%, 100% 100%, 100% 100%;
+  opacity: 0.28;
+  animation: row-skin-ancient-pulse 13s ease-in-out infinite !important;
+}
+
+.cosmetic-row-frame-ancient-divine:not(tr)::after,
+.leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame-ancient-divine::after,
+.leaderboard-stage .mobile-card-has-cosmetic-frame.cosmetic-row-frame-ancient-divine::after,
+.shop-frame-preview-row.cosmetic-row-frame-ancient-divine::after,
+.shop-try-on-frame-preview.cosmetic-row-frame-ancient-divine::after {
+  content: "" !important;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block !important;
+  border-radius: inherit;
+  background: linear-gradient(105deg, transparent 0 42%, rgba(255, 255, 255, 0.38) 50%, transparent 58% 100%);
+  background-size: 210% 100%;
+  opacity: 0;
+  animation: row-skin-ancient-glint 15s ease-in-out infinite !important;
+}
+
+.cosmetic-row-frame-sunfire-legend:not(tr)::before,
+.leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame-sunfire-legend::before,
+.leaderboard-stage .mobile-card-has-cosmetic-frame.cosmetic-row-frame-sunfire-legend::before,
+.shop-frame-preview-row.cosmetic-row-frame-sunfire-legend::before,
+.shop-try-on-frame-preview.cosmetic-row-frame-sunfire-legend::before {
+  content: "" !important;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block !important;
+  border-radius: inherit;
+  background: linear-gradient(108deg, transparent 0 38%, rgba(255, 255, 255, 0.58) 48%, rgba(254, 240, 138, 0.36) 54%, transparent 66% 100%);
+  background-size: 230% 100%;
+  opacity: 0;
+  animation: row-skin-sunfire-sheen 12s ease-in-out infinite !important;
+}
+
+.cosmetic-row-frame-sunfire-legend:not(tr)::after,
+.leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame-sunfire-legend::after,
+.leaderboard-stage .mobile-card-has-cosmetic-frame.cosmetic-row-frame-sunfire-legend::after,
+.shop-frame-preview-row.cosmetic-row-frame-sunfire-legend::after,
+.shop-try-on-frame-preview.cosmetic-row-frame-sunfire-legend::after {
+  content: "" !important;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block !important;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 18% 28%, rgba(255, 255, 255, 0.9) 0 1.5px, transparent 4px),
+    radial-gradient(circle at 38% 72%, rgba(254, 240, 138, 0.74) 0 1.5px, transparent 4px),
+    radial-gradient(circle at 76% 24%, rgba(251, 191, 36, 0.64) 0 2px, transparent 5px),
+    radial-gradient(circle at 91% 72%, rgba(249, 115, 22, 0.46) 0 2px, transparent 6px);
+  opacity: 0.34;
+  animation: row-skin-sunfire-sparkle 6.5s ease-in-out infinite !important;
 }
 
 .shop-row-frame-preview-stage {
