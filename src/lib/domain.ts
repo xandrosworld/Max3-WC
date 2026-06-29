@@ -34,6 +34,7 @@ export function getContributionAmount(round: RoundType) {
 
 export function canUseHopeStar(round: RoundType) {
   const hopeStarRounds: RoundType[] = [
+    RoundType.ROUND_OF_16,
     RoundType.QUARTER_FINAL,
     RoundType.SEMI_FINAL,
     RoundType.THIRD_PLACE,

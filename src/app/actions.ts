@@ -248,7 +248,7 @@ export async function voteAction(formData: FormData) {
     throw new Error("Kèo nửa trái chỉ có hai cửa đội A hoặc đội B");
   }
   if (requestedHopeStar && !canUseHopeStar(match.round)) {
-    throw new Error("Ngôi sao hy vọng chỉ dùng từ tứ kết trở đi");
+    throw new Error("Ngôi sao hy vọng chỉ dùng từ vòng 16 trở đi");
   }
 
   const existingVote = await prisma.vote.findUnique({

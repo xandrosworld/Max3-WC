@@ -125,7 +125,7 @@ export function MatchVoteForm({
         />
         <Sparkles size={17} aria-hidden="true" />
         <span className="font-bold">
-          {hopeStarAllowed ? "Bật Ngôi sao hy vọng" : "Ngôi sao mở từ tứ kết"}
+          {hopeStarAllowed ? "Bật Ngôi sao hy vọng" : "Ngôi sao mở từ vòng 16"}
         </span>
       </label>
     </form>

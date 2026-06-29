@@ -52,7 +52,7 @@ export function buildWorldCupChatReply(question: string, context: ChatContext) {
       "- Kèo nửa trái như 0,5 hoặc 1,5 chỉ có hai cửa đội A hoặc đội B.",
       "- Admin đặt mức chấp trước trận. Tỷ số tính theo 90 phút chính thức.",
       "- Chọn đúng thì không tăng đóng góp. Chọn sai thì ghi nhận đóng góp theo mức của vòng.",
-      "- Ngôi sao hy vọng chỉ dùng từ tứ kết trở đi: đúng thì giảm đóng góp bằng mức trận đó, sai thì đóng góp trận đó nhân đôi.",
+      "- Ngôi sao hy vọng chỉ dùng từ vòng 16 trở đi: đúng thì giảm đóng góp bằng mức trận đó, sai thì đóng góp trận đó nhân đôi.",
       "- Không chọn trước giờ khóa thì tính như thua và ghi nhận đóng góp theo mức của vòng.",
       "- Nếu đã cài tự theo một người, hệ thống chỉ copy lựa chọn khi bạn quên chọn; Ngôi sao hy vọng không tự copy.",
       "- Đây là dự đoán vui nội bộ, không phải nền tảng cá cược.",

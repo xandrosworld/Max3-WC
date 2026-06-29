@@ -242,9 +242,9 @@ describe("hope star eligibility", () => {
     expect(canUseHopeStar(RoundType.GROUP)).toBe(false);
   });
 
-  it("chỉ cho dùng từ tứ kết trở đi", () => {
+  it("chỉ cho dùng từ vòng 16 trở đi", () => {
     expect(canUseHopeStar(RoundType.ROUND_OF_32)).toBe(false);
-    expect(canUseHopeStar(RoundType.ROUND_OF_16)).toBe(false);
+    expect(canUseHopeStar(RoundType.ROUND_OF_16)).toBe(true);
     expect(canUseHopeStar(RoundType.QUARTER_FINAL)).toBe(true);
     expect(canUseHopeStar(RoundType.FINAL)).toBe(true);
   });

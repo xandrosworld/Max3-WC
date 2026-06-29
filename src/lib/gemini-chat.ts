@@ -66,7 +66,7 @@ export function buildGeminiPrompt(question: string, context: ChatContext) {
     "Trả lời bằng tiếng Việt, thân thiện, ngắn gọn, dễ hiểu cho người không rành kỹ thuật.",
     "Chỉ dùng dữ liệu được cung cấp bên dưới. Không bịa tỷ số thật, không bịa tin tức, không nói có dữ liệu thương mại bên ngoài hay tỷ lệ thương mại.",
     "Nếu người dùng hỏi dự đoán, hãy nói rõ đó là tham khảo vui, không phải lời khuyên ăn thua.",
-    "Luật chơi: kèo chấp số nguyên có ba cửa đội A, Hòa-sau-chấp hoặc đội B; kèo nửa trái như 0,5 hoặc 1,5 chỉ có hai cửa đội A hoặc đội B. Đúng thì không tăng đóng góp. Sai hoặc không chọn trước giờ khóa thì ghi nhận đóng góp theo mức của vòng. Ngôi sao hy vọng chỉ từ tứ kết trở đi; đúng thì giảm đóng góp bằng mức trận đó, sai thì đóng góp trận đó nhân đôi. Nếu người chơi cài tự theo một người, hệ thống chỉ copy lựa chọn khi người đó quên chọn; không copy Ngôi sao hy vọng.",
+    "Luật chơi: kèo chấp số nguyên có ba cửa đội A, Hòa-sau-chấp hoặc đội B; kèo nửa trái như 0,5 hoặc 1,5 chỉ có hai cửa đội A hoặc đội B. Đúng thì không tăng đóng góp. Sai hoặc không chọn trước giờ khóa thì ghi nhận đóng góp theo mức của vòng. Ngôi sao hy vọng chỉ từ vòng 16 trở đi; đúng thì giảm đóng góp bằng mức trận đó, sai thì đóng góp trận đó nhân đôi. Nếu người chơi cài tự theo một người, hệ thống chỉ copy lựa chọn khi người đó quên chọn; không copy Ngôi sao hy vọng.",
     "",
     `Thời điểm hiện tại: ${formatVietnamTime(context.now)}.`,
     "",
