@@ -51,7 +51,7 @@ type ShopTryOnContextValue = {
 };
 
 const SHOP_TYPE_LABELS: Record<ShopCosmeticType, string> = {
-  AVATAR_FRAME: "Viền BXH",
+  AVATAR_FRAME: "Nền BXH",
   AVATAR_WINGS: "Cánh",
   AVATAR_AURA: "Aura",
   TITLE: "Danh hiệu",

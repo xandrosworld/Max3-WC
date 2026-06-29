@@ -910,7 +910,6 @@ function LeaderboardSection({
           <div role="rowgroup" className="space-y-1.5 p-1.5">
             {rows.map((row, index) => {
               const visual = getRankVisual(row.displayRank, mode);
-              const rowFrameKey = row.cosmetics?.AVATAR_FRAME?.visualKey;
               const rowBg =
                 row.displayRank <= 3
                   ? visual.desktopClass
@@ -927,13 +926,6 @@ function LeaderboardSection({
                   } ${rowBg} ${cosmeticRowFrameClass(row.cosmetics)}`}
                   style={desktopGridStyle}
                 >
-                  {rowFrameKey && (
-                    <span
-                      className={`mobile-cosmetic-frame-art desktop-cosmetic-frame-art cosmetic-row-frame-${rowFrameKey}`}
-                      role="presentation"
-                      aria-hidden="true"
-                    />
-                  )}
                   <div role="cell" className={desktopCellClass}>
                     <RankBadge rank={row.displayRank} mode={mode} />
                   </div>
@@ -1244,12 +1236,6 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
 
   return (
     <article className={`relative overflow-hidden rounded-2xl border p-3 shadow-sm active:scale-[0.99] ${row.displayRank <= 3 ? `elite-card ${visual.rankClass}` : ""} ${visual.cardClass} ${rowFrameKey ? `mobile-card-has-cosmetic-frame cosmetic-row-frame-${rowFrameKey}` : ""}`}>
-      {rowFrameKey && (
-        <span
-          className={`mobile-cosmetic-frame-art cosmetic-row-frame-${rowFrameKey}`}
-          aria-hidden="true"
-        />
-      )}
       {row.displayRank <= 3 && (
         <span
           className={`rank-pulse pointer-events-none absolute right-2 top-2 h-14 w-14 rounded-full ${visual.haloClass}`}

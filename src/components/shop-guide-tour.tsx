@@ -58,7 +58,7 @@ const GUIDE_STEPS: GuideStep[] = [
   {
     eyebrow: "Bước 2",
     title: "Chọn nhóm đồ muốn xem",
-    body: "Viền BXH, cánh, aura, danh hiệu hay bảng tên đều nằm ở đây. Cứ lướt như chọn skin trong game.",
+    body: "Nền BXH, cánh, aura, danh hiệu hay bảng tên đều nằm ở đây. Cứ lướt như chọn skin trong game.",
     Icon: Sparkles,
     tone: "from-sky-500 to-cyan-400",
     durationMs: 3200,

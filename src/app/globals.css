@@ -1724,7 +1724,7 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
   z-index: 1;
 }
 
-/* Desktop leaderboard rows reuse the shop frame border art without copying preview content. */
+/* Legacy frame art is suppressed below; row items now render as background skins. */
 .leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame {
   border-color: color-mix(in srgb, var(--row-frame-a) 72%, transparent) !important;
   border-style: var(--row-frame-border-style) !important;
@@ -1997,6 +1997,108 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
     inset 0 0 0 1px rgba(254, 240, 138, 0.92),
     0 0 22px rgba(249, 115, 22, 0.42),
     0 0 7px rgba(220, 38, 38, 0.28);
+}
+
+/* Row background skins: formerly frame items, now calm leaderboard backgrounds. */
+.cosmetic-row-frame {
+  --row-skin-bg:
+    radial-gradient(circle at 12% 28%, rgba(255, 255, 255, 0.72), transparent 28%),
+    linear-gradient(135deg, rgba(236, 253, 245, 0.92), rgba(255, 255, 255, 0.96) 52%, rgba(209, 250, 229, 0.72));
+  --row-skin-border: rgba(16, 185, 129, 0.22);
+  --row-skin-shadow: rgba(16, 185, 129, 0.08);
+}
+
+.cosmetic-row-frame-silver-jade {
+  --row-skin-bg:
+    radial-gradient(circle at 12% 28%, rgba(255, 255, 255, 0.82), transparent 28%),
+    linear-gradient(135deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 0.98) 54%, rgba(226, 232, 240, 0.7));
+  --row-skin-border: rgba(148, 163, 184, 0.24);
+  --row-skin-shadow: rgba(148, 163, 184, 0.08);
+}
+
+.cosmetic-row-frame-emerald-glory {
+  --row-skin-bg:
+    radial-gradient(circle at 14% 28%, rgba(167, 243, 208, 0.34), transparent 32%),
+    linear-gradient(135deg, rgba(236, 253, 245, 0.96), rgba(255, 255, 255, 0.98) 50%, rgba(209, 250, 229, 0.78));
+  --row-skin-border: rgba(16, 185, 129, 0.28);
+  --row-skin-shadow: rgba(16, 185, 129, 0.1);
+}
+
+.cosmetic-row-frame-celestial-halo {
+  --row-skin-bg:
+    radial-gradient(circle at 16% 25%, rgba(186, 230, 253, 0.38), transparent 30%),
+    linear-gradient(135deg, rgba(240, 249, 255, 0.96), rgba(255, 255, 255, 0.98) 50%, rgba(224, 242, 254, 0.78));
+  --row-skin-border: rgba(56, 189, 248, 0.25);
+  --row-skin-shadow: rgba(56, 189, 248, 0.09);
+}
+
+.cosmetic-row-frame-neon-storm {
+  --row-skin-bg:
+    radial-gradient(circle at 13% 25%, rgba(45, 212, 191, 0.18), transparent 32%),
+    radial-gradient(circle at 90% 20%, rgba(168, 85, 247, 0.14), transparent 34%),
+    linear-gradient(135deg, rgba(245, 243, 255, 0.96), rgba(255, 255, 255, 0.98) 54%, rgba(236, 253, 245, 0.72));
+  --row-skin-border: rgba(124, 58, 237, 0.24);
+  --row-skin-shadow: rgba(124, 58, 237, 0.1);
+}
+
+.cosmetic-row-frame-royal-violet {
+  --row-skin-bg:
+    radial-gradient(circle at 14% 28%, rgba(253, 224, 71, 0.2), transparent 32%),
+    radial-gradient(circle at 90% 22%, rgba(167, 139, 250, 0.18), transparent 36%),
+    linear-gradient(135deg, rgba(250, 245, 255, 0.96), rgba(255, 255, 255, 0.98) 52%, rgba(254, 243, 199, 0.72));
+  --row-skin-border: rgba(124, 58, 237, 0.22);
+  --row-skin-shadow: rgba(124, 58, 237, 0.1);
+}
+
+.cosmetic-row-frame-dragon-crest {
+  --row-skin-bg:
+    radial-gradient(circle at 15% 28%, rgba(251, 146, 60, 0.18), transparent 32%),
+    radial-gradient(circle at 88% 18%, rgba(248, 113, 113, 0.14), transparent 34%),
+    linear-gradient(135deg, rgba(255, 247, 237, 0.96), rgba(255, 255, 255, 0.98) 52%, rgba(254, 226, 226, 0.72));
+  --row-skin-border: rgba(239, 68, 68, 0.22);
+  --row-skin-shadow: rgba(239, 68, 68, 0.1);
+}
+
+.cosmetic-row-frame-ancient-divine {
+  --row-skin-bg:
+    radial-gradient(circle at 14% 28%, rgba(251, 113, 133, 0.18), transparent 32%),
+    radial-gradient(circle at 88% 18%, rgba(236, 72, 153, 0.12), transparent 34%),
+    linear-gradient(135deg, rgba(255, 241, 242, 0.96), rgba(255, 255, 255, 0.98) 52%, rgba(252, 231, 243, 0.72));
+  --row-skin-border: rgba(190, 18, 60, 0.22);
+  --row-skin-shadow: rgba(190, 18, 60, 0.1);
+}
+
+.cosmetic-row-frame-sunfire-legend {
+  --row-skin-bg:
+    radial-gradient(circle at 14% 28%, rgba(251, 191, 36, 0.24), transparent 34%),
+    radial-gradient(circle at 88% 18%, rgba(249, 115, 22, 0.14), transparent 36%),
+    linear-gradient(135deg, rgba(255, 251, 235, 0.98), rgba(255, 255, 255, 0.98) 48%, rgba(254, 243, 199, 0.78));
+  --row-skin-border: rgba(245, 158, 11, 0.26);
+  --row-skin-shadow: rgba(245, 158, 11, 0.12);
+}
+
+.cosmetic-row-frame:not(tr),
+.leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame,
+.leaderboard-stage .mobile-card-has-cosmetic-frame,
+.shop-frame-preview-row.cosmetic-row-frame,
+.shop-try-on-frame-preview.cosmetic-row-frame {
+  border: 1px solid var(--row-skin-border) !important;
+  background: var(--row-skin-bg) !important;
+  box-shadow:
+    0 8px 18px var(--row-skin-shadow),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.58) !important;
+  animation: none !important;
+}
+
+.cosmetic-row-frame:not(tr)::before,
+.cosmetic-row-frame:not(tr)::after,
+.leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame::before,
+.leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame::after,
+.mobile-cosmetic-frame-art,
+.desktop-cosmetic-frame-art {
+  content: none !important;
+  display: none !important;
+  animation: none !important;
 }
 
 .shop-row-frame-preview-stage {

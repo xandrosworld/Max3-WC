@@ -249,11 +249,18 @@ function toTryOnItem(
     slug: item.slug,
     type: item.type as ShopTryOnItem["type"],
     rarity: item.rarity,
-    name: item.name,
+    name: getShopItemDisplayName(item),
     visualKey: item.visualKey,
     priceCtom: item.priceCtom,
     owned: options.owned,
   };
+}
+
+function getShopItemDisplayName(
+  item: Pick<ShopItem, "type" | "name">,
+) {
+  if (item.type !== ShopItemType.AVATAR_FRAME) return item.name;
+  return item.name.replace(/^Viền(?=\s)/u, "Nền");
 }
 
 function toTryOnCosmetics(equipped: EquippedCosmetics): ShopTryOnCosmetics {
@@ -307,7 +314,8 @@ function getActionItemName(
   items: ShopItem[],
 ) {
   const slug = typeof params.item === "string" ? params.item : "";
-  return items.find((item) => item.slug === slug)?.name;
+  const item = items.find((candidate) => candidate.slug === slug);
+  return item ? getShopItemDisplayName(item) : undefined;
 }
 
 function Notice({
@@ -599,7 +607,7 @@ function ShopItemCard({
                 ? "text-violet-950"
                 : "text-slate-950"
         }`}>
-          {item.name}
+          {getShopItemDisplayName(item)}
         </h3>
       </div>
 
@@ -713,7 +721,7 @@ function ShopItemCard({
             <ShopPurchaseForm
               itemId={item.id}
               itemSlug={item.slug}
-              itemName={item.name}
+              itemName={getShopItemDisplayName(item)}
               priceLabel={formatCtom(item.priceCtom)}
               rarity={item.rarity}
             />

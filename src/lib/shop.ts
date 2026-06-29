@@ -7,7 +7,7 @@ import {
 import { prisma } from "./prisma";
 
 export const SHOP_TYPE_LABELS: Record<ShopItemType, string> = {
-  AVATAR_FRAME: "Viền BXH",
+  AVATAR_FRAME: "Nền BXH",
   AVATAR_WINGS: "Cánh avatar",
   AVATAR_AURA: "Hào quang",
   TITLE: "Danh hiệu",
@@ -15,7 +15,7 @@ export const SHOP_TYPE_LABELS: Record<ShopItemType, string> = {
 };
 
 export const SHOP_TYPE_SHORT_LABELS: Record<ShopItemType, string> = {
-  AVATAR_FRAME: "Viền",
+  AVATAR_FRAME: "Nền",
   AVATAR_WINGS: "Cánh",
   AVATAR_AURA: "Aura",
   TITLE: "Danh hiệu",
@@ -65,13 +65,13 @@ type CatalogItem = {
 };
 
 export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
-  /* ── Ranking Row Frames ────────────────────────────────── */
+  /* ── Ranking Row Backgrounds ───────────────────────────── */
   {
     slug: "frame-silver-jade",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.COMMON,
-    name: "Viền Bạch Ngọc",
-    description: "Bạc ngọc mỏng, sạch mắt, chạy nhẹ quanh hàng.",
+    name: "Nền Bạch Ngọc",
+    description: "Nền bạc ngọc sạch mắt, nhẹ và dễ đọc trên bảng.",
     priceCtom: 11_111,
     visualKey: "silver-jade",
     sortOrder: 5,
@@ -80,8 +80,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     slug: "frame-emerald-glory",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.RARE,
-    name: "Viền Lục Bảo",
-    description: "Xanh ngọc sáng, nổi bật mà vẫn gọn.",
+    name: "Nền Lục Bảo",
+    description: "Nền xanh ngọc sáng, nổi bật mà vẫn gọn.",
     priceCtom: 22_222,
     visualKey: "emerald-glory",
     sortOrder: 10,
@@ -90,8 +90,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     slug: "frame-celestial-halo",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.RARE,
-    name: "Viền Thiên Giới",
-    description: "Sao xanh trắng nhấp nháy quanh dòng xếp hạng.",
+    name: "Nền Thiên Giới",
+    description: "Nền xanh trắng dịu, sáng nhưng không rối mắt.",
     priceCtom: 28_888,
     visualKey: "celestial-halo",
     sortOrder: 15,
@@ -100,8 +100,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     slug: "frame-neon-storm",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.EPIC,
-    name: "Viền Sấm Neon",
-    description: "Điện tím xanh quét quanh viền, nhìn phát biết sử thi.",
+    name: "Nền Sấm Neon",
+    description: "Nền tím xanh nổi bật, nhìn phát biết sử thi.",
     priceCtom: 39_999,
     visualKey: "neon-storm",
     sortOrder: 20,
@@ -110,8 +110,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     slug: "frame-royal-violet",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.EPIC,
-    name: "Viền Hoàng Gia",
-    description: "Tím vàng sang, có ánh kim chạy quanh khung.",
+    name: "Nền Hoàng Gia",
+    description: "Nền tím vàng sang, có chất hoàng gia.",
     priceCtom: 49_999,
     visualKey: "royal-violet",
     sortOrder: 30,
@@ -120,8 +120,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     slug: "frame-dragon-crest",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.EPIC,
-    name: "Viền Rồng Vương",
-    description: "Vảy đỏ vàng chạy quanh hàng, khí chất rồng vương.",
+    name: "Nền Rồng Vương",
+    description: "Nền đỏ vàng ấm, khí chất rồng vương.",
     priceCtom: 55_555,
     visualKey: "dragon-crest",
     sortOrder: 35,
@@ -130,8 +130,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     slug: "frame-ancient-divine",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.MYTHIC,
-    name: "Viền Cổ Thần",
-    description: "Rune đỏ hồng thức tỉnh quanh viền, chất cổ thần rõ rệt.",
+    name: "Nền Cổ Thần",
+    description: "Nền đỏ hồng cổ thần, nổi mà vẫn dễ nhìn.",
     priceCtom: 55_555,
     visualKey: "ancient-divine",
     sortOrder: 37,
@@ -140,8 +140,8 @@ export const DEFAULT_SHOP_ITEMS: CatalogItem[] = [
     slug: "frame-sunfire-legend",
     type: ShopItemType.AVATAR_FRAME,
     rarity: ShopItemRarity.LEGENDARY,
-    name: "Viền Thái Dương",
-    description: "Lửa mặt trời chạy bốn cạnh, sáng nhất bảng.",
+    name: "Nền Thái Dương",
+    description: "Nền mặt trời vàng ấm, sáng nhất bảng.",
     priceCtom: 99_999,
     visualKey: "sunfire-legend",
     sortOrder: 40,
