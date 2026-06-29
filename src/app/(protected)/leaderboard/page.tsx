@@ -954,6 +954,7 @@ function LeaderboardSection({
                         rank={row.displayRank}
                         mode={mode}
                         cosmetics={row.cosmetics}
+                        variant="desktop"
                       />
                       <div className="min-w-0">
                         <PlayerIdentity row={row} />
@@ -1277,6 +1278,7 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
               rank={row.displayRank}
               mode={mode}
               cosmetics={row.cosmetics}
+              variant="mobile"
             />
           </div>
           <div className="min-w-0 pt-1">
@@ -1455,18 +1457,23 @@ function Avatar({
   rank,
   mode,
   cosmetics,
+  variant = "desktop",
 }: {
   image: string | null;
   name: string;
   rank: number;
   mode: BoardMode;
   cosmetics: RankedRow["cosmetics"];
+  variant?: "desktop" | "mobile";
 }) {
   const visual = getRankVisual(rank, mode);
   const avatarClass = `relative z-10 h-10 w-10 rounded-2xl ${visual.avatarClass}`;
+  const hasWings = Boolean(cosmetics?.AVATAR_WINGS);
+  const stageClass =
+    variant === "desktop" && hasWings ? "leaderboard-avatar-stage-with-wings" : "";
 
   return (
-    <span className={`avatar-shell relative inline-flex shrink-0 ${rank <= 3 ? `avatar-elite ${visual.rankClass}` : ""}`}>
+    <span className={`avatar-shell relative inline-flex shrink-0 items-center justify-center ${stageClass} ${rank <= 3 ? `avatar-elite ${visual.rankClass}` : ""}`}>
       {rank <= 3 && (
         <>
           <span className="avatar-glow pointer-events-none" />

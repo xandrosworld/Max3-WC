@@ -1770,6 +1770,48 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
   border-color: rgba(245, 158, 11, 0.72) !important;
 }
 
+.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings {
+  width: 5.65rem;
+  min-width: 5.65rem;
+  min-height: 4.6rem;
+  margin-inline: -0.2rem 0.1rem;
+}
+
+.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings .cosmetic-avatar {
+  --leaderboard-desktop-wing-scale: 0.64;
+  z-index: 2;
+}
+
+.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings .cosmetic-avatar[data-effect-intensity="compact"] .cosmetic-avatar-wings {
+  transform: scale(var(--leaderboard-desktop-wing-scale));
+}
+
+.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings .cosmetic-avatar[data-wings="angel-soft"] .cosmetic-avatar-wings,
+.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings .cosmetic-avatar[data-wings="frost-crystal"] .cosmetic-avatar-wings,
+.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings .cosmetic-avatar[data-wings="thunder-bolt"] .cosmetic-avatar-wings {
+  inset: -34% -58%;
+}
+
+.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings .cosmetic-avatar[data-wings="demon-night"] .cosmetic-avatar-wings {
+  inset: -30% -58%;
+}
+
+.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings .cosmetic-avatar[data-wings="dragon-scale"],
+.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings .cosmetic-avatar[data-wings="galaxy-nebula"] {
+  --leaderboard-desktop-wing-scale: 0.58;
+}
+
+.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings .cosmetic-avatar[data-wings="dragon-scale"] .cosmetic-avatar-wings,
+.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings .cosmetic-avatar[data-wings="galaxy-nebula"] .cosmetic-avatar-wings {
+  inset: -36% -62%;
+}
+
+.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings .cosmetic-wings-svg {
+  filter:
+    drop-shadow(0 7px 10px rgba(15, 23, 42, 0.16))
+    saturate(1.04);
+}
+
 .mobile-cosmetic-frame-art {
   --row-frame-a: rgba(16, 185, 129, 0.72);
   --row-frame-b: rgba(45, 212, 191, 0.42);
