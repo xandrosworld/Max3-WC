@@ -910,6 +910,7 @@ function LeaderboardSection({
           <div role="rowgroup" className="space-y-1.5 p-1.5">
             {rows.map((row, index) => {
               const visual = getRankVisual(row.displayRank, mode);
+              const rowFrameKey = row.cosmetics?.AVATAR_FRAME?.visualKey;
               const rowBg =
                 row.displayRank <= 3
                   ? visual.desktopClass
@@ -926,6 +927,13 @@ function LeaderboardSection({
                   } ${rowBg} ${cosmeticRowFrameClass(row.cosmetics)}`}
                   style={desktopGridStyle}
                 >
+                  {rowFrameKey && (
+                    <span
+                      className={`mobile-cosmetic-frame-art desktop-cosmetic-frame-art cosmetic-row-frame-${rowFrameKey}`}
+                      role="presentation"
+                      aria-hidden="true"
+                    />
+                  )}
                   <div role="cell" className={desktopCellClass}>
                     <RankBadge rank={row.displayRank} mode={mode} />
                   </div>

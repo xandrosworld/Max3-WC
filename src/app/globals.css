@@ -1734,52 +1734,44 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
 }
 
 .leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame::before {
-  content: "" !important;
-  display: block !important;
-  pointer-events: none !important;
-  position: absolute !important;
-  inset: 0.36rem !important;
-  z-index: 0 !important;
-  border-radius: inherit !important;
-  border: 1px solid color-mix(in srgb, var(--row-frame-sheen) 72%, transparent) !important;
-  background: var(--row-frame-corner-art) !important;
-  opacity: var(--row-frame-corner-opacity) !important;
-  visibility: visible !important;
-  filter: drop-shadow(0 0 10px var(--row-frame-glow)) !important;
-  animation: cosmetic-row-frame-spark 3.2s ease-in-out infinite !important;
-  animation-play-state: running !important;
-  will-change: opacity, transform;
+  display: none !important;
 }
 
 .leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame::after {
-  content: "" !important;
-  display: block !important;
-  pointer-events: none !important;
-  position: absolute !important;
-  inset: 0.2rem !important;
-  z-index: 0 !important;
-  border-radius: inherit !important;
-  border: 0 !important;
-  background:
-    var(--row-frame-runner-x) top left / 220% var(--row-frame-edge-size) no-repeat,
-    var(--row-frame-runner-y) right top / var(--row-frame-edge-size) 220% no-repeat,
-    var(--row-frame-runner-x) bottom right / 220% var(--row-frame-edge-size) no-repeat,
-    var(--row-frame-runner-y) left bottom / var(--row-frame-edge-size) 220% no-repeat !important;
-  background-position:
-    -170% 0,
-    100% -170%,
-    170% 100%,
-    0 170% !important;
-  opacity: var(--row-frame-art-opacity) !important;
-  filter: drop-shadow(0 0 10px var(--row-frame-glow)) !important;
-  transform: none !important;
-  animation: cosmetic-row-frame-route 4.8s linear infinite !important;
-  animation-play-state: running !important;
-  will-change: background-position, opacity;
+  display: none !important;
 }
 
 .leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame-sunfire-legend {
   border-color: rgba(245, 158, 11, 0.72) !important;
+}
+
+.leaderboard-stage .desktop-cosmetic-frame-art {
+  inset: 0.18rem;
+  z-index: 1;
+  border-radius: 0.86rem;
+}
+
+.leaderboard-stage .desktop-cosmetic-frame-art::before {
+  animation: cosmetic-row-frame-spark 2.8s ease-in-out infinite !important;
+  animation-play-state: running !important;
+  will-change: opacity, transform;
+}
+
+.leaderboard-stage .desktop-cosmetic-frame-art::after {
+  background-size:
+    160% var(--row-frame-edge-size),
+    var(--row-frame-edge-size) 160%,
+    160% var(--row-frame-edge-size),
+    var(--row-frame-edge-size) 160%;
+  animation: cosmetic-row-frame-route 2.4s linear infinite !important;
+  animation-play-state: running !important;
+  opacity: 0.95;
+  will-change: background-position;
+}
+
+.leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame > [role="cell"] {
+  position: relative;
+  z-index: 2;
 }
 
 .leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings {
