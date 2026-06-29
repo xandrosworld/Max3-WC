@@ -2002,20 +2002,20 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
 @keyframes row-skin-ancient-drift {
   0%,
   100% {
-    background-position: 0 0, 100% 0, 0 0, 0 0;
+    background-position: 0 0, 100% 0, 70% 100%, 0 0, 0 0;
   }
   50% {
-    background-position: 6% 0, 92% 5%, 26px 0, 0 0;
+    background-position: 6% 0, 92% 5%, 74% 92%, 28px 0, 0 0;
   }
 }
 
 @keyframes row-skin-sunfire-drift {
   0%,
   100% {
-    background-position: 0 0, 100% 0, 0 0, 0 0, 0 0;
+    background-position: 0 0, 100% 0, 70% 100%, 0 0, 0 0, 0 0;
   }
   50% {
-    background-position: 8% 0, 92% 4%, 22px 0, 0 0, 0 0;
+    background-position: 8% 0, 92% 4%, 74% 94%, 24px 0, 0 0, 0 0;
   }
 }
 
@@ -2046,6 +2046,16 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
   }
   70% {
     opacity: 0.55;
+  }
+}
+
+@keyframes row-skin-premium-radiance {
+  0%,
+  100% {
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    filter: brightness(1.06) saturate(1.08);
   }
 }
 
@@ -2166,7 +2176,7 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
   --row-skin-border: rgba(190, 18, 60, 0.28);
   --row-skin-shadow: rgba(190, 18, 60, 0.2);
   --row-skin-inner: rgba(255, 228, 230, 0.78);
-  --row-skin-animation: row-skin-ancient-drift 18s ease-in-out infinite;
+  --row-skin-animation: row-skin-ancient-drift 18s ease-in-out infinite, row-skin-premium-radiance 5.5s ease-in-out infinite;
 }
 
 .cosmetic-row-frame-sunfire-legend {
@@ -2181,7 +2191,7 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
   --row-skin-border: rgba(245, 158, 11, 0.34);
   --row-skin-shadow: rgba(245, 158, 11, 0.24);
   --row-skin-inner: rgba(254, 240, 138, 0.82);
-  --row-skin-animation: row-skin-sunfire-drift 16s ease-in-out infinite;
+  --row-skin-animation: row-skin-sunfire-drift 16s ease-in-out infinite, row-skin-premium-radiance 4.8s ease-in-out infinite;
 }
 
 .cosmetic-row-frame:not(tr),
@@ -2189,6 +2199,8 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
 .leaderboard-stage .mobile-card-has-cosmetic-frame,
 .shop-frame-preview-row.cosmetic-row-frame,
 .shop-try-on-frame-preview.cosmetic-row-frame {
+  position: relative;
+  isolation: isolate;
   border: 1px solid var(--row-skin-border) !important;
   background: var(--row-skin-bg) !important;
   background-size: var(--row-skin-bg-size, auto) !important;
@@ -2196,6 +2208,15 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
     0 8px 18px var(--row-skin-shadow),
     inset 0 0 0 1px var(--row-skin-inner, rgba(255, 255, 255, 0.58)) !important;
   animation: var(--row-skin-animation, none) !important;
+}
+
+.leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame > [role="cell"],
+.leaderboard-stage .mobile-card-has-cosmetic-frame > *,
+.shop-frame-preview-row.cosmetic-row-frame > *,
+.shop-try-on-frame-preview.cosmetic-row-frame > *,
+.cosmetic-row-frame:not(tr) > * {
+  position: relative;
+  z-index: 2;
 }
 
 .cosmetic-row-frame:not(tr)::before,
@@ -2218,7 +2239,7 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 1;
   display: block !important;
   border-radius: inherit;
   background:
@@ -2241,7 +2262,7 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 1;
   display: block !important;
   border-radius: inherit;
   background:
@@ -2262,7 +2283,7 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 1;
   display: block !important;
   border-radius: inherit;
   background:
@@ -2283,7 +2304,7 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 1;
   display: block !important;
   border-radius: inherit;
   background:
