@@ -1450,10 +1450,12 @@ function Avatar({
   variant?: "desktop" | "mobile";
 }) {
   const visual = getRankVisual(rank, mode);
-  const avatarClass = `relative z-10 h-10 w-10 rounded-2xl ${visual.avatarClass}`;
   const hasWings = Boolean(cosmetics?.AVATAR_WINGS);
-  const stageClass =
-    variant === "desktop" && hasWings ? "leaderboard-avatar-stage-with-wings" : "";
+  const useDesktopWingStage = variant === "desktop" && hasWings;
+  const avatarClass = `relative z-10 ${
+    useDesktopWingStage ? "h-12 w-12 rounded-2xl" : "h-10 w-10 rounded-2xl"
+  } ${visual.avatarClass}`;
+  const stageClass = useDesktopWingStage ? "leaderboard-avatar-stage-with-wings" : "";
 
   return (
     <span className={`avatar-shell relative inline-flex shrink-0 items-center justify-center ${stageClass} ${rank <= 3 ? `avatar-elite ${visual.rankClass}` : ""}`}>
@@ -1509,10 +1511,10 @@ function Avatar({
         image={image}
         name={name}
         cosmetics={cosmetics}
-        size="md"
+        size={useDesktopWingStage ? "lg" : "md"}
         className="relative z-10"
         coreClassName={avatarClass}
-        effectIntensity="compact"
+        effectIntensity={useDesktopWingStage ? "full" : "compact"}
         showAvatarFrame={false}
       />
     </span>
