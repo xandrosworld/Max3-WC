@@ -1771,32 +1771,20 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
 }
 
 .leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings {
-  width: 7.25rem;
-  min-width: 7.25rem;
-  min-height: 5.35rem;
-  margin-inline: -0.55rem 0.1rem;
-}
-
-.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-phoenix {
-  width: 5.75rem;
-  min-width: 5.75rem;
-  min-height: 4.6rem;
-  margin-inline: -0.15rem 0.1rem;
+  width: 5.8rem;
+  min-width: 5.8rem;
+  min-height: 4.55rem;
+  margin-inline: -0.2rem 0.1rem;
 }
 
 .leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings .cosmetic-avatar {
   z-index: 2;
 }
 
-.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-phoenix .cosmetic-avatar[data-wings="phoenix-flame"][data-effect-intensity="compact"] .cosmetic-avatar-wings {
-  width: calc(var(--avatar-size) * 2.35);
-  height: calc(var(--avatar-size) * 2.35);
-}
-
 .leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings .cosmetic-wings-svg {
   filter:
-    drop-shadow(0 9px 14px rgba(15, 23, 42, 0.2))
-    saturate(1.08);
+    drop-shadow(0 7px 11px rgba(15, 23, 42, 0.17))
+    saturate(1.06);
 }
 
 .mobile-cosmetic-frame-art {
