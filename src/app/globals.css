@@ -1724,46 +1724,49 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
   z-index: 1;
 }
 
-/* Desktop leaderboard rows reuse shop frame colors, but never the shop runner art. */
+/* Desktop leaderboard rows reuse the shop frame border art without copying preview content. */
 .leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame {
   border-color: color-mix(in srgb, var(--row-frame-a) 72%, transparent) !important;
-  border-style: solid !important;
-  border-width: 1px !important;
+  border-style: var(--row-frame-border-style) !important;
+  border-width: var(--row-frame-border-width) !important;
   overflow: hidden !important;
   animation: desktop-leaderboard-frame-pulse 3.4s ease-in-out infinite !important;
 }
 
 .leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame::before {
   content: "" !important;
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-  background: none !important;
-  background-image: none !important;
-  border: 0 !important;
-  filter: none !important;
-  animation: none !important;
+  display: block !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  inset: 0.36rem !important;
+  z-index: 0 !important;
+  border-radius: inherit !important;
+  border: 1px solid color-mix(in srgb, var(--row-frame-sheen) 72%, transparent) !important;
+  background: var(--row-frame-corner-art) !important;
+  opacity: var(--row-frame-corner-opacity) !important;
+  visibility: visible !important;
+  filter: drop-shadow(0 0 10px var(--row-frame-glow)) !important;
+  animation: cosmetic-row-frame-spark 3.2s ease-in-out infinite !important;
 }
 
 .leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame::after {
   content: "" !important;
   display: block !important;
+  pointer-events: none !important;
   position: absolute !important;
-  left: 0.24rem !important;
-  right: 0.24rem !important;
-  top: 0.24rem !important;
-  bottom: 0.24rem !important;
-  width: auto !important;
-  height: auto !important;
+  inset: 0.2rem !important;
   z-index: 0 !important;
-  border-radius: 0.78rem !important;
-  border: 1px solid color-mix(in srgb, var(--row-frame-sheen) 54%, transparent) !important;
-  background: none !important;
-  background-image: none !important;
-  opacity: 0.72 !important;
-  filter: none !important;
+  border-radius: inherit !important;
+  border: 0 !important;
+  background:
+    var(--row-frame-runner-x) top left / 220% var(--row-frame-edge-size) no-repeat,
+    var(--row-frame-runner-y) right top / var(--row-frame-edge-size) 220% no-repeat,
+    var(--row-frame-runner-x) bottom right / 220% var(--row-frame-edge-size) no-repeat,
+    var(--row-frame-runner-y) left bottom / var(--row-frame-edge-size) 220% no-repeat !important;
+  opacity: var(--row-frame-art-opacity) !important;
+  filter: drop-shadow(0 0 10px var(--row-frame-glow)) !important;
   transform: none !important;
-  animation: none !important;
+  animation: var(--row-frame-route-animation) !important;
 }
 
 .leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame-sunfire-legend {
