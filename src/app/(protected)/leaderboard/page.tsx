@@ -162,13 +162,6 @@ export default async function LeaderboardPage({
           filter: drop-shadow(0 0 5px rgba(255,255,255,0.64));
           animation: wcBadgePop 2.3s ease-in-out infinite;
         }
-        @media (prefers-reduced-motion: reduce) {
-          .win-streak-badge,
-          .win-streak-badge svg,
-          .win-streak-badge::before {
-            animation: none;
-          }
-        }
         .leaderboard-stage::before {
           content: "";
           position: absolute;
@@ -728,16 +721,6 @@ export default async function LeaderboardPage({
           .leaderboard-stage .rank-tag-elite::after,
           .leaderboard-stage .win-streak-badge::before {
             animation-duration: 7.4s;
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .rank-pulse,
-          .elite-row::after,
-          .elite-card::after,
-          .rank-badge-elite,
-          .rank-badge-elite::after,
-          .accuracy-sweep::after {
-            animation: none !important;
           }
         }
       `}</style>
