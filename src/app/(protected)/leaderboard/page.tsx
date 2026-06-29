@@ -1450,12 +1450,16 @@ function Avatar({
   variant?: "desktop" | "mobile";
 }) {
   const visual = getRankVisual(rank, mode);
-  const hasWings = Boolean(cosmetics?.AVATAR_WINGS);
+  const wingKey = cosmetics?.AVATAR_WINGS?.visualKey;
+  const hasWings = Boolean(wingKey);
   const useDesktopWingStage = variant === "desktop" && hasWings;
+  const useDesktopPhoenixStage = useDesktopWingStage && wingKey === "phoenix-flame";
   const avatarClass = `relative z-10 ${
-    useDesktopWingStage ? "h-12 w-12 rounded-2xl" : "h-10 w-10 rounded-2xl"
+    useDesktopWingStage && !useDesktopPhoenixStage ? "h-12 w-12 rounded-2xl" : "h-10 w-10 rounded-2xl"
   } ${visual.avatarClass}`;
-  const stageClass = useDesktopWingStage ? "leaderboard-avatar-stage-with-wings" : "";
+  const stageClass = useDesktopWingStage
+    ? `leaderboard-avatar-stage-with-wings ${useDesktopPhoenixStage ? "leaderboard-avatar-stage-phoenix" : ""}`
+    : "";
 
   return (
     <span className={`avatar-shell relative inline-flex shrink-0 items-center justify-center ${stageClass} ${rank <= 3 ? `avatar-elite ${visual.rankClass}` : ""}`}>
@@ -1511,10 +1515,10 @@ function Avatar({
         image={image}
         name={name}
         cosmetics={cosmetics}
-        size={useDesktopWingStage ? "lg" : "md"}
+        size={useDesktopWingStage && !useDesktopPhoenixStage ? "lg" : "md"}
         className="relative z-10"
         coreClassName={avatarClass}
-        effectIntensity={useDesktopWingStage ? "full" : "compact"}
+        effectIntensity={useDesktopWingStage && !useDesktopPhoenixStage ? "full" : "compact"}
         showAvatarFrame={false}
       />
     </span>

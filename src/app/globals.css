@@ -1777,8 +1777,20 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
   margin-inline: -0.55rem 0.1rem;
 }
 
+.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-phoenix {
+  width: 5.75rem;
+  min-width: 5.75rem;
+  min-height: 4.6rem;
+  margin-inline: -0.15rem 0.1rem;
+}
+
 .leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings .cosmetic-avatar {
   z-index: 2;
+}
+
+.leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-phoenix .cosmetic-avatar[data-wings="phoenix-flame"][data-effect-intensity="compact"] .cosmetic-avatar-wings {
+  width: calc(var(--avatar-size) * 2.35);
+  height: calc(var(--avatar-size) * 2.35);
 }
 
 .leaderboard-stage .desktop-leaderboard-row .leaderboard-avatar-stage-with-wings .cosmetic-wings-svg {
