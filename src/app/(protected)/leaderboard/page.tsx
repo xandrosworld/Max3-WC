@@ -1236,6 +1236,12 @@ function MobileCard({ row, mode }: { row: RankedRow; mode: BoardMode }) {
 
   return (
     <article className={`relative overflow-hidden rounded-2xl border p-3 shadow-sm active:scale-[0.99] ${row.displayRank <= 3 ? `elite-card ${visual.rankClass}` : ""} ${visual.cardClass} ${rowFrameKey ? `mobile-card-has-cosmetic-frame cosmetic-row-frame-${rowFrameKey}` : ""}`}>
+      {rowFrameKey && (
+        <>
+          <span className={`mobile-row-skin-effect mobile-row-skin-effect-${rowFrameKey}`} aria-hidden="true" />
+          <span className={`mobile-row-skin-spark mobile-row-skin-spark-${rowFrameKey}`} aria-hidden="true" />
+        </>
+      )}
       {row.displayRank <= 3 && (
         <span
           className={`rank-pulse pointer-events-none absolute right-2 top-2 h-14 w-14 rounded-full ${visual.haloClass}`}

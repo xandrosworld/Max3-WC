@@ -2372,6 +2372,95 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
   animation-play-state: running !important;
 }
 
+@keyframes mobile-row-skin-sweep {
+  0% {
+    background-position: -90% 0, 0 0;
+  }
+  100% {
+    background-position: 190% 0, 0 0;
+  }
+}
+
+@keyframes mobile-row-skin-twinkle {
+  0%,
+  100% {
+    opacity: 0.34;
+    background-position: 0 0, 0 0, 0 0, 0 0;
+  }
+  50% {
+    opacity: 0.72;
+    background-position: 10px 0, -8px 0, 6px 0, 0 0;
+  }
+}
+
+.leaderboard-stage .mobile-row-skin-effect,
+.leaderboard-stage .mobile-row-skin-spark {
+  pointer-events: none;
+  position: absolute !important;
+  inset: 0;
+  z-index: 1 !important;
+  display: block !important;
+  border-radius: inherit;
+}
+
+.leaderboard-stage .mobile-row-skin-effect {
+  background:
+    linear-gradient(104deg, transparent 0 18%, rgba(255, 255, 255, 0.72) 34%, rgba(209, 250, 229, 0.42) 48%, transparent 66% 100%),
+    radial-gradient(ellipse at 16% 48%, rgba(110, 231, 183, 0.26), transparent 42%);
+  background-size: 54% 100%, 100% 100%;
+  opacity: 0.42;
+  mix-blend-mode: screen;
+  animation: mobile-row-skin-sweep 4.8s linear infinite !important;
+}
+
+.leaderboard-stage .mobile-row-skin-spark {
+  background:
+    radial-gradient(circle at 16% 24%, rgba(255, 255, 255, 0.88) 0 2px, transparent 6px),
+    radial-gradient(circle at 42% 72%, rgba(110, 231, 183, 0.54) 0 2px, transparent 7px),
+    radial-gradient(circle at 82% 32%, rgba(45, 212, 191, 0.42) 0 2px, transparent 7px),
+    transparent;
+  opacity: 0.34;
+  animation: mobile-row-skin-twinkle 3.6s ease-in-out infinite !important;
+}
+
+.leaderboard-stage .mobile-row-skin-effect-ancient-divine {
+  background:
+    linear-gradient(104deg, transparent 0 18%, rgba(255, 255, 255, 0.8) 32%, rgba(251, 207, 232, 0.58) 48%, transparent 66% 100%),
+    radial-gradient(ellipse at 16% 48%, rgba(251, 113, 133, 0.34), transparent 44%);
+  background-size: 58% 100%, 100% 100%;
+  opacity: 0.56;
+  animation-duration: 4.2s !important;
+}
+
+.leaderboard-stage .mobile-row-skin-spark-ancient-divine {
+  background:
+    radial-gradient(circle at 14% 26%, rgba(255, 255, 255, 0.9) 0 2px, transparent 6px),
+    radial-gradient(circle at 38% 70%, rgba(251, 113, 133, 0.64) 0 2.5px, transparent 7px),
+    radial-gradient(circle at 78% 28%, rgba(244, 63, 94, 0.5) 0 2.5px, transparent 8px),
+    repeating-linear-gradient(90deg, transparent 0 38px, rgba(159, 18, 57, 0.14) 38px 40px, transparent 40px 76px);
+  opacity: 0.5;
+  animation-duration: 3.2s !important;
+}
+
+.leaderboard-stage .mobile-row-skin-effect-sunfire-legend {
+  background:
+    linear-gradient(104deg, transparent 0 16%, rgba(255, 255, 255, 0.9) 32%, rgba(254, 240, 138, 0.68) 48%, transparent 68% 100%),
+    radial-gradient(ellipse at 16% 48%, rgba(254, 240, 138, 0.46), transparent 44%);
+  background-size: 60% 100%, 100% 100%;
+  opacity: 0.7;
+  animation-duration: 3.6s !important;
+}
+
+.leaderboard-stage .mobile-row-skin-spark-sunfire-legend {
+  background:
+    radial-gradient(circle at 12% 26%, rgba(255, 255, 255, 0.96) 0 2.5px, transparent 6px),
+    radial-gradient(circle at 34% 72%, rgba(254, 240, 138, 0.9) 0 2.5px, transparent 7px),
+    radial-gradient(circle at 62% 36%, rgba(255, 255, 255, 0.78) 0 2px, transparent 7px),
+    radial-gradient(circle at 84% 28%, rgba(251, 191, 36, 0.76) 0 3px, transparent 8px);
+  opacity: 0.62;
+  animation-duration: 2.8s !important;
+}
+
 .shop-row-frame-preview-stage {
   display: flex;
   min-height: 8.5rem;
