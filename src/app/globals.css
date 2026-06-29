@@ -1746,9 +1746,13 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
 }
 
 .leaderboard-stage .desktop-cosmetic-frame-art {
-  inset: 0.18rem;
-  z-index: 1;
-  border-radius: 0.86rem;
+  pointer-events: none !important;
+  position: absolute !important;
+  inset: 0.18rem !important;
+  z-index: 1 !important;
+  display: block !important;
+  border-radius: 0.86rem !important;
+  transform: none !important;
 }
 
 .leaderboard-stage .desktop-cosmetic-frame-art::before {
