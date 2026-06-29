@@ -1747,6 +1747,8 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
   visibility: visible !important;
   filter: drop-shadow(0 0 10px var(--row-frame-glow)) !important;
   animation: cosmetic-row-frame-spark 3.2s ease-in-out infinite !important;
+  animation-play-state: running !important;
+  will-change: opacity, transform;
 }
 
 .leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame::after {
@@ -1763,10 +1765,17 @@ tr.cosmetic-row-frame-sunfire-legend > td::before {
     var(--row-frame-runner-y) right top / var(--row-frame-edge-size) 220% no-repeat,
     var(--row-frame-runner-x) bottom right / 220% var(--row-frame-edge-size) no-repeat,
     var(--row-frame-runner-y) left bottom / var(--row-frame-edge-size) 220% no-repeat !important;
+  background-position:
+    -170% 0,
+    100% -170%,
+    170% 100%,
+    0 170% !important;
   opacity: var(--row-frame-art-opacity) !important;
   filter: drop-shadow(0 0 10px var(--row-frame-glow)) !important;
   transform: none !important;
-  animation: var(--row-frame-route-animation) !important;
+  animation: cosmetic-row-frame-route 4.8s linear infinite !important;
+  animation-play-state: running !important;
+  will-change: background-position, opacity;
 }
 
 .leaderboard-stage .desktop-leaderboard-row.cosmetic-row-frame-sunfire-legend {
