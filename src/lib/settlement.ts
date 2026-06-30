@@ -1,7 +1,10 @@
 import {
   LossTransactionType,
+  MatchDecisionMethod,
   MatchStatus,
   Prisma,
+  RoundType,
+  TeamSide,
 } from "@prisma/client";
 import {
   calculateWinningChoice,
@@ -16,6 +19,10 @@ export async function settleMatch(input: {
   teamAScore: number;
   teamBScore: number;
   adminId: string;
+  decisionMethod?: MatchDecisionMethod;
+  teamAFinalScore?: number;
+  teamBFinalScore?: number;
+  advancedTeam?: TeamSide | null;
 }) {
   return prisma.$transaction(
     async (tx) => {
@@ -38,6 +45,27 @@ export async function settleMatch(input: {
         throw new Error("Tỷ số không hợp lệ");
       }
 
+      const decisionMethod = input.decisionMethod ?? MatchDecisionMethod.REGULAR;
+      const teamAFinalScore = input.teamAFinalScore ?? input.teamAScore;
+      const teamBFinalScore = input.teamBFinalScore ?? input.teamBScore;
+      if (
+        teamAFinalScore < 0 ||
+        teamBFinalScore < 0 ||
+        !Number.isInteger(teamAFinalScore) ||
+        !Number.isInteger(teamBFinalScore)
+      ) {
+        throw new Error("Tá»· sá»‘ cuá»‘i cÃ¹ng khÃ´ng há»£p lá»‡");
+      }
+      const inferredAdvancedTeam =
+        teamAFinalScore > teamBFinalScore
+          ? TeamSide.TEAM_A
+          : teamAFinalScore < teamBFinalScore
+            ? TeamSide.TEAM_B
+            : null;
+      const advancedTeam = isKnockoutRound(match.round)
+        ? (input.advancedTeam ?? inferredAdvancedTeam)
+        : null;
+
       const winningChoice = calculateWinningChoice({
         teamAScore: input.teamAScore,
         teamBScore: input.teamBScore,
@@ -49,7 +77,14 @@ export async function settleMatch(input: {
         match.result &&
         match.result.teamAScore === input.teamAScore &&
         match.result.teamBScore === input.teamBScore &&
-        match.result.winningChoice === winningChoice
+        match.result.winningChoice === winningChoice &&
+        (match.result.decisionMethod ?? MatchDecisionMethod.REGULAR) ===
+          decisionMethod &&
+        (match.result.teamAFinalScore ?? match.result.teamAScore) ===
+          teamAFinalScore &&
+        (match.result.teamBFinalScore ?? match.result.teamBScore) ===
+          teamBFinalScore &&
+        (match.result.advancedTeam ?? null) === advancedTeam
       ) {
         if (match.status !== MatchStatus.SETTLED) {
           await tx.match.update({
@@ -97,6 +132,10 @@ export async function settleMatch(input: {
           teamAScore: input.teamAScore,
           teamBScore: input.teamBScore,
           winningChoice,
+          decisionMethod,
+          teamAFinalScore,
+          teamBFinalScore,
+          advancedTeam,
           createdById: input.adminId,
         },
       });
@@ -259,6 +298,10 @@ export async function settleMatch(input: {
           teamAScore: input.teamAScore,
           teamBScore: input.teamBScore,
           winningChoice,
+          decisionMethod,
+          teamAFinalScore,
+          teamBFinalScore,
+          advancedTeam,
           revision,
           settledAt: new Date(),
           settledById: input.adminId,
@@ -268,6 +311,10 @@ export async function settleMatch(input: {
           teamAScore: input.teamAScore,
           teamBScore: input.teamBScore,
           winningChoice,
+          decisionMethod,
+          teamAFinalScore,
+          teamBFinalScore,
+          advancedTeam,
           revision,
           settledById: input.adminId,
         },
@@ -288,6 +335,10 @@ export async function settleMatch(input: {
             revision,
             teamAScore: input.teamAScore,
             teamBScore: input.teamBScore,
+            decisionMethod,
+            teamAFinalScore,
+            teamBFinalScore,
+            advancedTeam,
             winningChoice,
             autoCopiedVotes: autoVotes.length,
           } satisfies Prisma.InputJsonValue,
@@ -302,4 +353,8 @@ export async function settleMatch(input: {
       timeout: 20_000,
     },
   );
+}
+
+function isKnockoutRound(round: RoundType) {
+  return round !== RoundType.GROUP;
 }

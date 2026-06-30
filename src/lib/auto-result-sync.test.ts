@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { MatchStatus } from "@prisma/client";
+import { MatchDecisionMethod, MatchStatus, TeamSide } from "@prisma/client";
 import { FOOTBALL_DATA_SOURCE } from "./football-data";
 
 const prismaMock = vi.hoisted(() => ({
@@ -99,6 +99,10 @@ describe("runAutoResultSync", () => {
       matchId: "match-1",
       teamAScore: 2,
       teamBScore: 1,
+      decisionMethod: MatchDecisionMethod.REGULAR,
+      teamAFinalScore: 2,
+      teamBFinalScore: 1,
+      advancedTeam: TeamSide.TEAM_A,
       adminId: "admin-1",
     });
     expect(result).toEqual({ checked: 1, settled: 1, failed: 0 });

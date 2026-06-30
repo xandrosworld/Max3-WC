@@ -1,6 +1,7 @@
-import { RoundType } from "@prisma/client";
+import { MatchDecisionMethod, RoundType, TeamSide } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 import {
+  extractFootballDataResult,
   extractRegularTimeScore,
   fetchFootballDataMatchResult,
   fetchFootballDataWorldCupFixtures,
@@ -132,6 +133,33 @@ describe("football-data.org result extraction", () => {
     ).toEqual({ teamAScore: 1, teamBScore: 1 });
   });
 
+  it("keeps the betting score at 90 minutes but uses final score for penalty advancement", () => {
+    expect(
+      extractFootballDataResult({
+        id: 537415,
+        utcDate: "2026-06-29T19:00:00Z",
+        status: "FINISHED",
+        stage: "LAST_32",
+        homeTeam: { name: "Germany" },
+        awayTeam: { name: "Paraguay" },
+        score: {
+          duration: "PENALTY_SHOOTOUT",
+          regularTime: { home: 1, away: 1 },
+          extraTime: { home: 0, away: 0 },
+          penalties: { home: 4, away: 4 },
+          fullTime: { home: 4, away: 5 },
+        },
+      }),
+    ).toEqual({
+      teamAScore: 1,
+      teamBScore: 1,
+      decisionMethod: MatchDecisionMethod.PENALTY_SHOOTOUT,
+      teamAFinalScore: 4,
+      teamBFinalScore: 5,
+      advancedTeam: TeamSide.TEAM_B,
+    });
+  });
+
   it("rejects matches that are not finished yet", () => {
     expect(() =>
       extractRegularTimeScore({
@@ -167,6 +195,10 @@ describe("football-data.org result extraction", () => {
       externalFixtureId: "537327",
       teamAScore: 2,
       teamBScore: 1,
+      decisionMethod: MatchDecisionMethod.REGULAR,
+      teamAFinalScore: 2,
+      teamBFinalScore: 1,
+      advancedTeam: TeamSide.TEAM_A,
     });
   });
 });

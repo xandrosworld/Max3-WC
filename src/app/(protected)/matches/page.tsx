@@ -1,4 +1,10 @@
-import { MatchStatus, VoteChoice } from "@prisma/client";
+import {
+  MatchDecisionMethod,
+  MatchStatus,
+  RoundType,
+  TeamSide,
+  VoteChoice,
+} from "@prisma/client";
 import Image from "next/image";
 import {
   CalendarDays,
@@ -53,6 +59,16 @@ const extraFilters: Array<{ id: MatchFilter; label: string }> = [
 ];
 
 const allFilters = [...primaryFilters, ...extraFilters];
+
+const roundTabOrder: RoundType[] = [
+  RoundType.GROUP,
+  RoundType.ROUND_OF_32,
+  RoundType.ROUND_OF_16,
+  RoundType.QUARTER_FINAL,
+  RoundType.SEMI_FINAL,
+  RoundType.THIRD_PLACE,
+  RoundType.FINAL,
+];
 
 export default async function MatchesPage({
   searchParams,
@@ -112,6 +128,23 @@ export default async function MatchesPage({
       : null,
   }));
 
+  const availableRoundTabs = roundTabOrder
+    .map((round) => ({
+      id: round,
+      label: ROUND_LABELS[round],
+      count: rows.filter((row) => row.match.round === round).length,
+    }))
+    .filter((round) => round.count > 0);
+  const rawRound = typeof params.round === "string" ? params.round : "";
+  const requestedRound = roundTabOrder.includes(rawRound as RoundType)
+    ? (rawRound as RoundType)
+    : null;
+  const defaultRound = chooseDefaultRound(rows, now);
+  const selectedRound =
+    activeFilter === "all"
+      ? requestedRound ?? defaultRound ?? availableRoundTabs[0]?.id ?? RoundType.GROUP
+      : null;
+
   const filteredRows = rows.filter(({ match, locked, myVote }) => {
     const matchesSearch =
       !searchTerm ||
@@ -120,7 +153,8 @@ export default async function MatchesPage({
         .includes(searchTerm.toLocaleLowerCase("vi"));
     return (
       matchesSearch &&
-      matchPassesFilter(activeFilter, match, locked, Boolean(myVote), now)
+      matchPassesFilter(activeFilter, match, locked, Boolean(myVote), now) &&
+      (!selectedRound || match.round === selectedRound)
     );
   });
 
@@ -205,6 +239,7 @@ export default async function MatchesPage({
                     filter={filter}
                     selected={filter.id === activeFilter}
                     searchTerm={searchTerm}
+                    selectedRound={selectedRound}
                   />
                 ))}
               </nav>
@@ -213,6 +248,9 @@ export default async function MatchesPage({
                 <form action="/matches" className="relative min-w-0 flex-1 sm:min-w-64">
                   {activeFilter !== "open" && (
                     <input type="hidden" name="filter" value={activeFilter} />
+                  )}
+                  {activeFilter === "all" && selectedRound && (
+                    <input type="hidden" name="round" value={selectedRound} />
                   )}
                   <Search
                     className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -255,6 +293,39 @@ export default async function MatchesPage({
                 </details>
               </div>
             </div>
+
+            {activeFilter === "all" && availableRoundTabs.length > 0 && (
+              <nav
+                className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
+                aria-label="Chá»n vÃ²ng Ä‘áº¥u"
+              >
+                {availableRoundTabs.map((round) => {
+                  const selected = round.id === selectedRound;
+                  return (
+                    <a
+                      key={round.id}
+                      href={filterHref("all", searchTerm, round.id)}
+                      className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-black ring-1 transition sm:px-4 ${
+                        selected
+                          ? "bg-[#062f25] text-white ring-[#062f25] shadow-md shadow-emerald-950/10"
+                          : "bg-white text-slate-700 ring-slate-200 hover:bg-emerald-50 hover:text-emerald-900"
+                      }`}
+                    >
+                      <span>{round.label}</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-black ${
+                          selected
+                            ? "bg-white/15 text-white"
+                            : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {round.count}
+                      </span>
+                    </a>
+                  );
+                })}
+              </nav>
+            )}
 
             {(searchTerm || activeFilter !== "all") && (
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
@@ -409,6 +480,7 @@ export default async function MatchesPage({
                             <MatchVoteForm
                               matchId={match.id}
                               returnFilter={activeFilter}
+                              returnRound={selectedRound ?? undefined}
                               returnQ={searchTerm}
                               teamA={match.teamA}
                               teamB={match.teamB}
@@ -696,6 +768,38 @@ function formatMyVoteContribution(amount: number, correct: boolean) {
   return correct ? "Không đóng góp" : "Không tăng thêm";
 }
 
+function formatSettledScoreLine(match: {
+  teamA: string;
+  teamB: string;
+  result: {
+    teamAScore: number;
+    teamBScore: number;
+    decisionMethod: MatchDecisionMethod;
+    teamAFinalScore: number;
+    teamBFinalScore: number;
+  } | null;
+}) {
+  if (!match.result) return "";
+  const regularScore = `${match.teamA} ${match.result.teamAScore}-${match.result.teamBScore} ${match.teamB}`;
+  if (match.result.decisionMethod === MatchDecisionMethod.PENALTY_SHOOTOUT) {
+    return `Kết quả 90 phút: ${regularScore} · Pen ${match.result.teamAFinalScore}-${match.result.teamBFinalScore}`;
+  }
+  if (match.result.decisionMethod === MatchDecisionMethod.EXTRA_TIME) {
+    return `Kết quả 90 phút: ${regularScore} · Sau hiệp phụ ${match.result.teamAFinalScore}-${match.result.teamBFinalScore}`;
+  }
+  return `Kết quả 90 phút: ${regularScore}`;
+}
+
+function getAdvancedTeamLabel(match: {
+  teamA: string;
+  teamB: string;
+  result: { advancedTeam: TeamSide | null } | null;
+}) {
+  if (match.result?.advancedTeam === TeamSide.TEAM_A) return match.teamA;
+  if (match.result?.advancedTeam === TeamSide.TEAM_B) return match.teamB;
+  return null;
+}
+
 function BannerStat({
   value,
   label,
@@ -717,14 +821,16 @@ function FilterLink({
   filter,
   selected,
   searchTerm,
+  selectedRound,
 }: {
   filter: { id: MatchFilter; label: string };
   selected: boolean;
   searchTerm: string;
+  selectedRound: RoundType | null;
 }) {
   return (
     <a
-      href={filterHref(filter.id, searchTerm)}
+      href={filterHref(filter.id, searchTerm, filter.id === "all" ? selectedRound : null)}
       className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-bold ring-1 transition ${
         selected
           ? "bg-emerald-800 text-white ring-emerald-800"
@@ -796,6 +902,10 @@ function SettledMatchSummary({
     result: {
       teamAScore: number;
       teamBScore: number;
+      decisionMethod: MatchDecisionMethod;
+      teamAFinalScore: number;
+      teamBFinalScore: number;
+      advancedTeam: TeamSide | null;
       winningChoice: VoteChoice;
       settledAt: Date;
     } | null;
@@ -806,6 +916,7 @@ function SettledMatchSummary({
 }) {
   if (!match.result) return null;
   const correct = myVote?.choice === match.result.winningChoice;
+  const advancedTeamLabel = getAdvancedTeamLabel(match);
   const autoFollowedVoteText = getAutoFollowedVoteText({
     autoFollowTargetName,
     followedVote,
@@ -825,9 +936,13 @@ function SettledMatchSummary({
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p className="text-sm font-extrabold text-[#082d24]">
-          Kết quả 90 phút: {match.teamA} {match.result.teamAScore}-
-          {match.result.teamBScore} {match.teamB}
+          {formatSettledScoreLine(match)}
         </p>
+        {advancedTeamLabel && (
+          <p className="mt-1 text-xs font-black text-emerald-800">
+            Đội đi tiếp: {advancedTeamLabel}
+          </p>
+        )}
         <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
           <span className="rounded-lg bg-amber-50 px-2.5 py-1.5 text-amber-900 ring-1 ring-amber-100">
             Chấp: {formatHandicap(match)}
@@ -981,10 +1096,50 @@ function groupMatchesByDay<
   return [...groups.entries()];
 }
 
-function filterHref(filter: MatchFilter, searchTerm: string) {
+type MatchRowForRound = {
+  locked: boolean;
+  match: {
+    round: RoundType;
+    status: MatchStatus;
+    kickoffAt: Date;
+    result: unknown;
+  };
+};
+
+function chooseDefaultRound(rows: MatchRowForRound[], now: Date) {
+  const byKickoffAsc = [...rows].sort(
+    (a, b) => a.match.kickoffAt.getTime() - b.match.kickoffAt.getTime(),
+  );
+  const openRound = byKickoffAsc.find(
+    ({ match, locked }) => match.status === MatchStatus.OPEN && !locked,
+  )?.match.round;
+  if (openRound) return openRound;
+
+  const lockedRound = byKickoffAsc.find(
+    ({ match }) => !match.result && match.kickoffAt.getTime() <= now.getTime(),
+  )?.match.round;
+  if (lockedRound) return lockedRound;
+
+  const upcomingRound = byKickoffAsc.find(
+    ({ match }) => !match.result && match.kickoffAt.getTime() > now.getTime(),
+  )?.match.round;
+  if (upcomingRound) return upcomingRound;
+
+  return [...rows]
+    .filter(({ match }) => match.result)
+    .sort((a, b) => b.match.kickoffAt.getTime() - a.match.kickoffAt.getTime())[0]
+    ?.match.round ?? null;
+}
+
+function filterHref(
+  filter: MatchFilter,
+  searchTerm: string,
+  selectedRound?: RoundType | null,
+) {
   const params = new URLSearchParams();
   if (filter !== "open") params.set("filter", filter);
   if (searchTerm) params.set("q", searchTerm);
+  if (filter === "all" && selectedRound) params.set("round", selectedRound);
   const query = params.toString();
   return query ? `/matches?${query}` : "/matches";
 }

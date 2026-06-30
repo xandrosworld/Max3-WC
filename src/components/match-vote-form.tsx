@@ -9,6 +9,7 @@ type VoteChoice = "TEAM_A" | "DRAW" | "TEAM_B";
 export function MatchVoteForm({
   matchId,
   returnFilter,
+  returnRound,
   returnQ,
   teamA,
   teamB,
@@ -24,6 +25,7 @@ export function MatchVoteForm({
 }: {
   matchId: string;
   returnFilter: string;
+  returnRound?: string;
   returnQ: string;
   teamA: string;
   teamB: string;
@@ -53,6 +55,7 @@ export function MatchVoteForm({
     <form action={voteAction} className="space-y-4">
       <input type="hidden" name="matchId" value={matchId} />
       <input type="hidden" name="returnFilter" value={returnFilter} />
+      {returnRound && <input type="hidden" name="returnRound" value={returnRound} />}
       {returnQ && <input type="hidden" name="returnQ" value={returnQ} />}
 
       <div className="flex flex-wrap items-center justify-between gap-2">

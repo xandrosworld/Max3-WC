@@ -90,6 +90,12 @@ function normalizeVoteReturnFilter(value: string) {
   return value;
 }
 
+function normalizeVoteReturnRound(value: string) {
+  return Object.values(RoundType).includes(value as RoundType)
+    ? (value as RoundType)
+    : null;
+}
+
 function vietnamLocalToUtc(value: string) {
   const normalized = value.length === 16 ? `${value}:00` : value;
   const result = new Date(`${normalized}+07:00`);
@@ -241,6 +247,7 @@ export async function voteAction(formData: FormData) {
   const requestedHopeStar = formString(formData, "hopeStar") === "true";
   const returnFilter = normalizeVoteReturnFilter(formString(formData, "returnFilter"));
   const returnQ = formString(formData, "returnQ").trim().slice(0, 80);
+  const returnRound = normalizeVoteReturnRound(formString(formData, "returnRound"));
   const match = await prisma.match.findUnique({ where: { id: matchId } });
   if (!match || match.deletedAt) throw new Error("Không tìm thấy trận");
   if (isVoteLocked(match, new Date())) throw new Error("Trận này đã khóa lựa chọn");
@@ -271,6 +278,7 @@ export async function voteAction(formData: FormData) {
   });
   if (returnFilter !== "open") params.set("filter", returnFilter);
   if (returnQ) params.set("q", returnQ);
+  if (returnFilter === "all" && returnRound) params.set("round", returnRound);
   redirect(`/matches?${params.toString()}#match-${matchId}`);
 }
 
@@ -695,6 +703,10 @@ export async function settleMatchFromApiAction(formData: FormData) {
     matchId,
     teamAScore: result.teamAScore,
     teamBScore: result.teamBScore,
+    decisionMethod: result.decisionMethod,
+    teamAFinalScore: result.teamAFinalScore,
+    teamBFinalScore: result.teamBFinalScore,
+    advancedTeam: result.advancedTeam,
     adminId: admin.id,
   });
   await audit(admin.id, "MATCH_RESULT_IMPORTED", "Match", matchId, {
@@ -702,6 +714,10 @@ export async function settleMatchFromApiAction(formData: FormData) {
     externalFixtureId: result.externalFixtureId,
     teamAScore: result.teamAScore,
     teamBScore: result.teamBScore,
+    decisionMethod: result.decisionMethod,
+    teamAFinalScore: result.teamAFinalScore,
+    teamBFinalScore: result.teamBFinalScore,
+    advancedTeam: result.advancedTeam,
   });
   revalidatePath("/admin");
   revalidatePath("/matches");

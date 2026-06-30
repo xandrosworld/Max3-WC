@@ -75,6 +75,10 @@ export async function runAutoResultSync(options?: {
         matchId: match.id,
         teamAScore: result.teamAScore,
         teamBScore: result.teamBScore,
+        decisionMethod: result.decisionMethod,
+        teamAFinalScore: result.teamAFinalScore,
+        teamBFinalScore: result.teamBFinalScore,
+        advancedTeam: result.advancedTeam,
         adminId: systemAdmin.id,
       });
       settled += 1;

@@ -63,6 +63,12 @@ enum CtomTransactionType {
   GRANT
 }
 
+enum MatchDecisionMethod {
+  REGULAR
+  EXTRA_TIME
+  PENALTY_SHOOTOUT
+}
+
 model User {
   id                 String    @id @default(cuid())
   name               String
@@ -195,28 +201,36 @@ model Vote {
 }
 
 model MatchResult {
-  id            String     @id @default(cuid())
-  matchId       String     @unique
-  teamAScore    Int
-  teamBScore    Int
-  winningChoice VoteChoice
-  revision      Int
-  settledAt     DateTime   @default(now()) @db.Timestamptz(3)
-  settledById   String
+  id              String              @id @default(cuid())
+  matchId         String              @unique
+  teamAScore      Int
+  teamBScore      Int
+  winningChoice   VoteChoice
+  decisionMethod  MatchDecisionMethod @default(REGULAR)
+  teamAFinalScore Int
+  teamBFinalScore Int
+  advancedTeam    TeamSide?
+  revision        Int
+  settledAt       DateTime            @default(now()) @db.Timestamptz(3)
+  settledById     String
 
   match     Match @relation(fields: [matchId], references: [id], onDelete: Restrict)
   settledBy User  @relation("ResultSettler", fields: [settledById], references: [id], onDelete: Restrict)
 }
 
 model ResultRevision {
-  id            String     @id @default(cuid())
-  matchId       String
-  revision      Int
-  teamAScore    Int
-  teamBScore    Int
-  winningChoice VoteChoice
-  createdById   String
-  createdAt     DateTime   @default(now()) @db.Timestamptz(3)
+  id              String              @id @default(cuid())
+  matchId         String
+  revision        Int
+  teamAScore      Int
+  teamBScore      Int
+  winningChoice   VoteChoice
+  decisionMethod  MatchDecisionMethod @default(REGULAR)
+  teamAFinalScore Int
+  teamBFinalScore Int
+  advancedTeam    TeamSide?
+  createdById     String
+  createdAt       DateTime            @default(now()) @db.Timestamptz(3)
 
   match     Match @relation(fields: [matchId], references: [id], onDelete: Restrict)
   createdBy User  @relation("RevisionCreator", fields: [createdById], references: [id], onDelete: Restrict)

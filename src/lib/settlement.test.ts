@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { LossTransactionType, MatchStatus, VoteChoice } from "@prisma/client";
+import {
+  LossTransactionType,
+  MatchDecisionMethod,
+  MatchStatus,
+  RoundType,
+  TeamSide,
+  VoteChoice,
+} from "@prisma/client";
 
 const txMock = vi.hoisted(() => ({
   match: {
@@ -44,6 +51,7 @@ function baseMatch(overrides = {}) {
     result: null,
     votes: [],
     lossTransactions: [],
+    round: RoundType.GROUP,
     handicap: 0,
     handicappedTeam: null,
     contributionAmount: 40_000,
@@ -339,6 +347,55 @@ describe("settleMatch hope star", () => {
           type: LossTransactionType.LOSS,
         }),
       ]),
+    });
+  });
+
+  it("luu ty so penalty de biet doi di tiep nhung van tinh keo theo 90 phut", async () => {
+    txMock.user.findMany.mockResolvedValue([{ id: "draw-picker", autoFollowUserId: null }]);
+    txMock.match.findUnique.mockResolvedValue(
+      baseMatch({
+        round: RoundType.ROUND_OF_32,
+        votes: [{ userId: "draw-picker", choice: VoteChoice.DRAW, hopeStar: false }],
+      }),
+    );
+
+    await settleMatch({
+      matchId: "match-1",
+      teamAScore: 1,
+      teamBScore: 1,
+      decisionMethod: MatchDecisionMethod.PENALTY_SHOOTOUT,
+      teamAFinalScore: 4,
+      teamBFinalScore: 5,
+      advancedTeam: TeamSide.TEAM_B,
+      adminId: "admin-1",
+    });
+
+    expect(txMock.lossTransaction.createMany).not.toHaveBeenCalled();
+    expect(txMock.resultRevision.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        winningChoice: VoteChoice.DRAW,
+        decisionMethod: MatchDecisionMethod.PENALTY_SHOOTOUT,
+        teamAFinalScore: 4,
+        teamBFinalScore: 5,
+        advancedTeam: TeamSide.TEAM_B,
+      }),
+    });
+    expect(txMock.matchResult.upsert).toHaveBeenCalledWith({
+      where: { matchId: "match-1" },
+      update: expect.objectContaining({
+        winningChoice: VoteChoice.DRAW,
+        decisionMethod: MatchDecisionMethod.PENALTY_SHOOTOUT,
+        teamAFinalScore: 4,
+        teamBFinalScore: 5,
+        advancedTeam: TeamSide.TEAM_B,
+      }),
+      create: expect.objectContaining({
+        winningChoice: VoteChoice.DRAW,
+        decisionMethod: MatchDecisionMethod.PENALTY_SHOOTOUT,
+        teamAFinalScore: 4,
+        teamBFinalScore: 5,
+        advancedTeam: TeamSide.TEAM_B,
+      }),
     });
   });
 });

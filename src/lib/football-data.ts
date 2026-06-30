@@ -1,4 +1,4 @@
-import { RoundType } from "@prisma/client";
+import { MatchDecisionMethod, RoundType, TeamSide } from "@prisma/client";
 import { z } from "zod";
 import { getContributionAmount } from "./domain";
 
@@ -72,6 +72,10 @@ export type FootballDataMatchResult = {
   externalFixtureId: string;
   teamAScore: number;
   teamBScore: number;
+  decisionMethod: MatchDecisionMethod;
+  teamAFinalScore: number;
+  teamBFinalScore: number;
+  advancedTeam: TeamSide | null;
 };
 
 function normalizeStage(value: string) {
@@ -107,6 +111,19 @@ function scoreFromPair(pair: z.infer<typeof scorePairSchema>) {
   };
 }
 
+function advancedTeamFromScore(teamAScore: number, teamBScore: number) {
+  if (teamAScore > teamBScore) return TeamSide.TEAM_A;
+  if (teamAScore < teamBScore) return TeamSide.TEAM_B;
+  return null;
+}
+
+function decisionMethodFromDuration(value: string | null | undefined) {
+  const duration = normalizeStage(value ?? "REGULAR");
+  if (duration.includes("PENALTY")) return MatchDecisionMethod.PENALTY_SHOOTOUT;
+  if (duration.includes("EXTRA")) return MatchDecisionMethod.EXTRA_TIME;
+  return MatchDecisionMethod.REGULAR;
+}
+
 function teamName(
   team: { name?: string | null },
   fallback: "Chưa xác định A" | "Chưa xác định B",
@@ -131,6 +148,25 @@ export function extractRegularTimeScore(match: FootballDataMatch) {
   }
 
   throw new Error("Chưa có tỷ số 90 phút cho trận này.");
+}
+
+export function extractFootballDataResult(match: FootballDataMatch) {
+  const regularScore = extractRegularTimeScore(match);
+  const decisionMethod = decisionMethodFromDuration(match.score.duration);
+  const finalScore = hasScore(match.score.fullTime)
+    ? scoreFromPair(match.score.fullTime!)
+    : regularScore;
+
+  return {
+    ...regularScore,
+    decisionMethod,
+    teamAFinalScore: finalScore.teamAScore,
+    teamBFinalScore: finalScore.teamBScore,
+    advancedTeam: advancedTeamFromScore(
+      finalScore.teamAScore,
+      finalScore.teamBScore,
+    ),
+  };
 }
 
 async function parseFootballDataResponse(response: Response) {
@@ -229,6 +265,6 @@ export async function fetchFootballDataMatchResult(
 
   return {
     externalFixtureId: String(parsed.data.id),
-    ...extractRegularTimeScore(parsed.data),
+    ...extractFootballDataResult(parsed.data),
   };
 }

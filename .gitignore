@@ -48,6 +48,10 @@ next-env.d.ts
 # dev logs
 .next-dev.err.log
 .next-dev.out.log
+.next-dev-*.log
+.next-start-*.log
+.codex-video-frames/
+/tmp/
 
 # documents
 *.pdf
