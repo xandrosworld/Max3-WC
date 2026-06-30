@@ -196,37 +196,61 @@ export default async function GroupsPage() {
       />
 
       <nav
-        className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:p-2 sm:shadow-sm sm:shadow-slate-950/5"
+        className={`-mx-4 grid gap-3 px-4 pb-1 sm:mx-0 sm:rounded-3xl sm:border sm:border-emerald-950/10 sm:bg-white/90 sm:p-3 sm:shadow-xl sm:shadow-emerald-950/10 ${
+          knockoutRounds.length > 0 && groups.length > 0
+            ? "sm:grid-cols-2"
+            : "sm:grid-cols-1"
+        }`}
         aria-label="Chọn nhanh khu vực bảng đấu"
       >
         {knockoutRounds.length > 0 && (
           <a
             href="#knockout"
-            className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border-2 border-slate-950 bg-slate-950 px-3.5 py-2 text-sm font-black text-white shadow-sm shadow-slate-950/10"
+            className="group relative inline-flex min-h-16 items-center justify-between gap-3 overflow-hidden rounded-2xl border border-slate-950 bg-slate-950 px-4 py-3 text-left text-white shadow-lg shadow-slate-950/20 ring-1 ring-white/50 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-950/25"
           >
-            <Swords size={16} aria-hidden="true" />
-            Knock-out
+            <span className="pointer-events-none absolute inset-y-0 -left-16 w-12 rotate-12 bg-white/20 blur-sm transition duration-700 group-hover:left-full" />
+            <span className="relative flex min-w-0 items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
+                <Swords size={19} aria-hidden="true" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-base font-black leading-tight">
+                  Knock-out
+                </span>
+                <span className="mt-0.5 block text-xs font-bold text-white/70">
+                  Nhánh loại trực tiếp
+                </span>
+              </span>
+            </span>
+            <span className="relative shrink-0 rounded-full bg-white px-3 py-1 text-xs font-black text-slate-950 shadow-sm">
+              {knockoutRounds.length} vòng
+            </span>
           </a>
         )}
         {groups.length > 0 && (
           <a
             href="#group-stage"
-            className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border-2 border-emerald-700 bg-white px-3.5 py-2 text-sm font-black text-slate-950 shadow-sm shadow-slate-950/5"
+            className="group relative inline-flex min-h-16 items-center justify-between gap-3 overflow-hidden rounded-2xl border border-emerald-700 bg-[linear-gradient(135deg,#ffffff_0%,#ecfdf5_48%,#fff7ed_100%)] px-4 py-3 text-left text-slate-950 shadow-lg shadow-emerald-950/10 ring-1 ring-emerald-100 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-950/15"
           >
-            <Trophy size={16} aria-hidden="true" />
-            Vòng bảng
+            <span className="pointer-events-none absolute inset-y-0 -left-16 w-12 rotate-12 bg-emerald-200/60 blur-sm transition duration-700 group-hover:left-full" />
+            <span className="relative flex min-w-0 items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white shadow-sm shadow-emerald-900/20">
+                <Trophy size={19} aria-hidden="true" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-base font-black leading-tight">
+                  Vòng bảng
+                </span>
+                <span className="mt-0.5 block text-xs font-bold text-slate-600">
+                  Xếp hạng từng bảng
+                </span>
+              </span>
+            </span>
+            <span className="relative shrink-0 rounded-full bg-emerald-700 px-3 py-1 text-xs font-black text-white shadow-sm shadow-emerald-900/15">
+              {groups.length} bảng
+            </span>
           </a>
         )}
-        {groups.map((group, index) => (
-          <a
-            key={group.id}
-            href={`#${group.id}`}
-            className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border-2 bg-white px-3.5 py-2 text-sm font-black text-slate-950 shadow-sm shadow-slate-950/5 hover:-translate-y-0.5 ${groupAccents[index % groupAccents.length].border}`}
-          >
-            <span className={`h-2.5 w-2.5 rounded-full ${groupAccents[index % groupAccents.length].dot}`} />
-            {group.label}
-          </a>
-        ))}
       </nav>
 
       {knockoutRounds.length > 0 && (
