@@ -54,6 +54,7 @@ describe("getLeaderboard", () => {
       {
         id: "user-1",
         name: "dungnh1",
+        createdAt: new Date("2026-06-01T00:00:00.000Z"),
         image: null,
         department: "Sq1",
         votes: [],
@@ -62,7 +63,7 @@ describe("getLeaderboard", () => {
       },
     ]);
     prismaMock.match.findMany.mockResolvedValue([
-      { id: "match-1", votes: [] },
+      { id: "match-1", kickoffAt: new Date("2026-06-02T00:00:00.000Z"), votes: [] },
     ]);
 
     const rows = await getLeaderboard();
@@ -80,6 +81,7 @@ describe("getLeaderboard", () => {
       {
         id: "missed-heavy",
         name: "BA1",
+        createdAt: new Date("2026-06-01T00:00:00.000Z"),
         image: null,
         department: "BA",
         votes: [],
@@ -89,6 +91,7 @@ describe("getLeaderboard", () => {
       {
         id: "correct-player",
         name: "Tạ Tuấn",
+        createdAt: new Date("2026-06-01T00:00:00.000Z"),
         image: null,
         department: "Bạ Lằng Huyện",
         votes: [
@@ -103,7 +106,11 @@ describe("getLeaderboard", () => {
       },
     ]);
     prismaMock.match.findMany.mockResolvedValue([
-      { id: "match-1", votes: [{ userId: "correct-player" }] },
+      {
+        id: "match-1",
+        kickoffAt: new Date("2026-06-02T00:00:00.000Z"),
+        votes: [{ userId: "correct-player" }],
+      },
     ]);
 
     const rows = await getLeaderboard();
@@ -113,11 +120,48 @@ describe("getLeaderboard", () => {
     expect(rows[1].rank).toBe(2);
   });
 
+  it("does not count matches before account creation as missed", async () => {
+    prismaMock.user.findMany.mockResolvedValue([
+      {
+        id: "new-player",
+        name: "New Player",
+        createdAt: new Date("2026-07-01T00:00:00.000Z"),
+        image: null,
+        department: "Sq1",
+        votes: [],
+        lossTransactions: [],
+        payments: [],
+      },
+    ]);
+    prismaMock.match.findMany.mockResolvedValue([
+      {
+        id: "old-settled-match",
+        kickoffAt: new Date("2026-06-30T00:00:00.000Z"),
+        result: { winningChoice: "TEAM_A" },
+        votes: [],
+      },
+      {
+        id: "new-settled-match",
+        kickoffAt: new Date("2026-07-02T00:00:00.000Z"),
+        result: { winningChoice: "TEAM_A" },
+        votes: [],
+      },
+    ]);
+
+    const rows = await getLeaderboard();
+
+    expect(rows[0]).toMatchObject({
+      name: "New Player",
+      missed: 1,
+    });
+  });
+
   it("calculates the current winning streak from latest settled matches", async () => {
     prismaMock.user.findMany.mockResolvedValue([
       {
         id: "hot-player",
         name: "Hot Player",
+        createdAt: new Date("2026-06-01T00:00:00.000Z"),
         image: null,
         department: "Sq1",
         votes: [
@@ -144,16 +188,19 @@ describe("getLeaderboard", () => {
     prismaMock.match.findMany.mockResolvedValue([
       {
         id: "latest",
+        kickoffAt: new Date("2026-06-05T00:00:00.000Z"),
         result: { winningChoice: "TEAM_A" },
         votes: [{ userId: "hot-player", choice: "TEAM_A" }],
       },
       {
         id: "previous",
+        kickoffAt: new Date("2026-06-04T00:00:00.000Z"),
         result: { winningChoice: "TEAM_B" },
         votes: [{ userId: "hot-player", choice: "TEAM_B" }],
       },
       {
         id: "older",
+        kickoffAt: new Date("2026-06-03T00:00:00.000Z"),
         result: { winningChoice: "TEAM_B" },
         votes: [{ userId: "hot-player", choice: "TEAM_A" }],
       },

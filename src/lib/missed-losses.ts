@@ -34,6 +34,7 @@ export async function backfillMissedLossesForUser(userId: string) {
         AND existing_loss."type" = 'LOSS'::"LossTransactionType"
       WHERE m."deletedAt" IS NULL
         AND m."status" = 'SETTLED'::"MatchStatus"
+        AND m."kickoffAt" >= u."createdAt"
         AND u."role" = 'user'
         AND u."banned" = false
         AND v."id" IS NULL

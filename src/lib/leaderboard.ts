@@ -8,6 +8,7 @@ import { prisma } from "./prisma";
 import { toEquippedCosmeticsMap } from "./shop";
 
 type SettledMatchForStreak = {
+  kickoffAt: Date;
   result: { winningChoice: VoteChoice } | null;
   votes: Array<{ userId: string; choice: VoteChoice }>;
 };
@@ -65,6 +66,7 @@ export async function getLeaderboard() {
       ],
       select: {
         id: true,
+        kickoffAt: true,
         result: { select: { winningChoice: true } },
         votes: { select: { userId: true, choice: true } },
       },
@@ -84,6 +86,7 @@ export async function getLeaderboard() {
         vote.match.result.winningChoice !== (vote.choice as VoteChoice),
     ).length;
     const missed = settledMatches.filter((match) => {
+      if (match.kickoffAt.getTime() < user.createdAt.getTime()) return false;
       return !match.votes.some((vote) => vote.userId === user.id);
     }).length;
     const hopeStarUsed = user.votes.filter((vote) => vote.hopeStar).length;
