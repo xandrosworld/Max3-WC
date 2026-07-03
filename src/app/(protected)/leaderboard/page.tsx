@@ -6,17 +6,22 @@ import {
   cosmeticNameplateClass,
   cosmeticRowFrameClass,
 } from "@/components/cosmetic-avatar";
+import { CtomChampionBadge } from "@/components/ctom-champion-badge";
 import { AnimationVisibility } from "@/components/animation-visibility";
 import { LeaderboardMediaHints } from "@/components/leaderboard-media-hints";
 import { formatCurrency } from "@/lib/domain";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { getTopWinnerMedia } from "@/lib/leaderboard-media";
 import { requireUser } from "@/lib/session";
+import { getCtomLeaderboard } from "@/lib/shop";
 
 export const dynamic = "force-dynamic";
 
 type LeaderboardRow = Awaited<ReturnType<typeof getLeaderboard>>[number];
-type RankedRow = LeaderboardRow & { displayRank: number };
+type RankedRow = LeaderboardRow & {
+  displayRank: number;
+  isCtomChampion?: boolean;
+};
 type BoardMode = "prediction" | "contribution";
 
 export default async function LeaderboardPage({
@@ -30,10 +35,16 @@ export default async function LeaderboardPage({
     typeof params.board === "string" && params.board === "contribution"
       ? "contribution"
       : "prediction";
-  const rows = await getLeaderboard();
+  const [rows, ctomRows] = await Promise.all([
+    getLeaderboard(),
+    getCtomLeaderboard(1),
+  ]);
+  const ctomChampionId =
+    ctomRows[0] && ctomRows[0].totalCtom > 0 ? ctomRows[0].id : null;
   const predictionRows = rows.map((row, index) => ({
     ...row,
     displayRank: index + 1,
+    isCtomChampion: row.id === ctomChampionId,
   }));
   const contributionRows = [...rows]
     .sort(
@@ -42,7 +53,11 @@ export default async function LeaderboardPage({
         b.voted - a.voted ||
         a.name.localeCompare(b.name, "vi"),
     )
-    .map((row, index) => ({ ...row, displayRank: index + 1 }));
+    .map((row, index) => ({
+      ...row,
+      displayRank: index + 1,
+      isCtomChampion: row.id === ctomChampionId,
+    }));
 
   const totalContribution = rows.reduce((sum, row) => sum + row.loss, 0);
   const totalCorrect = rows.reduce((sum, row) => sum + row.correct, 0);
@@ -1126,11 +1141,13 @@ function PlayerStatusBadges({
 }) {
   const showRank = row.displayRank <= 3;
   const showStreak = mode === "prediction" && row.currentWinStreak >= 2;
+  const showCtomChampion = row.isCtomChampion;
 
-  if (!showRank && !showStreak) return null;
+  if (!showRank && !showStreak && !showCtomChampion) return null;
 
   return (
     <div className="mt-1.5 flex max-w-full flex-wrap items-center gap-1.5">
+      {showCtomChampion && <CtomChampionBadge compact />}
       {showRank && <RankTag rank={row.displayRank} mode={mode} />}
       {showStreak && <WinStreakBadge streak={row.currentWinStreak} />}
     </div>

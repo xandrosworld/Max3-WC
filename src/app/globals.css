@@ -77,6 +77,29 @@ textarea {
   }
 }
 
+@keyframes ctomChampionShine {
+  0%,
+  30% {
+    transform: translateX(-115%);
+  }
+  62%,
+  100% {
+    transform: translateX(115%);
+  }
+}
+
+@keyframes ctomChampionTwinkle {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.85) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.22) rotate(18deg);
+  }
+}
+
 @keyframes shop-nav-gem-pulse {
   0%,
   100% {

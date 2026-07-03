@@ -20,6 +20,7 @@ import {
   cosmeticNameplateClass,
   cosmeticRowFrameClass,
 } from "@/components/cosmetic-avatar";
+import { CtomChampionBadge } from "@/components/ctom-champion-badge";
 import { ExpandableList } from "@/components/expandable-list";
 import { ShopActionBurst } from "@/components/shop-action-burst";
 import { ShopCatalogTabs } from "@/components/shop-catalog-tabs";
@@ -802,6 +803,11 @@ function CtomLeaderboard({ rows }: { rows: ShopPageData["leaderboard"] }) {
         <p className={`truncate text-sm font-black text-slate-950 ${cosmeticNameplateClass(row.cosmetics)}`}>
           {row.name}
         </p>
+        {row.rank === 1 && row.totalCtom > 0 && (
+          <div className="mt-1">
+            <CtomChampionBadge compact />
+          </div>
+        )}
         <p className="truncate text-xs font-semibold text-slate-500">
           {row.itemCount} món
         </p>

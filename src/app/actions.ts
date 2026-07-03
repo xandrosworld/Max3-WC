@@ -15,7 +15,6 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import {
   fetchFootballDataMatchResult,
-  fetchFootballDataWorldCupFixtures,
   FOOTBALL_DATA_SOURCE,
 } from "@/lib/football-data";
 import {
@@ -31,6 +30,7 @@ import { backfillMissedLossesForUser } from "@/lib/missed-losses";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireUser } from "@/lib/session";
 import { settleMatch } from "@/lib/settlement";
+import { syncWorldCupFixturesFromFootballData } from "@/lib/fixture-sync";
 import {
   equipShopItem,
   purchaseShopItem,
@@ -449,132 +449,35 @@ export async function bulkImportMatchesAction(formData: FormData) {
   redirect(`/admin?importedMatches=${rowsToCreate.length}&skippedMatches=${skipped}`);
 }
 
-function externalMatchKey(source: string, fixtureId: string) {
-  return `${source}|${fixtureId}`;
-}
-
-function scheduledMatchKey(input: { teamA: string; teamB: string; kickoffAt: Date }) {
-  return [
-    input.teamA.trim().toLowerCase(),
-    input.teamB.trim().toLowerCase(),
-    input.kickoffAt.getTime(),
-  ].join("|");
-}
-
 export async function syncWorldCupFixturesAction() {
   const admin = await requireAdmin();
   const apiToken = process.env.FOOTBALL_DATA_TOKEN ?? "";
 
-  let fetched: Awaited<ReturnType<typeof fetchFootballDataWorldCupFixtures>>;
+  let summary: Awaited<ReturnType<typeof syncWorldCupFixturesFromFootballData>>;
   try {
-    fetched = await fetchFootballDataWorldCupFixtures(apiToken);
+    summary = await syncWorldCupFixturesFromFootballData({
+      apiToken,
+      auditActorId: admin.id,
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Không thể cập nhật lịch tự động.";
     redirect(`/admin?fixtureSyncError=${encodeURIComponent(message)}`);
   }
-
-  const existingMatches = await prisma.match.findMany({
-    where: { deletedAt: null },
-    include: { result: true, _count: { select: { votes: true } } },
-  });
-  const byExternalId = new Map(
-    existingMatches
-      .filter((match) => match.externalSource && match.externalFixtureId)
-      .map((match) => [
-        externalMatchKey(match.externalSource!, match.externalFixtureId!),
-        match,
-      ]),
-  );
-  const bySchedule = new Map(existingMatches.map((match) => [scheduledMatchKey(match), match]));
-
-  let created = 0;
-  let updated = 0;
-  let protectedMatches = 0;
-  const syncedAt = new Date();
-
-  const syncJobs = fetched.fixtures.map((fixture) => async () => {
-    const externalKey = externalMatchKey(
-      fixture.externalSource,
-      fixture.externalFixtureId,
-    );
-    const existing =
-      byExternalId.get(externalKey) ?? bySchedule.get(scheduledMatchKey(fixture));
-
-    if (!existing) {
-      await prisma.match.create({
-        data: {
-          ...fixture,
-          status: MatchStatus.DRAFT,
-          handicap: 0,
-          handicappedTeam: null,
-          lastSyncedAt: syncedAt,
-        },
-      });
-      created += 1;
-      return;
-    }
-
-    const hasProtectedData = existing._count.votes > 0 || Boolean(existing.result);
-    if (hasProtectedData) {
-      await prisma.match.update({
-        where: { id: existing.id },
-        data: {
-          externalSource: fixture.externalSource,
-          externalFixtureId: fixture.externalFixtureId,
-          teamACode: fixture.teamACode,
-          teamBCode: fixture.teamBCode,
-          teamACrest: fixture.teamACrest,
-          teamBCrest: fixture.teamBCrest,
-          lastSyncedAt: syncedAt,
-        },
-      });
-      protectedMatches += 1;
-      return;
-    }
-
-    await prisma.match.update({
-      where: { id: existing.id },
-      data: {
-        teamA: fixture.teamA,
-        teamB: fixture.teamB,
-        teamACode: fixture.teamACode,
-        teamBCode: fixture.teamBCode,
-        teamACrest: fixture.teamACrest,
-        teamBCrest: fixture.teamBCrest,
-        kickoffAt: fixture.kickoffAt,
-        round: fixture.round,
-        contributionAmount: fixture.contributionAmount,
-        externalSource: fixture.externalSource,
-        externalFixtureId: fixture.externalFixtureId,
-        lastSyncedAt: syncedAt,
-      },
-    });
-    updated += 1;
-  });
-
-  // Keep the sync responsive even when the database is reached through Railway's
-  // public proxy. Each job is idempotent, so a retry safely completes partial runs.
-  for (let index = 0; index < syncJobs.length; index += 8) {
-    await Promise.all(
-      syncJobs.slice(index, index + 8).map((runSyncJob) => runSyncJob()),
+  if (summary.skippedReason === "NO_API_TOKEN") {
+    redirect(
+      `/admin?fixtureSyncError=${encodeURIComponent("Chưa kết nối nguồn dữ liệu tự động.")}`,
     );
   }
 
-  await audit(admin.id, "WORLD_CUP_FIXTURES_SYNCED", "Match", FOOTBALL_DATA_SOURCE, {
-    created,
-    updated,
-    protectedMatches,
-    skippedRounds: fetched.skippedRounds,
-  });
   revalidatePath("/admin");
   revalidatePath("/matches");
 
   const params = new URLSearchParams({
-    fixtureCreated: String(created),
-    fixtureUpdated: String(updated),
-    fixtureProtected: String(protectedMatches),
-    fixtureSkippedRounds: String(fetched.skippedRounds.length),
+    fixtureCreated: String(summary.created),
+    fixtureUpdated: String(summary.updated),
+    fixtureProtected: String(summary.protectedMatches),
+    fixtureSkippedRounds: String(summary.skippedRounds.length),
   });
   redirect(`/admin?${params.toString()}`);
 }
