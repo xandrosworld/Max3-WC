@@ -8,7 +8,7 @@ export function CtomChampionBadge({ compact = false }: { compact?: boolean }) {
           ? "gap-1 px-2 py-0.5 text-[10px]"
           : "gap-1.5 px-2.5 py-1 text-[11px]"
       }`}
-      title="Top 1 BXH CTOM"
+      title="Kim Chủ WC - Top 1 BXH CTOM"
     >
       <span className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(110deg,transparent_0%,rgba(255,255,255,0.85)_42%,transparent_68%)] opacity-70 [animation:ctomChampionShine_2.8s_ease-in-out_infinite]" />
       <Crown
@@ -17,7 +17,7 @@ export function CtomChampionBadge({ compact = false }: { compact?: boolean }) {
         strokeWidth={2.7}
         aria-hidden="true"
       />
-      <span className="min-w-0 truncate">Chủ tịch CTOM</span>
+      <span className="min-w-0 truncate">Kim Chủ WC</span>
       <span className="relative shrink-0">
         <Gem
           className="text-emerald-700"
