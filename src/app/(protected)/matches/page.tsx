@@ -43,6 +43,8 @@ type MatchFilter =
   | "locked"
   | "settled";
 
+type MatchStageTab = "group" | "knockout";
+
 const primaryFilters: Array<{ id: MatchFilter; label: string }> = [
   { id: "open", label: "Đang mở" },
   { id: "scheduled", label: "Sắp mở" },
@@ -60,14 +62,9 @@ const extraFilters: Array<{ id: MatchFilter; label: string }> = [
 
 const allFilters = [...primaryFilters, ...extraFilters];
 
-const roundTabOrder: RoundType[] = [
-  RoundType.GROUP,
-  RoundType.ROUND_OF_32,
-  RoundType.ROUND_OF_16,
-  RoundType.QUARTER_FINAL,
-  RoundType.SEMI_FINAL,
-  RoundType.THIRD_PLACE,
-  RoundType.FINAL,
+const stageTabs: Array<{ id: MatchStageTab; label: string }> = [
+  { id: "knockout", label: "Knock-out" },
+  { id: "group", label: "Vòng bảng" },
 ];
 
 export default async function MatchesPage({
@@ -128,21 +125,30 @@ export default async function MatchesPage({
       : null,
   }));
 
-  const availableRoundTabs = roundTabOrder
-    .map((round) => ({
-      id: round,
-      label: ROUND_LABELS[round],
-      count: rows.filter((row) => row.match.round === round).length,
+  const availableStageTabs = stageTabs
+    .map((stage) => ({
+      id: stage.id,
+      label: stage.label,
+      count: rows.filter((row) => matchStage(row.match.round) === stage.id).length,
     }))
-    .filter((round) => round.count > 0);
+    .filter((stage) => stage.count > 0);
+  const rawStage = typeof params.stage === "string" ? params.stage : "";
+  const requestedStage =
+    rawStage === "group" || rawStage === "knockout"
+      ? rawStage
+      : null;
   const rawRound = typeof params.round === "string" ? params.round : "";
-  const requestedRound = roundTabOrder.includes(rawRound as RoundType)
+  const requestedLegacyRound = Object.values(RoundType).includes(rawRound as RoundType)
     ? (rawRound as RoundType)
     : null;
-  const defaultRound = chooseDefaultRound(rows, now);
-  const selectedRound =
+  const defaultStage = chooseDefaultStage(rows, now);
+  const selectedStage =
     activeFilter === "all"
-      ? requestedRound ?? defaultRound ?? availableRoundTabs[0]?.id ?? RoundType.GROUP
+      ? requestedStage ??
+        (requestedLegacyRound ? matchStage(requestedLegacyRound) : null) ??
+        defaultStage ??
+        availableStageTabs[0]?.id ??
+        "group"
       : null;
 
   const filteredRows = rows.filter(({ match, locked, myVote }) => {
@@ -154,7 +160,7 @@ export default async function MatchesPage({
     return (
       matchesSearch &&
       matchPassesFilter(activeFilter, match, locked, Boolean(myVote), now) &&
-      (!selectedRound || match.round === selectedRound)
+      (!selectedStage || matchStage(match.round) === selectedStage)
     );
   });
 
@@ -239,7 +245,7 @@ export default async function MatchesPage({
                     filter={filter}
                     selected={filter.id === activeFilter}
                     searchTerm={searchTerm}
-                    selectedRound={selectedRound}
+                    selectedStage={selectedStage}
                   />
                 ))}
               </nav>
@@ -249,8 +255,8 @@ export default async function MatchesPage({
                   {activeFilter !== "open" && (
                     <input type="hidden" name="filter" value={activeFilter} />
                   )}
-                  {activeFilter === "all" && selectedRound && (
-                    <input type="hidden" name="round" value={selectedRound} />
+                  {activeFilter === "all" && selectedStage && (
+                    <input type="hidden" name="stage" value={selectedStage} />
                   )}
                   <Search
                     className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -294,24 +300,24 @@ export default async function MatchesPage({
               </div>
             </div>
 
-            {activeFilter === "all" && availableRoundTabs.length > 0 && (
+            {activeFilter === "all" && availableStageTabs.length > 0 && (
               <nav
                 className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
                 aria-label="Chá»n vÃ²ng Ä‘áº¥u"
               >
-                {availableRoundTabs.map((round) => {
-                  const selected = round.id === selectedRound;
+                {availableStageTabs.map((stage) => {
+                  const selected = stage.id === selectedStage;
                   return (
                     <a
-                      key={round.id}
-                      href={filterHref("all", searchTerm, round.id)}
-                      className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-black ring-1 transition sm:px-4 ${
+                      key={stage.id}
+                      href={filterHref("all", searchTerm, stage.id)}
+                      className={`inline-flex min-h-12 shrink-0 items-center gap-2 rounded-2xl px-4 py-2 text-sm font-black ring-2 transition sm:px-5 ${
                         selected
-                          ? "bg-[#062f25] text-white ring-[#062f25] shadow-md shadow-emerald-950/10"
-                          : "bg-white text-slate-700 ring-slate-200 hover:bg-emerald-50 hover:text-emerald-900"
+                          ? "bg-[#062f25] text-white ring-[#062f25] shadow-lg shadow-emerald-950/15"
+                          : "bg-white text-emerald-950 ring-emerald-200 shadow-sm shadow-slate-950/5 hover:bg-emerald-50"
                       }`}
                     >
-                      <span>{round.label}</span>
+                      <span>{stage.label}</span>
                       <span
                         className={`rounded-full px-2 py-0.5 text-[11px] font-black ${
                           selected
@@ -319,7 +325,7 @@ export default async function MatchesPage({
                             : "bg-slate-100 text-slate-500"
                         }`}
                       >
-                        {round.count}
+                        {stage.count}
                       </span>
                     </a>
                   );
@@ -480,7 +486,7 @@ export default async function MatchesPage({
                             <MatchVoteForm
                               matchId={match.id}
                               returnFilter={activeFilter}
-                              returnRound={selectedRound ?? undefined}
+                              returnRound={activeFilter === "all" ? match.round : undefined}
                               returnQ={searchTerm}
                               teamA={match.teamA}
                               teamB={match.teamB}
@@ -821,16 +827,16 @@ function FilterLink({
   filter,
   selected,
   searchTerm,
-  selectedRound,
+  selectedStage,
 }: {
   filter: { id: MatchFilter; label: string };
   selected: boolean;
   searchTerm: string;
-  selectedRound: RoundType | null;
+  selectedStage: MatchStageTab | null;
 }) {
   return (
     <a
-      href={filterHref(filter.id, searchTerm, filter.id === "all" ? selectedRound : null)}
+      href={filterHref(filter.id, searchTerm, filter.id === "all" ? selectedStage : null)}
       className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-bold ring-1 transition ${
         selected
           ? "bg-emerald-800 text-white ring-emerald-800"
@@ -1106,40 +1112,46 @@ type MatchRowForRound = {
   };
 };
 
-function chooseDefaultRound(rows: MatchRowForRound[], now: Date) {
+function matchStage(round: RoundType): MatchStageTab {
+  return round === RoundType.GROUP ? "group" : "knockout";
+}
+
+function chooseDefaultStage(rows: MatchRowForRound[], now: Date) {
   const byKickoffAsc = [...rows].sort(
     (a, b) => a.match.kickoffAt.getTime() - b.match.kickoffAt.getTime(),
   );
   const openRound = byKickoffAsc.find(
     ({ match, locked }) => match.status === MatchStatus.OPEN && !locked,
   )?.match.round;
-  if (openRound) return openRound;
+  if (openRound) return matchStage(openRound);
 
   const lockedRound = byKickoffAsc.find(
     ({ match }) => !match.result && match.kickoffAt.getTime() <= now.getTime(),
   )?.match.round;
-  if (lockedRound) return lockedRound;
+  if (lockedRound) return matchStage(lockedRound);
 
   const upcomingRound = byKickoffAsc.find(
     ({ match }) => !match.result && match.kickoffAt.getTime() > now.getTime(),
   )?.match.round;
-  if (upcomingRound) return upcomingRound;
+  if (upcomingRound) return matchStage(upcomingRound);
 
-  return [...rows]
+  const latestSettledRound = [...rows]
     .filter(({ match }) => match.result)
     .sort((a, b) => b.match.kickoffAt.getTime() - a.match.kickoffAt.getTime())[0]
-    ?.match.round ?? null;
+    ?.match.round;
+
+  return latestSettledRound ? matchStage(latestSettledRound) : null;
 }
 
 function filterHref(
   filter: MatchFilter,
   searchTerm: string,
-  selectedRound?: RoundType | null,
+  selectedStage?: MatchStageTab | null,
 ) {
   const params = new URLSearchParams();
   if (filter !== "open") params.set("filter", filter);
   if (searchTerm) params.set("q", searchTerm);
-  if (filter === "all" && selectedRound) params.set("round", selectedRound);
+  if (filter === "all" && selectedStage) params.set("stage", selectedStage);
   const query = params.toString();
   return query ? `/matches?${query}` : "/matches";
 }
