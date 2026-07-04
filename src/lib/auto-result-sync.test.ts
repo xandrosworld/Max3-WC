@@ -108,6 +108,48 @@ describe("runAutoResultSync", () => {
     expect(result).toEqual({ checked: 1, settled: 1, failed: 0 });
   });
 
+  it("settles knockout betting score by regular time and keeps final score for advancement", async () => {
+    prismaMock.match.findMany.mockResolvedValue([
+      { id: "match-extra-time", externalFixtureId: "537427" },
+    ]);
+    const fetcher = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          id: 537427,
+          utcDate: "2026-07-03T22:00:00Z",
+          status: "FINISHED",
+          stage: "LAST_32",
+          homeTeam: { name: "Argentina" },
+          awayTeam: { name: "Cape Verde Islands" },
+          score: {
+            duration: "EXTRA_TIME",
+            regularTime: { home: 1, away: 1 },
+            fullTime: { home: 3, away: 2 },
+            extraTime: { home: 2, away: 1 },
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    const result = await runAutoResultSync({
+      apiToken: "token",
+      fetcher,
+    });
+
+    expect(settleMatchMock).toHaveBeenCalledWith({
+      matchId: "match-extra-time",
+      teamAScore: 1,
+      teamBScore: 1,
+      decisionMethod: MatchDecisionMethod.EXTRA_TIME,
+      teamAFinalScore: 3,
+      teamBFinalScore: 2,
+      advancedTeam: TeamSide.TEAM_A,
+      adminId: "admin-1",
+    });
+    expect(result).toEqual({ checked: 1, settled: 1, failed: 0 });
+  });
+
   it("keeps scanning later if the provider has not published a result yet", async () => {
     prismaMock.match.findMany.mockResolvedValue([
       { id: "match-1", externalFixtureId: "537327" },
