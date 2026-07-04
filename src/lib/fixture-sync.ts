@@ -45,26 +45,55 @@ function hasProtectedData(match: ExistingMatch) {
   return match._count.votes > 0 || Boolean(match.result);
 }
 
+function shouldKeepExistingTeam(existingTeam: string, fixtureTeam: string) {
+  return (
+    !isPlaceholderTeamName(existingTeam) && isPlaceholderTeamName(fixtureTeam)
+  );
+}
+
+function buildUnprotectedTeamUpdateData(
+  existing: ExistingMatch,
+  fixture: FootballDataFixture,
+) {
+  const keepExistingA = shouldKeepExistingTeam(existing.teamA, fixture.teamA);
+  const keepExistingB = shouldKeepExistingTeam(existing.teamB, fixture.teamB);
+
+  return {
+    teamA: keepExistingA ? existing.teamA : fixture.teamA,
+    teamB: keepExistingB ? existing.teamB : fixture.teamB,
+    teamACode: keepExistingA ? existing.teamACode : fixture.teamACode,
+    teamBCode: keepExistingB ? existing.teamBCode : fixture.teamBCode,
+    teamACrest: keepExistingA ? existing.teamACrest : fixture.teamACrest,
+    teamBCrest: keepExistingB ? existing.teamBCrest : fixture.teamBCrest,
+  };
+}
+
 function buildProtectedUpdateData(
   existing: ExistingMatch,
   fixture: FootballDataFixture,
   syncedAt: Date,
 ) {
+  const keepExistingA = shouldKeepExistingTeam(existing.teamA, fixture.teamA);
+  const keepExistingB = shouldKeepExistingTeam(existing.teamB, fixture.teamB);
   const data: Prisma.MatchUpdateInput = {
     externalSource: fixture.externalSource,
     externalFixtureId: fixture.externalFixtureId,
-    teamACode: fixture.teamACode,
-    teamBCode: fixture.teamBCode,
-    teamACrest: fixture.teamACrest,
-    teamBCrest: fixture.teamBCrest,
+    teamACode: keepExistingA ? existing.teamACode : fixture.teamACode,
+    teamBCode: keepExistingB ? existing.teamBCode : fixture.teamBCode,
+    teamACrest: keepExistingA ? existing.teamACrest : fixture.teamACrest,
+    teamBCrest: keepExistingB ? existing.teamBCrest : fixture.teamBCrest,
     lastSyncedAt: syncedAt,
   };
 
   if (isPlaceholderTeamName(existing.teamA) && !isPlaceholderTeamName(fixture.teamA)) {
     data.teamA = fixture.teamA;
+  } else if (keepExistingA) {
+    data.teamA = existing.teamA;
   }
   if (isPlaceholderTeamName(existing.teamB) && !isPlaceholderTeamName(fixture.teamB)) {
     data.teamB = fixture.teamB;
+  } else if (keepExistingB) {
+    data.teamB = existing.teamB;
   }
 
   return data;
@@ -154,12 +183,7 @@ export async function syncWorldCupFixturesFromFootballData(options?: {
     await prisma.match.update({
       where: { id: existing.id },
       data: {
-        teamA: fixture.teamA,
-        teamB: fixture.teamB,
-        teamACode: fixture.teamACode,
-        teamBCode: fixture.teamBCode,
-        teamACrest: fixture.teamACrest,
-        teamBCrest: fixture.teamBCrest,
+        ...buildUnprotectedTeamUpdateData(existing, fixture),
         kickoffAt: fixture.kickoffAt,
         round: fixture.round,
         contributionAmount: getContributionAmount(fixture.round),

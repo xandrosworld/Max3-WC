@@ -144,4 +144,64 @@ describe("syncWorldCupFixturesFromFootballData", () => {
     );
     expect(summary.protectedMatches).toBe(1);
   });
+
+  it("keeps manually resolved teams when provider still returns placeholders", async () => {
+    prismaMock.match.findMany.mockResolvedValue([
+      {
+        id: "match-existing",
+        teamA: "Portugal",
+        teamB: "Spain",
+        teamACode: "POR",
+        teamBCode: "ESP",
+        teamACrest: "https://crests.football-data.org/765.svg",
+        teamBCrest: "https://crests.football-data.org/760.svg",
+        kickoffAt: new Date("2026-07-06T19:00:00.000Z"),
+        round: RoundType.ROUND_OF_16,
+        contributionAmount: 60_000,
+        handicap: 0,
+        handicappedTeam: null,
+        status: MatchStatus.DRAFT,
+        externalSource: "FOOTBALL_DATA",
+        externalFixtureId: "537379",
+        lastSyncedAt: null,
+        deletedAt: null,
+        createdAt: new Date("2026-01-01T00:00:00Z"),
+        updatedAt: new Date("2026-01-01T00:00:00Z"),
+        result: null,
+        _count: { votes: 0 },
+      },
+    ]);
+    const fetcher = vi.fn(async () =>
+      responseWith([
+        apiMatch({
+          id: 537379,
+          homeTeam: { name: null, tla: null, crest: null },
+          awayTeam: { name: null, tla: null, crest: null },
+        }),
+      ]),
+    );
+
+    const summary = await syncWorldCupFixturesFromFootballData({
+      apiToken: "token",
+      fetcher,
+    });
+
+    expect(prismaMock.match.update).toHaveBeenCalledWith({
+      where: { id: "match-existing" },
+      data: expect.objectContaining({
+        teamA: "Portugal",
+        teamB: "Spain",
+        teamACode: "POR",
+        teamBCode: "ESP",
+        teamACrest: "https://crests.football-data.org/765.svg",
+        teamBCrest: "https://crests.football-data.org/760.svg",
+      }),
+    });
+    expect(summary).toMatchObject({
+      checked: 1,
+      created: 0,
+      updated: 1,
+      protectedMatches: 0,
+    });
+  });
 });
