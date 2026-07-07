@@ -58,7 +58,7 @@ function SideMarketCardView({ market }: { market: SideMarketCard }) {
 
   return (
     <article className={`rounded-2xl border p-4 ${accent}`}>
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700">
             {market.eyebrow}
@@ -153,7 +153,7 @@ function SideMarketCardView({ market }: { market: SideMarketCard }) {
 function StatusPill({ label, isOpen }: { label: string; isOpen: boolean }) {
   return (
     <span
-      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black ring-1 ${
+      className={`inline-flex max-w-full shrink-0 items-center gap-1.5 self-start rounded-full px-3 py-1.5 text-left text-xs font-black ring-1 ${
         isOpen
           ? "bg-emerald-600 text-white ring-emerald-600"
           : "bg-white text-slate-700 ring-slate-200"
