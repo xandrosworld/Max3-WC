@@ -34,7 +34,8 @@ export function startAutoResultSyncScheduler() {
         summary.fixtures.protectedMatches > 0 ||
         summary.results.checked > 0 ||
         summary.results.settled > 0 ||
-        summary.results.failed > 0;
+        summary.results.failed > 0 ||
+        summary.championMarket.settled > 0;
       if (hasChanges) {
         console.info("[auto-football-data-sync]", summary);
       }

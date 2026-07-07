@@ -1,5 +1,6 @@
 import { syncWorldCupFixturesFromFootballData } from "./fixture-sync";
 import { runAutoResultSync } from "./auto-result-sync";
+import { settleChampionMarketFromMatches } from "./side-markets";
 
 export async function runAutoFootballDataSync(options?: {
   now?: Date;
@@ -19,6 +20,7 @@ export async function runAutoFootballDataSync(options?: {
     limit: options?.limit,
     fetcher: options?.fetcher,
   });
+  const championMarket = await settleChampionMarketFromMatches();
 
-  return { fixtures, results };
+  return { fixtures, results, championMarket };
 }

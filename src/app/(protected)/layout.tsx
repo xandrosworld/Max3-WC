@@ -6,7 +6,9 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { AppNav } from "@/components/app-nav";
 import { CosmeticAvatar } from "@/components/cosmetic-avatar";
 import { LogoutButton } from "@/components/logout-button";
+import { SideMarketPrompt } from "@/components/side-market-prompt";
 import { requireUser } from "@/lib/session";
+import { getSideMarketCardsForUser } from "@/lib/side-markets";
 import { getEquippedCosmetics, type EquippedCosmetics } from "@/lib/shop";
 
 export default async function ProtectedLayout({
@@ -16,7 +18,10 @@ export default async function ProtectedLayout({
 }) {
   const user = await requireUser();
   if (user.mustChangePassword) redirect("/change-password");
-  const cosmetics = await getEquippedCosmetics(user.id);
+  const [cosmetics, sideMarkets] = await Promise.all([
+    getEquippedCosmetics(user.id),
+    getSideMarketCardsForUser(user.id),
+  ]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.18),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(251,191,36,0.18),_transparent_30%),linear-gradient(180deg,#f8fafc,#f1f5f9)]">
@@ -54,6 +59,7 @@ export default async function ProtectedLayout({
         Dự đoán vui nội bộ, không phải nền tảng cá cược.
       </div>
       <main className="mx-auto max-w-7xl px-4 py-5 sm:py-7">{children}</main>
+      <SideMarketPrompt markets={sideMarkets.filter((market) => market.isOpen)} />
       <AiChatBot />
     </div>
   );

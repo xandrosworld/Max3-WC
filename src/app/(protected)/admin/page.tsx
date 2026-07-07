@@ -11,6 +11,7 @@ import {
   setUserLockAction,
   settleMatchFromApiAction,
   settleMatchAction,
+  settleTopScorerMarketAction,
   syncOddsSuggestionsAction,
   syncWorldCupFixturesAction,
   updateUserAction,
@@ -29,6 +30,7 @@ import {
 import { FOOTBALL_DATA_SOURCE } from "@/lib/football-data";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
+import { getSideMarketAdminState } from "@/lib/side-markets";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +89,12 @@ export default async function AdminPage({
   const oddsUnchanged =
     typeof params.oddsUnchanged === "string" ? params.oddsUnchanged : null;
   const oddsCredits = typeof params.oddsCredits === "string" ? params.oddsCredits : null;
+  const sideMarketSettled =
+    typeof params.sideMarketSettled === "string" ? params.sideMarketSettled : null;
+  const sideMarketCount =
+    typeof params.sideMarketCount === "string" ? params.sideMarketCount : null;
+  const sideMarketError =
+    typeof params.sideMarketError === "string" ? params.sideMarketError : null;
   const createdUsers = typeof params.createdUsers === "string" ? params.createdUsers : null;
   const skippedUsers = typeof params.skippedUsers === "string" ? params.skippedUsers : null;
   const userImportErrors =
@@ -100,7 +108,7 @@ export default async function AdminPage({
   const now = new Date();
   const footballDataConfigured = Boolean(process.env.FOOTBALL_DATA_TOKEN);
   const oddsApiConfigured = Boolean(process.env.THE_ODDS_API_KEY);
-  const [matches, users, payments, audits] = await Promise.all([
+  const [matches, users, payments, audits, sideMarketAdmin] = await Promise.all([
     prisma.match.findMany({
       where: { deletedAt: null },
       orderBy: { kickoffAt: "asc" },
@@ -116,6 +124,7 @@ export default async function AdminPage({
       take: 20,
       include: { actor: true },
     }),
+    getSideMarketAdminState(now),
   ]);
 
   const matchRows = matches.map((match) => {
@@ -163,6 +172,73 @@ export default async function AdminPage({
         <AdminMetric label="Cần chốt tỷ số" value={workStats.needsResult} href="/admin?matchFilter=needsResult" tone="danger" />
         <AdminMetric label="Đã chốt" value={workStats.settled} href="/admin?matchFilter=settled" />
       </section>
+
+      <AdminSection
+        id="side-markets-admin"
+        title="Kèo phụ"
+        description="Theo dõi kèo đội vô địch và chốt thủ công kèo Vua phá lưới khi có kết quả cuối."
+      >
+        {sideMarketError && (
+          <p className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+            {sideMarketError}
+          </p>
+        )}
+        {sideMarketSettled && (
+          <p className="mb-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-900">
+            Đã chốt Vua phá lưới: {sideMarketSettled}. Đã tính {sideMarketCount ?? 0} phiếu.
+          </p>
+        )}
+
+        <div className="grid gap-3 lg:grid-cols-2">
+          {sideMarketAdmin.cards.map((market) => (
+            <article key={market.slug} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                    {market.eyebrow}
+                  </p>
+                  <h3 className="mt-1 text-lg font-black text-emerald-950">{market.title}</h3>
+                  <p className="mt-1 text-sm font-semibold text-slate-600">{market.statusLabel}</p>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600 ring-1 ring-slate-200">
+                  {market.phaseLabel ?? "Tự động"}
+                </span>
+              </div>
+              <div className="mt-3 grid gap-2 text-xs font-bold text-slate-600 sm:grid-cols-2">
+                <p className="rounded-xl bg-white px-3 py-2">
+                  Mở: <b>{market.openAtLabel ?? "Chờ lịch"}</b>
+                </p>
+                <p className="rounded-xl bg-white px-3 py-2">
+                  Đóng: <b>{market.closeAtLabel ?? "Chờ lịch"}</b>
+                </p>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <form action={settleTopScorerMarketAction} className="mt-4 grid gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:grid-cols-[1fr_auto]">
+          <div>
+            <label className="grid gap-1 text-xs font-black uppercase tracking-[0.12em] text-amber-800">
+              Chốt Vua phá lưới
+              <select name="winningOptionSlug" required className={inputClass}>
+                <option value="">Chọn kết quả thắng</option>
+                {sideMarketAdmin.topScorerOptions.map((option) => (
+                  <option key={option.slug} value={option.slug}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="mt-2 text-xs font-semibold text-amber-900">
+              Có {sideMarketAdmin.pendingTopScorerPicks} phiếu Vua phá lưới đang chờ tính.
+              Chỉ bấm khi đã chắc chắn kết quả cuối cùng.
+            </p>
+          </div>
+          <button className="self-end rounded-xl bg-amber-600 px-4 py-2 text-sm font-black text-white hover:bg-amber-700">
+            Chốt kèo
+          </button>
+        </form>
+      </AdminSection>
 
       <AdminSection id="matches" title="Quản lý trận đấu" description="Chọn trận, đặt mức chấp, mở dự đoán và chốt tỷ số sau trận.">
         <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
@@ -801,6 +877,9 @@ function auditActionLabel(action: string) {
     USER_PASSWORD_RESET: "đã cấp lại mật khẩu",
     PAYMENT_ADDED: "đã ghi nhận quỹ nội bộ",
     PAYMENT_VOIDED: "đã hủy bản ghi quỹ nội bộ",
+    SIDE_MARKET_PICKED: "đã chốt kèo phụ",
+    SIDE_MARKET_CHAMPION_SETTLED: "đã tự tính kèo vô địch",
+    SIDE_MARKET_TOP_SCORER_SETTLED: "đã chốt kèo Vua phá lưới",
   };
 
   return labels[action] ?? "đã thực hiện một thay đổi";

@@ -32,6 +32,11 @@ import { requireAdmin, requireUser } from "@/lib/session";
 import { settleMatch } from "@/lib/settlement";
 import { syncWorldCupFixturesFromFootballData } from "@/lib/fixture-sync";
 import {
+  placeSideMarketPick,
+  settleChampionMarketFromMatches,
+  settleTopScorerMarket,
+} from "@/lib/side-markets";
+import {
   equipShopItem,
   purchaseShopItem,
   purchaseShopItems,
@@ -280,6 +285,37 @@ export async function voteAction(formData: FormData) {
   if (returnQ) params.set("q", returnQ);
   if (returnFilter === "all" && returnRound) params.set("round", returnRound);
   redirect(`/matches?${params.toString()}#match-${matchId}`);
+}
+
+export async function placeSideMarketPickAction(formData: FormData) {
+  const user = await requireUser();
+  const marketSlug = z.string().min(1).max(120).parse(formString(formData, "marketSlug"));
+  const optionSlug = z.string().min(1).max(120).parse(formString(formData, "optionSlug"));
+
+  let pick: Awaited<ReturnType<typeof placeSideMarketPick>>;
+  try {
+    pick = await placeSideMarketPick({
+      userId: user.id,
+      marketSlug,
+      optionSlug,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Không thể lưu lựa chọn kèo phụ.";
+    redirect(`/matches?sideMarketError=${encodeURIComponent(message)}#side-markets`);
+  }
+
+  await audit(user.id, "SIDE_MARKET_PICKED", "SideMarket", pick.marketId, {
+    market: pick.market.slug,
+    option: pick.option.label,
+    phase: pick.phase,
+    rewardAmount: pick.rewardAmount,
+    stakeLoss: pick.stakeLoss,
+  });
+  revalidatePath("/matches");
+  revalidatePath("/leaderboard");
+  const params = new URLSearchParams({ sideMarketSaved: marketSlug });
+  redirect(`/matches?${params.toString()}#side-markets`);
 }
 
 export async function upsertMatchAction(formData: FormData) {
@@ -612,6 +648,7 @@ export async function settleMatchFromApiAction(formData: FormData) {
     advancedTeam: result.advancedTeam,
     adminId: admin.id,
   });
+  await settleChampionMarketFromMatches(admin.id);
   await audit(admin.id, "MATCH_RESULT_IMPORTED", "Match", matchId, {
     source: FOOTBALL_DATA_SOURCE,
     externalFixtureId: result.externalFixtureId,
@@ -692,9 +729,37 @@ export async function settleMatchAction(formData: FormData) {
     teamBScore: formString(formData, "teamBScore"),
   });
   await settleMatch({ ...data, adminId: admin.id });
+  await settleChampionMarketFromMatches(admin.id);
   revalidatePath("/admin");
   revalidatePath("/matches");
   revalidatePath("/leaderboard");
+}
+
+export async function settleTopScorerMarketAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const winningOptionSlug = z
+    .string()
+    .min(1)
+    .max(120)
+    .parse(formString(formData, "winningOptionSlug"));
+
+  let result: Awaited<ReturnType<typeof settleTopScorerMarket>>;
+  try {
+    result = await settleTopScorerMarket({ winningOptionSlug, adminId: admin.id });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Không thể chốt kèo Vua phá lưới.";
+    redirect(`/admin?sideMarketError=${encodeURIComponent(message)}#side-markets-admin`);
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/matches");
+  revalidatePath("/leaderboard");
+  redirect(
+    `/admin?sideMarketSettled=${encodeURIComponent(result.winningOption)}&sideMarketCount=${
+      result.settled
+    }#side-markets-admin`,
+  );
 }
 
 export async function createUserAction(formData: FormData) {
@@ -882,7 +947,9 @@ export async function deleteUserAction(formData: FormData) {
     prisma.account.deleteMany({ where: { userId: id } }),
     prisma.vote.deleteMany({ where: { userId: id } }),
     prisma.lossTransaction.deleteMany({ where: { userId: id } }),
+    prisma.sideMarketPick.deleteMany({ where: { userId: id } }),
     prisma.payment.deleteMany({ where: { userId: id } }),
+    prisma.auditLog.deleteMany({ where: { actorId: id } }),
     prisma.user.delete({ where: { id } }),
   ]);
 

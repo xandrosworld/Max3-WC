@@ -15,6 +15,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { MatchVoteForm } from "@/components/match-vote-form";
+import { SideMarketPanel } from "@/components/side-market-panel";
 import { TeamMark } from "@/components/team-mark";
 import {
   canUseHopeStar,
@@ -29,6 +30,7 @@ import {
 } from "@/lib/domain";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { getSideMarketCardsForUser } from "@/lib/side-markets";
 
 export const dynamic = "force-dynamic";
 
@@ -81,14 +83,21 @@ export default async function MatchesPage({
   const searchTerm = typeof params.q === "string" ? params.q.trim().slice(0, 80) : "";
   const saved = typeof params.saved === "string" ? params.saved : null;
   const savedMatchId = typeof params.match === "string" ? params.match : null;
+  const sideMarketSaved =
+    typeof params.sideMarketSaved === "string" ? params.sideMarketSaved : null;
+  const sideMarketError =
+    typeof params.sideMarketError === "string" ? params.sideMarketError : null;
   const now = new Date();
   const activeExtraFilter = extraFilters.find((filter) => filter.id === activeFilter);
-  const autoFollowTarget = user.autoFollowUserId
-    ? await prisma.user.findUnique({
-        where: { id: user.autoFollowUserId },
-        select: { name: true, department: true },
-      })
-    : null;
+  const [autoFollowTarget, sideMarkets] = await Promise.all([
+    user.autoFollowUserId
+      ? prisma.user.findUnique({
+          where: { id: user.autoFollowUserId },
+          select: { name: true, department: true },
+        })
+      : null,
+    getSideMarketCardsForUser(user.id, now),
+  ]);
 
   const matches = await prisma.match.findMany({
     where: {
@@ -223,6 +232,12 @@ export default async function MatchesPage({
             : "Đã lưu lựa chọn của bạn."}
         </div>
       )}
+
+      <SideMarketPanel
+        markets={sideMarkets}
+        saved={sideMarketSaved}
+        error={sideMarketError}
+      />
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_310px]">
         <div className="min-w-0 space-y-5">

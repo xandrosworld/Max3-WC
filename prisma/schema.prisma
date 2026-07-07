@@ -69,6 +69,23 @@ enum MatchDecisionMethod {
   PENALTY_SHOOTOUT
 }
 
+enum SideMarketType {
+  CHAMPION
+  TOP_SCORER
+}
+
+enum SideMarketPickPhase {
+  CHAMPION
+  QUARTER_FINAL
+  SEMI_FINAL
+}
+
+enum SideMarketPickOutcome {
+  PENDING
+  WON
+  LOST
+}
+
 model User {
   id                 String    @id @default(cuid())
   name               String
@@ -102,6 +119,7 @@ model User {
   shopInventory     UserShopItem[]
   equippedCosmetics UserCosmeticEquip[]
   ctomTransactions  CtomTransaction[]
+  sideMarketPicks   SideMarketPick[]
 
   @@index([autoFollowUserId])
 }
@@ -241,18 +259,84 @@ model ResultRevision {
 model LossTransaction {
   id                 String              @id @default(cuid())
   userId             String
-  matchId            String
+  matchId            String?
+  sideMarketPickId   String?
   amount             Int
   type               LossTransactionType
   settlementRevision Int
   note               String?
   createdAt          DateTime            @default(now()) @db.Timestamptz(3)
 
-  user  User  @relation(fields: [userId], references: [id], onDelete: Restrict)
-  match Match @relation(fields: [matchId], references: [id], onDelete: Restrict)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  match          Match?          @relation(fields: [matchId], references: [id], onDelete: Restrict)
+  sideMarketPick SideMarketPick? @relation(fields: [sideMarketPickId], references: [id], onDelete: Restrict)
 
   @@unique([userId, matchId, settlementRevision, type])
+  @@unique([userId, sideMarketPickId, settlementRevision, type])
   @@index([userId])
+  @@index([sideMarketPickId])
+}
+
+model SideMarket {
+  id          String         @id @default(cuid())
+  slug        String         @unique
+  type        SideMarketType
+  title       String
+  description String
+  isActive    Boolean        @default(true)
+  settledAt   DateTime?      @db.Timestamptz(3)
+  createdAt   DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime       @updatedAt @db.Timestamptz(3)
+
+  options SideMarketOption[]
+  picks   SideMarketPick[]
+
+  @@index([type, isActive])
+}
+
+model SideMarketOption {
+  id                 String     @id @default(cuid())
+  marketId           String
+  slug               String
+  label              String
+  rewardChampion     Int?
+  rewardQuarterFinal Int?
+  rewardSemiFinal    Int?
+  lossAmount         Int?
+  sortOrder          Int        @default(0)
+  metadata           Json?
+  isActive           Boolean    @default(true)
+  createdAt          DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime   @updatedAt @db.Timestamptz(3)
+
+  market SideMarket      @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  picks  SideMarketPick[]
+
+  @@unique([marketId, slug])
+  @@index([marketId, isActive, sortOrder])
+}
+
+model SideMarketPick {
+  id           String                @id @default(cuid())
+  userId       String
+  marketId     String
+  optionId     String
+  phase        SideMarketPickPhase
+  stakeLoss    Int
+  rewardAmount Int
+  outcome      SideMarketPickOutcome @default(PENDING)
+  settledAt    DateTime?             @db.Timestamptz(3)
+  createdAt    DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime              @updatedAt @db.Timestamptz(3)
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  market           SideMarket        @relation(fields: [marketId], references: [id], onDelete: Restrict)
+  option           SideMarketOption  @relation(fields: [optionId], references: [id], onDelete: Restrict)
+  lossTransactions LossTransaction[]
+
+  @@unique([userId, marketId])
+  @@index([marketId, outcome])
+  @@index([optionId, outcome])
 }
 
 model Payment {
