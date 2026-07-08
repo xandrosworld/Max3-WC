@@ -47,9 +47,9 @@ export const CHAMPION_OPTIONS: ChampionOptionDefinition[] = [
   { slug: "spain", label: "Tây Ban Nha", reward: 200_000, teamNames: ["Spain"] },
   {
     slug: "colombia-switzerland",
-    label: "Colombia / Switzerland",
+    label: "Switzerland",
     reward: 350_000,
-    teamNames: ["Colombia", "Switzerland"],
+    teamNames: ["Switzerland"],
   },
   { slug: "belgium", label: "Bỉ", reward: 350_000, teamNames: ["Belgium"] },
 ];
@@ -74,6 +74,8 @@ export type SideMarketOptionCard = {
 
 export type SideMarketPickCard = {
   optionLabel: string;
+  voterName?: string;
+  voterDepartment?: string | null;
   phaseLabel: string;
   rewardLabel: string;
   lossLabel: string;
@@ -95,6 +97,7 @@ export type SideMarketCard = {
   phase: SideMarketPickPhase | null;
   phaseLabel: string | null;
   pick: SideMarketPickCard | null;
+  publicPicks: SideMarketPickCard[];
   options: SideMarketOptionCard[];
 };
 
@@ -238,9 +241,11 @@ export async function getSideMarketCardsForUser(
           orderBy: { sortOrder: "asc" },
         },
         picks: {
-          where: { userId },
-          include: { option: true },
-          take: 1,
+          orderBy: { createdAt: "asc" },
+          include: {
+            option: true,
+            user: { select: { id: true, name: true, department: true } },
+          },
         },
       },
     }),
@@ -249,7 +254,7 @@ export async function getSideMarketCardsForUser(
 
   return markets
     .sort((a, b) => marketSortOrder(a.type) - marketSortOrder(b.type))
-    .map((market) => buildSideMarketCard(market, milestones, now));
+    .map((market) => buildSideMarketCard(market, milestones, now, userId));
 }
 
 export async function getSideMarketAdminState(
@@ -591,8 +596,14 @@ async function getTournamentMilestones(
       ? maxDate(r16.map((match) => match.result!.settledAt))
       : null;
   const championCloseAt = qf[0]?.kickoffAt ?? null;
-  const topScorerOpenAt = qf[0]?.kickoffAt ?? championCloseAt;
-  const topScorerSemiStartAt = sf[0]?.kickoffAt ?? null;
+  const quarterFinalFinishedAt =
+    qf.length > 0
+      ? qf.every((match) => match.result)
+        ? maxDate(qf.map((match) => match.result!.settledAt))
+        : maxDate(qf.map((match) => addMinutes(match.kickoffAt, ESTIMATED_KNOCKOUT_END_MINUTES)))
+      : null;
+  const topScorerOpenAt = championOpenAt ?? championCloseAt;
+  const topScorerSemiStartAt = quarterFinalFinishedAt ?? sf[0]?.kickoffAt ?? null;
   const topScorerCloseAt =
     sf.length > 0
       ? maxDate(
@@ -631,13 +642,15 @@ function buildSideMarketCard(
       outcome: SideMarketPickOutcome;
       createdAt: Date;
       option: { label: string };
+      user: { id: string; name: string; department: string | null };
     }>;
   },
   milestones: TournamentMilestones,
   now: Date,
+  userId: string,
 ): SideMarketCard {
   const availability = getSideMarketAvailability(market.type, milestones, now);
-  const pick = market.picks[0] ?? null;
+  const pick = market.picks.find((row) => row.user.id === userId) ?? null;
   const termsPhase = pick?.phase ?? availability.phase ?? fallbackPhase(market.type);
 
   return {
@@ -663,6 +676,16 @@ function buildSideMarketCard(
           createdAtLabel: formatVietnamTime(pick.createdAt),
         }
       : null,
+    publicPicks: market.picks.map((row) => ({
+      optionLabel: row.option.label,
+      voterName: row.user.name,
+      voterDepartment: row.user.department,
+      phaseLabel: phaseLabel(row.phase),
+      rewardLabel: formatCurrency(row.rewardAmount),
+      lossLabel: formatCurrency(row.stakeLoss),
+      outcome: row.outcome,
+      createdAtLabel: formatVietnamTime(row.createdAt),
+    })),
     options: market.options.map((option) => {
       const terms = getSideMarketTerms({
         type: market.type,
@@ -812,17 +835,29 @@ async function getBalances(db: SideMarketDb, userIds: string[]) {
 }
 
 function needsChampionSeed(
-  existing: Array<{ slug: string; options: Array<{ slug: string; rewardChampion: number | null; lossAmount: number | null; label: string }> }>,
+  existing: Array<{
+    slug: string;
+    options: Array<{
+      slug: string;
+      rewardChampion: number | null;
+      lossAmount: number | null;
+      label: string;
+      metadata: Prisma.JsonValue | null;
+    }>;
+  }>,
 ) {
   const market = existing.find((row) => row.slug === CHAMPION_MARKET_SLUG);
   if (!market) return true;
   return CHAMPION_OPTIONS.some((definition) => {
     const option = market.options.find((row) => row.slug === definition.slug);
+    const teamNames = option ? getChampionTeamNames(option) : [];
     return (
       !option ||
       option.label !== definition.label ||
       option.rewardChampion !== definition.reward ||
-      option.lossAmount !== 200_000
+      option.lossAmount !== 200_000 ||
+      teamNames.length !== definition.teamNames.length ||
+      teamNames.some((teamName, index) => teamName !== definition.teamNames[index])
     );
   });
 }

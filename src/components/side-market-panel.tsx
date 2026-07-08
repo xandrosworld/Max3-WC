@@ -1,6 +1,6 @@
-import { CircleDollarSign, Sparkles, Trophy } from "lucide-react";
+import { CircleDollarSign, Sparkles, Trophy, UsersRound } from "lucide-react";
 import { SideMarketPickForm } from "@/components/side-market-pick-form";
-import { SideMarketCard } from "@/lib/side-markets";
+import { SideMarketCard, SideMarketPickCard } from "@/lib/side-markets";
 
 export function SideMarketPanel({
   markets,
@@ -80,6 +80,8 @@ function SideMarketCardView({ market }: { market: SideMarketCard }) {
         <InfoLine label="Luật" value="Chọn một lần" />
       </div>
 
+      <PublicPicksList picks={market.publicPicks} />
+
       {market.pick ? (
         <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
           <div className="flex items-start justify-between gap-3">
@@ -147,6 +149,44 @@ function SideMarketCardView({ market }: { market: SideMarketCard }) {
         </div>
       )}
     </article>
+  );
+}
+
+function PublicPicksList({ picks }: { picks: SideMarketPickCard[] }) {
+  if (picks.length === 0) return null;
+
+  const visiblePicks = picks.slice(0, 12);
+  const hiddenCount = Math.max(0, picks.length - visiblePicks.length);
+
+  return (
+    <div className="mt-4 rounded-2xl bg-white/80 p-3 text-slate-700 ring-1 ring-slate-200/80">
+      <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+        <UsersRound size={15} aria-hidden="true" />
+        Mọi người đã chọn ({picks.length})
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {visiblePicks.map((pick) => (
+          <span
+            key={`${pick.voterName}-${pick.optionLabel}-${pick.createdAtLabel}`}
+            className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-black text-slate-700 ring-1 ring-slate-200"
+            title={`${pick.voterName ?? "Người chơi"} chọn ${pick.optionLabel} lúc ${pick.createdAtLabel}`}
+          >
+            <span className="max-w-28 truncate text-slate-950 sm:max-w-36">
+              {pick.voterName ?? "Người chơi"}
+            </span>
+            <span className="text-slate-400">→</span>
+            <span className="max-w-28 truncate text-emerald-700 sm:max-w-36">
+              {pick.optionLabel}
+            </span>
+          </span>
+        ))}
+        {hiddenCount > 0 && (
+          <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-800 ring-1 ring-emerald-100">
+            +{hiddenCount} người nữa
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
 

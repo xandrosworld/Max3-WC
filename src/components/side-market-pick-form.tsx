@@ -58,7 +58,7 @@ export function SideMarketPickForm({
       action={placeSideMarketPickAction}
       onSubmit={(event) => {
         const ok = window.confirm(
-          `Chốt ${optionLabel}?\n\nNếu thắng: được giảm đóng góp ${rewardLabel}.\nNếu thua: đóng góp thêm ${lossLabel}.\n\nLựa chọn này sẽ không thể hủy hoặc đổi.`,
+          `Chốt ${optionLabel}?\n\nNếu thắng: giảm đóng góp ${rewardLabel}.\nNếu thua: đóng góp thêm ${lossLabel}.\n\nChọn xong là khóa, không hủy và không đổi được.`,
         );
         if (!ok) event.preventDefault();
       }}
@@ -75,7 +75,7 @@ export function SideMarketPickedBadge() {
   return (
     <span className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-black text-emerald-800">
       <Gem size={16} aria-hidden="true" />
-      Da chon
+      Đã chọn
     </span>
   );
 }
