@@ -2,6 +2,8 @@
 
 import {
   MatchStatus,
+  MiniBetChoice,
+  MiniBetType,
   Prisma,
   RoundType,
   ShopItemType,
@@ -27,6 +29,12 @@ import {
 } from "@/lib/domain";
 import { parseMatchImport } from "@/lib/match-import";
 import { backfillMissedLossesForUser } from "@/lib/missed-losses";
+import {
+  MINI_BET_TYPES,
+  isValidMiniBetChoice,
+  placeMiniBetPick,
+  settleMiniBetResults,
+} from "@/lib/mini-bets";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireUser } from "@/lib/session";
 import { settleMatch } from "@/lib/settlement";
@@ -99,6 +107,10 @@ function normalizeVoteReturnRound(value: string) {
   return Object.values(RoundType).includes(value as RoundType)
     ? (value as RoundType)
     : null;
+}
+
+function normalizeVoteReturnStage(value: string) {
+  return value === "group" || value === "knockout" ? value : null;
 }
 
 function vietnamLocalToUtc(value: string) {
@@ -284,6 +296,44 @@ export async function voteAction(formData: FormData) {
   if (returnFilter !== "open") params.set("filter", returnFilter);
   if (returnQ) params.set("q", returnQ);
   if (returnFilter === "all" && returnRound) params.set("round", returnRound);
+  redirect(`/matches?${params.toString()}#match-${matchId}`);
+}
+
+export async function placeMiniBetPickAction(formData: FormData) {
+  const user = await requireUser();
+  const matchId = formString(formData, "matchId");
+  const returnFilter = normalizeVoteReturnFilter(formString(formData, "returnFilter"));
+  const returnQ = formString(formData, "returnQ").trim().slice(0, 80);
+  const returnStage = normalizeVoteReturnStage(formString(formData, "returnStage"));
+  const returnRound = normalizeVoteReturnRound(formString(formData, "returnRound"));
+  const params = new URLSearchParams({ match: matchId });
+  if (returnFilter !== "open") params.set("filter", returnFilter);
+  if (returnQ) params.set("q", returnQ);
+  if (returnFilter === "all" && returnStage) params.set("stage", returnStage);
+  if (returnFilter === "all" && !returnStage && returnRound) params.set("round", returnRound);
+
+  let pick: Awaited<ReturnType<typeof placeMiniBetPick>>;
+  try {
+    const type = z.nativeEnum(MiniBetType).parse(formString(formData, "type"));
+    const choice = z.nativeEnum(MiniBetChoice).parse(formString(formData, "choice"));
+    if (!isValidMiniBetChoice(type, choice)) {
+      throw new Error("Lựa chọn kèo mini không hợp lệ.");
+    }
+    pick = await placeMiniBetPick({ userId: user.id, matchId, type, choice });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Không thể lưu lựa chọn kèo mini.";
+    params.set("miniBetError", message);
+    redirect(`/matches?${params.toString()}#match-${matchId}`);
+  }
+
+  await audit(user.id, "MINI_BET_PICKED", "Match", matchId, {
+    type: pick.type,
+    choice: pick.choice,
+  });
+  revalidatePath("/matches");
+  revalidatePath("/leaderboard");
+  params.set("miniBetSaved", pick.type);
   redirect(`/matches?${params.toString()}#match-${matchId}`);
 }
 
@@ -735,6 +785,62 @@ export async function settleMatchAction(formData: FormData) {
   revalidatePath("/leaderboard");
 }
 
+export async function settleMiniBetResultsAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const matchId = z.string().min(1).parse(formString(formData, "matchId"));
+  const matchFilter = formString(formData, "matchFilter") || "all";
+  const results: Array<{
+    type: MiniBetType;
+    winningChoice: MiniBetChoice | null;
+    voided: boolean;
+  }> = [];
+
+  for (const type of MINI_BET_TYPES) {
+    const raw = formString(formData, `miniBet_${type}`);
+    if (!raw) continue;
+    if (raw === "VOID") {
+      results.push({ type, winningChoice: null, voided: true });
+      continue;
+    }
+    const winningChoice = z.nativeEnum(MiniBetChoice).parse(raw);
+    if (!isValidMiniBetChoice(type, winningChoice)) {
+      throw new Error("Kết quả kèo mini không hợp lệ.");
+    }
+    results.push({ type, winningChoice, voided: false });
+  }
+
+  if (results.length === 0) {
+    redirect(`/admin?matchFilter=${encodeURIComponent(matchFilter)}#match-${matchId}`);
+  }
+
+  let settled: Awaited<ReturnType<typeof settleMiniBetResults>>;
+  try {
+    settled = await settleMiniBetResults({
+      matchId,
+      adminId: admin.id,
+      results,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Không thể chốt kèo mini.";
+    redirect(
+      `/admin?matchFilter=${encodeURIComponent(matchFilter)}&miniBetError=${encodeURIComponent(
+        message,
+      )}#match-${matchId}`,
+    );
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/matches");
+  revalidatePath("/leaderboard");
+  const params = new URLSearchParams({
+    matchFilter,
+    miniBetSettled: String(settled.settledTypes),
+    miniBetPicks: String(settled.affectedPicks),
+  });
+  redirect(`/admin?${params.toString()}#match-${matchId}`);
+}
+
 export async function settleTopScorerMarketAction(formData: FormData) {
   const admin = await requireAdmin();
   const winningOptionSlug = z
@@ -948,6 +1054,7 @@ export async function deleteUserAction(formData: FormData) {
     prisma.vote.deleteMany({ where: { userId: id } }),
     prisma.lossTransaction.deleteMany({ where: { userId: id } }),
     prisma.sideMarketPick.deleteMany({ where: { userId: id } }),
+    prisma.miniBetPick.deleteMany({ where: { userId: id } }),
     prisma.payment.deleteMany({ where: { userId: id } }),
     prisma.auditLog.deleteMany({ where: { actorId: id } }),
     prisma.user.delete({ where: { id } }),

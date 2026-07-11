@@ -86,6 +86,23 @@ enum SideMarketPickOutcome {
   LOST
 }
 
+enum MiniBetType {
+  TOTAL_GOALS
+  FIRST_GOAL
+  KICKOFF
+  PENALTY_90
+  CORNERS_8
+}
+
+enum MiniBetChoice {
+  OVER
+  UNDER
+  TEAM_A
+  TEAM_B
+  YES
+  NO
+}
+
 model User {
   id                 String    @id @default(cuid())
   name               String
@@ -120,6 +137,8 @@ model User {
   equippedCosmetics UserCosmeticEquip[]
   ctomTransactions  CtomTransaction[]
   sideMarketPicks   SideMarketPick[]
+  miniBetPicks      MiniBetPick[]
+  miniBetResults    MiniBetResult[]    @relation("MiniBetResultSettler")
 
   @@index([autoFollowUserId])
 }
@@ -197,6 +216,8 @@ model Match {
   result           MatchResult?
   resultRevisions  ResultRevision[]
   lossTransactions LossTransaction[]
+  miniBetPicks     MiniBetPick[]
+  miniBetResults   MiniBetResult[]
 
   @@unique([externalSource, externalFixtureId])
   @@index([status, kickoffAt])
@@ -261,6 +282,7 @@ model LossTransaction {
   userId             String
   matchId            String?
   sideMarketPickId   String?
+  miniBetPickId      String?
   amount             Int
   type               LossTransactionType
   settlementRevision Int
@@ -270,11 +292,50 @@ model LossTransaction {
   user           User            @relation(fields: [userId], references: [id], onDelete: Restrict)
   match          Match?          @relation(fields: [matchId], references: [id], onDelete: Restrict)
   sideMarketPick SideMarketPick? @relation(fields: [sideMarketPickId], references: [id], onDelete: Restrict)
+  miniBetPick    MiniBetPick?    @relation(fields: [miniBetPickId], references: [id], onDelete: Restrict)
 
   @@unique([userId, matchId, settlementRevision, type])
   @@unique([userId, sideMarketPickId, settlementRevision, type])
+  @@unique([userId, miniBetPickId, settlementRevision, type])
   @@index([userId])
   @@index([sideMarketPickId])
+  @@index([miniBetPickId])
+}
+
+model MiniBetPick {
+  id        String        @id @default(cuid())
+  userId    String
+  matchId   String
+  type      MiniBetType
+  choice    MiniBetChoice
+  createdAt DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime      @updatedAt @db.Timestamptz(3)
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  match            Match             @relation(fields: [matchId], references: [id], onDelete: Restrict)
+  lossTransactions LossTransaction[]
+
+  @@unique([userId, matchId, type])
+  @@index([matchId, type])
+  @@index([userId])
+}
+
+model MiniBetResult {
+  id            String         @id @default(cuid())
+  matchId       String
+  type          MiniBetType
+  winningChoice MiniBetChoice?
+  voided        Boolean        @default(false)
+  revision      Int
+  settledAt     DateTime       @default(now()) @db.Timestamptz(3)
+  settledById   String
+
+  match     Match @relation(fields: [matchId], references: [id], onDelete: Restrict)
+  settledBy User  @relation("MiniBetResultSettler", fields: [settledById], references: [id], onDelete: Restrict)
+
+  @@unique([matchId, type])
+  @@index([matchId])
+  @@index([settledById])
 }
 
 model SideMarket {

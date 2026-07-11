@@ -1,4 +1,4 @@
-import { MatchStatus, RoundType, TeamSide } from "@prisma/client";
+import { MatchStatus, MiniBetType, RoundType, TeamSide } from "@prisma/client";
 import {
   addPaymentAction,
   bulkImportUsersAction,
@@ -9,6 +9,7 @@ import {
   resetPasswordAction,
   setMatchStatusAction,
   setUserLockAction,
+  settleMiniBetResultsAction,
   settleMatchFromApiAction,
   settleMatchAction,
   settleTopScorerMarketAction,
@@ -28,6 +29,13 @@ import {
   toVietnamDateTimeLocal,
 } from "@/lib/domain";
 import { FOOTBALL_DATA_SOURCE } from "@/lib/football-data";
+import {
+  MINI_BET_TYPES,
+  canUseMiniBets,
+  getMiniBetChoiceOptions,
+  getMiniBetConfig,
+  miniBetChoiceLabel,
+} from "@/lib/mini-bets";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { getSideMarketAdminState } from "@/lib/side-markets";
@@ -95,6 +103,12 @@ export default async function AdminPage({
     typeof params.sideMarketCount === "string" ? params.sideMarketCount : null;
   const sideMarketError =
     typeof params.sideMarketError === "string" ? params.sideMarketError : null;
+  const miniBetSettled =
+    typeof params.miniBetSettled === "string" ? params.miniBetSettled : null;
+  const miniBetPicks =
+    typeof params.miniBetPicks === "string" ? params.miniBetPicks : null;
+  const miniBetError =
+    typeof params.miniBetError === "string" ? params.miniBetError : null;
   const createdUsers = typeof params.createdUsers === "string" ? params.createdUsers : null;
   const skippedUsers = typeof params.skippedUsers === "string" ? params.skippedUsers : null;
   const userImportErrors =
@@ -112,7 +126,11 @@ export default async function AdminPage({
     prisma.match.findMany({
       where: { deletedAt: null },
       orderBy: { kickoffAt: "asc" },
-      include: { result: true, _count: { select: { votes: true } } },
+      include: {
+        result: true,
+        miniBetResults: true,
+        _count: { select: { votes: true, miniBetPicks: true } },
+      },
     }),
     prisma.user.findMany({ orderBy: { name: "asc" } }),
     prisma.payment.findMany({
@@ -287,6 +305,16 @@ export default async function AdminPage({
           {resultSynced && (
             <p className="mt-3 rounded-xl bg-white px-3 py-2 text-sm text-emerald-900">
               Đã lấy tỷ số 90 phút: {resultScore}.
+            </p>
+          )}
+          {miniBetError && (
+            <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
+              Chốt kèo mini thất bại: {miniBetError}
+            </p>
+          )}
+          {miniBetSettled && (
+            <p className="mt-3 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-emerald-900">
+              Đã chốt {miniBetSettled} loại kèo mini cho {miniBetPicks ?? 0} lựa chọn.
             </p>
           )}
           <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
@@ -590,6 +618,74 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                     </form>
                   </details>
                 </section>
+                {canUseMiniBets(match.round) && (
+                  <section className="rounded-xl bg-violet-50 p-3 xl:col-span-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-extrabold uppercase tracking-wide text-violet-800">
+                          4. Chốt Kèo Mini
+                        </p>
+                        <p className="mt-2 text-xs leading-5 text-slate-600">
+                          Mỗi kèo đúng giảm 20.000 Belly, sai góp +40.000 Belly.
+                          Riêng kèo ghi bàn trước có thể chọn hoàn nếu 90 phút là 0-0.
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-violet-800 ring-1 ring-violet-100">
+                        {match._count.miniBetPicks} lựa chọn
+                      </span>
+                    </div>
+                    <form action={settleMiniBetResultsAction} className="mt-3 grid gap-3 lg:grid-cols-5">
+                      <input type="hidden" name="matchId" value={match.id} />
+                      <input type="hidden" name="matchFilter" value={matchFilter} />
+                      {MINI_BET_TYPES.map((type) => {
+                        const config = getMiniBetConfig(type);
+                        const current = match.miniBetResults.find((row) => row.type === type);
+                        const defaultValue = current?.voided
+                          ? "VOID"
+                          : current?.winningChoice ?? "";
+                        return (
+                          <label key={type} className="grid gap-1 text-xs font-bold text-slate-600">
+                            {config.shortTitle}
+                            <select
+                              name={`miniBet_${type}`}
+                              defaultValue={defaultValue}
+                              className={inputClass}
+                            >
+                              <option value="">Chưa chốt / giữ nguyên</option>
+                              {type === MiniBetType.FIRST_GOAL && (
+                                <option value="VOID">Hoàn kèo 0-0</option>
+                              )}
+                              {getMiniBetChoiceOptions(type, match.teamA, match.teamB).map((option) => (
+                                <option key={option.choice} value={option.choice}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                            {current && (
+                              <span className="text-[11px] font-semibold text-violet-700">
+                                Đang chốt:{" "}
+                                {current.voided
+                                  ? "Hoàn kèo"
+                                  : miniBetChoiceLabel(
+                                      type,
+                                      current.winningChoice,
+                                      match.teamA,
+                                      match.teamB,
+                                    )}
+                              </span>
+                            )}
+                          </label>
+                        );
+                      })}
+                      <button
+                        disabled={!matchHasStarted}
+                        className="min-h-11 rounded-xl bg-violet-700 px-4 py-2 text-sm font-black text-white hover:bg-violet-800 disabled:cursor-not-allowed disabled:bg-slate-400 lg:col-span-5"
+                      >
+                        Chốt kèo mini
+                      </button>
+                    </form>
+                  </section>
+                )}
               </div>
             </article>
           ))}

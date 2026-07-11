@@ -1,6 +1,8 @@
 import {
   MatchDecisionMethod,
   MatchStatus,
+  MiniBetChoice,
+  MiniBetType,
   RoundType,
   TeamSide,
   VoteChoice,
@@ -15,6 +17,11 @@ import {
   Trophy,
 } from "lucide-react";
 import { MatchVoteForm } from "@/components/match-vote-form";
+import {
+  MiniBetGuidePrompt,
+  MiniBetPanel,
+  type MiniBetPanelItem,
+} from "@/components/mini-bet-panel";
 import { SideMarketPanel } from "@/components/side-market-panel";
 import { TeamMark } from "@/components/team-mark";
 import {
@@ -28,6 +35,14 @@ import {
   LOCK_MINUTES,
   ROUND_LABELS,
 } from "@/lib/domain";
+import {
+  MINI_BET_TYPES,
+  canUseMiniBets,
+  getMiniBetChoiceOptions,
+  getMiniBetConfig,
+  miniBetChoiceLabel,
+  shouldShowMiniBetGuide,
+} from "@/lib/mini-bets";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { getSideMarketCardsForUser } from "@/lib/side-markets";
@@ -87,6 +102,10 @@ export default async function MatchesPage({
     typeof params.sideMarketSaved === "string" ? params.sideMarketSaved : null;
   const sideMarketError =
     typeof params.sideMarketError === "string" ? params.sideMarketError : null;
+  const miniBetSaved =
+    typeof params.miniBetSaved === "string" ? params.miniBetSaved : null;
+  const miniBetError =
+    typeof params.miniBetError === "string" ? params.miniBetError : null;
   const now = new Date();
   const activeExtraFilter = extraFilters.find((filter) => filter.id === activeFilter);
   const [autoFollowTarget, sideMarkets] = await Promise.all([
@@ -119,6 +138,16 @@ export default async function MatchesPage({
         select: { amount: true },
         orderBy: { settlementRevision: "desc" },
       },
+      miniBetPicks: {
+        where: { userId: user.id },
+        include: {
+          lossTransactions: {
+            select: { amount: true },
+            orderBy: { createdAt: "asc" },
+          },
+        },
+      },
+      miniBetResults: true,
       votes: {
         select: { userId: true, choice: true, hopeStar: true, createdAt: true, updatedAt: true },
       },
@@ -133,6 +162,7 @@ export default async function MatchesPage({
       ? match.votes.find((vote) => vote.userId === user.autoFollowUserId) ?? null
       : null,
   }));
+  const showMiniBetGuide = rows.some(({ match }) => shouldShowMiniBetGuide(match.round));
 
   const availableStageTabs = stageTabs
     .map((stage) => ({
@@ -195,6 +225,7 @@ export default async function MatchesPage({
 
   return (
     <div className="space-y-6">
+      <MiniBetGuidePrompt enabled={showMiniBetGuide} />
       <section className="relative min-h-[220px] overflow-hidden rounded-2xl bg-[#061526] text-white shadow-xl shadow-slate-950/15 sm:min-h-[200px]">
         <Image
           src="/world-cup-2026-banner.png"
@@ -386,6 +417,15 @@ export default async function MatchesPage({
                     : [VoteChoice.TEAM_A, VoteChoice.TEAM_B];
                   const participantCount = match.votes.length;
                   const justSaved = Boolean(saved && savedMatchId === match.id);
+                  const miniBetEnabled = canUseMiniBets(match.round);
+                  const miniBetItems = miniBetEnabled ? buildMiniBetPanelItems(match) : [];
+                  const activeMiniBetSaved =
+                    savedMatchId === match.id &&
+                    MINI_BET_TYPES.includes(miniBetSaved as MiniBetType)
+                      ? miniBetSaved
+                      : null;
+                  const activeMiniBetError =
+                    savedMatchId === match.id ? miniBetError : null;
 
                   return (
                     <article
@@ -476,6 +516,23 @@ export default async function MatchesPage({
                             <p className="mt-0 text-xs font-bold text-emerald-700 md:mt-2">
                               Bạn đã chọn
                             </p>
+                          )}
+                          {miniBetEnabled && (
+                            <div className="mt-0 md:mt-3">
+                              <MiniBetPanel
+                                matchId={match.id}
+                                teamA={match.teamA}
+                                teamB={match.teamB}
+                                canPick={canPick}
+                                miniBetSaved={activeMiniBetSaved}
+                                miniBetError={activeMiniBetError}
+                                returnFilter={activeFilter}
+                                returnStage={selectedStage}
+                                returnRound={activeFilter === "all" ? match.round : null}
+                                returnQ={searchTerm}
+                                items={miniBetItems}
+                              />
+                            </div>
                           )}
                         </div>
                       </div>
@@ -819,6 +876,62 @@ function getAdvancedTeamLabel(match: {
   if (match.result?.advancedTeam === TeamSide.TEAM_A) return match.teamA;
   if (match.result?.advancedTeam === TeamSide.TEAM_B) return match.teamB;
   return null;
+}
+
+function buildMiniBetPanelItems(match: {
+  teamA: string;
+  teamB: string;
+  miniBetPicks: Array<{
+    type: MiniBetType;
+    choice: MiniBetChoice;
+    lossTransactions: Array<{ amount: number }>;
+  }>;
+  miniBetResults: Array<{
+    type: MiniBetType;
+    winningChoice: MiniBetChoice | null;
+    voided: boolean;
+  }>;
+}): MiniBetPanelItem[] {
+  return MINI_BET_TYPES.map((type) => {
+    const config = getMiniBetConfig(type);
+    const pick = match.miniBetPicks.find((row) => row.type === type) ?? null;
+    const result = match.miniBetResults.find((row) => row.type === type) ?? null;
+    const transactionAmount =
+      pick?.lossTransactions.reduce((sum, row) => sum + row.amount, 0) ?? 0;
+    const resultState =
+      result && result.voided
+        ? "void"
+        : result && pick && result.winningChoice
+          ? pick.choice === result.winningChoice
+            ? "won"
+            : "lost"
+          : null;
+
+    return {
+      type,
+      title: config.title,
+      shortTitle: config.shortTitle,
+      description: config.description,
+      helper: config.helper,
+      choices: getMiniBetChoiceOptions(type, match.teamA, match.teamB),
+      selectedChoice: pick?.choice ?? null,
+      selectedLabel: pick
+        ? miniBetChoiceLabel(type, pick.choice, match.teamA, match.teamB)
+        : null,
+      resultLabel: result
+        ? result.voided
+          ? "Hoàn kèo"
+          : `Kết quả: ${miniBetChoiceLabel(
+              type,
+              result.winningChoice,
+              match.teamA,
+              match.teamB,
+            )}`
+        : null,
+      resultState,
+      transactionAmount,
+    };
+  });
 }
 
 function BannerStat({
