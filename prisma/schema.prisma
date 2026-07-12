@@ -92,6 +92,7 @@ enum MiniBetType {
   KICKOFF
   PENALTY_90
   CORNERS_8
+  PLAYER_GOAL
 }
 
 enum MiniBetChoice {
@@ -138,7 +139,7 @@ model User {
   ctomTransactions  CtomTransaction[]
   sideMarketPicks   SideMarketPick[]
   miniBetPicks      MiniBetPick[]
-  miniBetResults    MiniBetResult[]    @relation("MiniBetResultSettler")
+  miniBetResults    MiniBetResult[]     @relation("MiniBetResultSettler")
 
   @@index([autoFollowUserId])
 }
@@ -356,7 +357,7 @@ model SideMarket {
 }
 
 model SideMarketOption {
-  id                 String     @id @default(cuid())
+  id                 String   @id @default(cuid())
   marketId           String
   slug               String
   label              String
@@ -364,13 +365,13 @@ model SideMarketOption {
   rewardQuarterFinal Int?
   rewardSemiFinal    Int?
   lossAmount         Int?
-  sortOrder          Int        @default(0)
+  sortOrder          Int      @default(0)
   metadata           Json?
-  isActive           Boolean    @default(true)
-  createdAt          DateTime   @default(now()) @db.Timestamptz(3)
-  updatedAt          DateTime   @updatedAt @db.Timestamptz(3)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime @updatedAt @db.Timestamptz(3)
 
-  market SideMarket      @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  market SideMarket       @relation(fields: [marketId], references: [id], onDelete: Cascade)
   picks  SideMarketPick[]
 
   @@unique([marketId, slug])

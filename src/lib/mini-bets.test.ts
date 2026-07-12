@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   canUseMiniBets,
   getMiniBetContributionChange,
+  getMiniBetPlayerName,
+  getMiniBetTypesForMatch,
   isValidMiniBetChoice,
   shouldShowMiniBetGuide,
 } from "./mini-bets";
@@ -19,6 +21,18 @@ describe("mini bets eligibility", () => {
     expect(shouldShowMiniBetGuide(RoundType.QUARTER_FINAL)).toBe(false);
     expect(shouldShowMiniBetGuide(RoundType.SEMI_FINAL)).toBe(true);
   });
+
+  it("adds the requested scorer market only to the two semi-finals", () => {
+    expect(getMiniBetPlayerName("France", "Spain")).toBe("Mbappe");
+    expect(getMiniBetPlayerName("England", "Argentina")).toBe("Messi");
+    expect(getMiniBetPlayerName("France", "England")).toBeNull();
+    expect(
+      getMiniBetTypesForMatch(RoundType.SEMI_FINAL, "France", "Spain"),
+    ).toContain(MiniBetType.PLAYER_GOAL);
+    expect(
+      getMiniBetTypesForMatch(RoundType.QUARTER_FINAL, "France", "Spain"),
+    ).not.toContain(MiniBetType.PLAYER_GOAL);
+  });
 });
 
 describe("mini bets choices", () => {
@@ -27,6 +41,7 @@ describe("mini bets choices", () => {
     expect(isValidMiniBetChoice(MiniBetType.TOTAL_GOALS, MiniBetChoice.TEAM_A)).toBe(false);
     expect(isValidMiniBetChoice(MiniBetType.PENALTY_90, MiniBetChoice.YES)).toBe(true);
     expect(isValidMiniBetChoice(MiniBetType.PENALTY_90, MiniBetChoice.UNDER)).toBe(false);
+    expect(isValidMiniBetChoice(MiniBetType.PLAYER_GOAL, MiniBetChoice.YES)).toBe(true);
   });
 });
 

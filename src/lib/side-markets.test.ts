@@ -5,6 +5,8 @@ import {
   SideMarketType,
 } from "@prisma/client";
 import {
+  CHAMPION_REOPEN_MARKET_SLUG,
+  canJoinReopenedChampionMarket,
   getSideMarketAvailability,
   getSideMarketContributionChange,
   resolveChampionOptionOutcome,
@@ -23,6 +25,13 @@ describe("side market contribution changes", () => {
 });
 
 describe("champion side market outcome", () => {
+  it("allows only first-time users or users whose first champion pick lost", () => {
+    expect(canJoinReopenedChampionMarket(null)).toBe(true);
+    expect(canJoinReopenedChampionMarket(SideMarketPickOutcome.LOST)).toBe(true);
+    expect(canJoinReopenedChampionMarket(SideMarketPickOutcome.PENDING)).toBe(false);
+    expect(canJoinReopenedChampionMarket(SideMarketPickOutcome.WON)).toBe(false);
+  });
+
   it("keeps a combined option alive until every covered team is eliminated", () => {
     const outcome = resolveChampionOptionOutcome({
       teamNames: ["Colombia", "Switzerland"],
@@ -58,6 +67,8 @@ describe("side market availability", () => {
   const milestones = {
     championOpenAt: new Date("2026-07-06T03:00:00.000Z"),
     championCloseAt: new Date("2026-07-07T03:00:00.000Z"),
+    championReopenOpenAt: new Date("2026-07-12T03:00:00.000Z"),
+    championReopenCloseAt: new Date("2026-07-14T19:00:00.000Z"),
     topScorerOpenAt: new Date("2026-07-07T03:00:00.000Z"),
     topScorerSemiStartAt: new Date("2026-07-12T03:00:00.000Z"),
     topScorerCloseAt: new Date("2026-07-15T03:00:00.000Z"),
@@ -78,6 +89,27 @@ describe("side market availability", () => {
     expect(open).toMatchObject({
       isOpen: true,
       phase: SideMarketPickPhase.CHAMPION,
+    });
+    expect(closed.isOpen).toBe(false);
+  });
+
+  it("reopens champion voting after quarter-finals until the first semi-final", () => {
+    const open = getSideMarketAvailability(
+      SideMarketType.CHAMPION,
+      milestones,
+      new Date("2026-07-12T04:00:00.000Z"),
+      CHAMPION_REOPEN_MARKET_SLUG,
+    );
+    const closed = getSideMarketAvailability(
+      SideMarketType.CHAMPION,
+      milestones,
+      new Date("2026-07-14T19:00:00.000Z"),
+      CHAMPION_REOPEN_MARKET_SLUG,
+    );
+
+    expect(open).toMatchObject({
+      isOpen: true,
+      phase: SideMarketPickPhase.SEMI_FINAL,
     });
     expect(closed.isOpen).toBe(false);
   });

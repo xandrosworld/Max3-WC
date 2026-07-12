@@ -40,6 +40,8 @@ import {
   canUseMiniBets,
   getMiniBetChoiceOptions,
   getMiniBetConfig,
+  getMiniBetPlayerName,
+  getMiniBetTypesForMatch,
   miniBetChoiceLabel,
   shouldShowMiniBetGuide,
 } from "@/lib/mini-bets";
@@ -881,6 +883,7 @@ function getAdvancedTeamLabel(match: {
 function buildMiniBetPanelItems(match: {
   teamA: string;
   teamB: string;
+  round: RoundType;
   miniBetPicks: Array<{
     type: MiniBetType;
     choice: MiniBetChoice;
@@ -892,8 +895,9 @@ function buildMiniBetPanelItems(match: {
     voided: boolean;
   }>;
 }): MiniBetPanelItem[] {
-  return MINI_BET_TYPES.map((type) => {
-    const config = getMiniBetConfig(type);
+  const playerName = getMiniBetPlayerName(match.teamA, match.teamB);
+  return getMiniBetTypesForMatch(match.round, match.teamA, match.teamB).map((type) => {
+    const config = getMiniBetConfig(type, playerName);
     const pick = match.miniBetPicks.find((row) => row.type === type) ?? null;
     const result = match.miniBetResults.find((row) => row.type === type) ?? null;
     const transactionAmount =

@@ -30,10 +30,10 @@ import {
 } from "@/lib/domain";
 import { FOOTBALL_DATA_SOURCE } from "@/lib/football-data";
 import {
-  MINI_BET_TYPES,
-  canUseMiniBets,
   getMiniBetChoiceOptions,
   getMiniBetConfig,
+  getMiniBetPlayerName,
+  getMiniBetTypesForMatch,
   miniBetChoiceLabel,
 } from "@/lib/mini-bets";
 import { prisma } from "@/lib/prisma";
@@ -618,7 +618,7 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                     </form>
                   </details>
                 </section>
-                {canUseMiniBets(match.round) && (
+                {getMiniBetTypesForMatch(match.round, match.teamA, match.teamB).length > 0 && (
                   <section className="rounded-xl bg-violet-50 p-3 xl:col-span-3">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -634,11 +634,14 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                         {match._count.miniBetPicks} lựa chọn
                       </span>
                     </div>
-                    <form action={settleMiniBetResultsAction} className="mt-3 grid gap-3 lg:grid-cols-5">
+                    <form action={settleMiniBetResultsAction} className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                       <input type="hidden" name="matchId" value={match.id} />
                       <input type="hidden" name="matchFilter" value={matchFilter} />
-                      {MINI_BET_TYPES.map((type) => {
-                        const config = getMiniBetConfig(type);
+                      {getMiniBetTypesForMatch(match.round, match.teamA, match.teamB).map((type) => {
+                        const config = getMiniBetConfig(
+                          type,
+                          getMiniBetPlayerName(match.teamA, match.teamB),
+                        );
                         const current = match.miniBetResults.find((row) => row.type === type);
                         const defaultValue = current?.voided
                           ? "VOID"
@@ -679,7 +682,7 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                       })}
                       <button
                         disabled={!matchHasStarted}
-                        className="min-h-11 rounded-xl bg-violet-700 px-4 py-2 text-sm font-black text-white hover:bg-violet-800 disabled:cursor-not-allowed disabled:bg-slate-400 lg:col-span-5"
+                        className="min-h-11 rounded-xl bg-violet-700 px-4 py-2 text-sm font-black text-white hover:bg-violet-800 disabled:cursor-not-allowed disabled:bg-slate-400 sm:col-span-2 xl:col-span-3"
                       >
                         Chốt kèo mini
                       </button>

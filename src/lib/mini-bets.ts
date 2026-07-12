@@ -24,6 +24,7 @@ export const MINI_BET_TYPES: MiniBetType[] = [
   MiniBetType.KICKOFF,
   MiniBetType.PENALTY_90,
   MiniBetType.CORNERS_8,
+  MiniBetType.PLAYER_GOAL,
 ];
 
 export type MiniBetChoiceOption = {
@@ -67,7 +68,10 @@ export function shouldShowMiniBetGuide(round: RoundType) {
   return rounds.includes(round);
 }
 
-export function getMiniBetConfig(type: MiniBetType): MiniBetConfig {
+export function getMiniBetConfig(
+  type: MiniBetType,
+  playerName?: string | null,
+): MiniBetConfig {
   switch (type) {
     case MiniBetType.TOTAL_GOALS:
       return {
@@ -109,7 +113,39 @@ export function getMiniBetConfig(type: MiniBetType): MiniBetConfig {
         description: "Chọn tổng phạt góc hai đội trong 90 phút có đạt từ 8 quả không.",
         helper: "Tính tổng phạt góc trong 90 phút.",
       };
+    case MiniBetType.PLAYER_GOAL: {
+      const scorer = playerName?.trim() || "Cầu thủ";
+      return {
+        type,
+        title: `${scorer} có ghi bàn`,
+        shortTitle: `${scorer} ghi bàn`,
+        description: `Chọn ${scorer} có ghi bàn trong 90 phút chính thức hay không.`,
+        helper: "Không tính bàn trong hiệp phụ hoặc loạt luân lưu.",
+      };
+    }
   }
+}
+
+export function getMiniBetPlayerName(teamA: string, teamB: string) {
+  const teams = new Set([normalizeTeamName(teamA), normalizeTeamName(teamB)]);
+  if (teams.has("france") && teams.has("spain")) return "Mbappe";
+  if (teams.has("argentina") && teams.has("england")) return "Messi";
+  return null;
+}
+
+export function getMiniBetTypesForMatch(
+  round: RoundType,
+  teamA: string,
+  teamB: string,
+): MiniBetType[] {
+  if (!canUseMiniBets(round)) return [];
+  const types: MiniBetType[] = MINI_BET_TYPES.filter(
+    (type) => type !== MiniBetType.PLAYER_GOAL,
+  );
+  if (round === RoundType.SEMI_FINAL && getMiniBetPlayerName(teamA, teamB)) {
+    types.push(MiniBetType.PLAYER_GOAL);
+  }
+  return types;
 }
 
 export function getMiniBetChoiceOptions(
@@ -131,6 +167,7 @@ export function getMiniBetChoiceOptions(
       ];
     case MiniBetType.PENALTY_90:
     case MiniBetType.CORNERS_8:
+    case MiniBetType.PLAYER_GOAL:
       return [
         { choice: MiniBetChoice.YES, label: "Có", shortLabel: "Có" },
         { choice: MiniBetChoice.NO, label: "Không", shortLabel: "Không" },
@@ -182,6 +219,9 @@ export async function placeMiniBetPick(input: {
   if (!canUseMiniBets(match.round)) {
     throw new Error("Kèo mini chỉ mở từ tứ kết trở đi.");
   }
+  if (!getMiniBetTypesForMatch(match.round, match.teamA, match.teamB).includes(input.type)) {
+    throw new Error("Kèo mini này không áp dụng cho trận đã chọn.");
+  }
   if (isVoteLocked(match, now)) {
     throw new Error("Trận này đã khóa lựa chọn kèo mini.");
   }
@@ -231,9 +271,14 @@ export async function settleMiniBetResults(input: {
 
       let settledTypes = 0;
       let affectedPicks = 0;
+      const availableTypes = getMiniBetTypesForMatch(
+        match.round,
+        match.teamA,
+        match.teamB,
+      );
 
       for (const resultInput of input.results) {
-        if (!MINI_BET_TYPES.includes(resultInput.type)) continue;
+        if (!availableTypes.includes(resultInput.type)) continue;
         const voided = Boolean(resultInput.voided);
         if (!voided) {
           if (!resultInput.winningChoice) continue;
@@ -351,6 +396,7 @@ function getValidChoices(type: MiniBetType): MiniBetChoice[] {
       return [MiniBetChoice.TEAM_A, MiniBetChoice.TEAM_B];
     case MiniBetType.PENALTY_90:
     case MiniBetType.CORNERS_8:
+    case MiniBetType.PLAYER_GOAL:
       return [MiniBetChoice.YES, MiniBetChoice.NO];
   }
 }
@@ -425,7 +471,10 @@ function getMiniBetTransactionNote(input: {
   teamA: string;
   teamB: string;
 }) {
-  const title = getMiniBetConfig(input.type).shortTitle;
+  const title = getMiniBetConfig(
+    input.type,
+    getMiniBetPlayerName(input.teamA, input.teamB),
+  ).shortTitle;
   const result = miniBetChoiceLabel(
     input.type,
     input.winningChoice,
@@ -440,4 +489,14 @@ function getMiniBetTransactionNote(input: {
   return `Kèo mini ${title} sai; kết quả ${result}; đóng góp +${formatCurrency(
     input.amount,
   )}`;
+}
+
+function normalizeTeamName(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/đ/g, "d")
+    .replace(/\s+/g, " ");
 }

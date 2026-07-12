@@ -18,7 +18,8 @@ type MiniBetType =
   | "FIRST_GOAL"
   | "KICKOFF"
   | "PENALTY_90"
-  | "CORNERS_8";
+  | "CORNERS_8"
+  | "PLAYER_GOAL";
 
 type MiniBetChoice =
   | "OVER"
@@ -372,7 +373,8 @@ export function MiniBetGuidePrompt({ enabled }: { enabled: boolean }) {
         <div className="mt-4 space-y-3 text-sm font-semibold leading-6 text-slate-600">
           <p>
             Từ bán kết trở đi, mỗi trận có thêm vài kèo nhỏ như tài xỉu, đội mở tỷ
-            số, giao bóng, penalty và phạt góc.
+            số, giao bóng, penalty, phạt góc và thử tài cầu thủ ghi bàn ở những trận
+            đặc biệt.
           </p>
           <p>
             Bạn thích kèo nào thì chọn kèo đó, không cần chọn đủ. Mỗi kèo đúng sẽ

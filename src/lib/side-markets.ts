@@ -17,6 +17,7 @@ import {
 import { prisma } from "./prisma";
 
 export const CHAMPION_MARKET_SLUG = "world-cup-2026-champion";
+export const CHAMPION_REOPEN_MARKET_SLUG = "world-cup-2026-champion-semi-final";
 export const TOP_SCORER_MARKET_SLUG = "world-cup-2026-top-scorer";
 
 const SIDE_MARKET_SETTLEMENT_REVISION = 1;
@@ -28,6 +29,7 @@ type ChampionOptionDefinition = {
   slug: string;
   label: string;
   reward: number;
+  loss: number;
   teamNames: string[];
 };
 
@@ -39,25 +41,32 @@ type TopScorerOptionDefinition = {
 };
 
 export const CHAMPION_OPTIONS: ChampionOptionDefinition[] = [
-  { slug: "france", label: "Pháp", reward: 100_000, teamNames: ["France"] },
-  { slug: "morocco", label: "Ma Rốc", reward: 350_000, teamNames: ["Morocco"] },
-  { slug: "norway", label: "Na Uy", reward: 350_000, teamNames: ["Norway"] },
-  { slug: "argentina", label: "Argentina", reward: 150_000, teamNames: ["Argentina"] },
-  { slug: "england", label: "Anh", reward: 200_000, teamNames: ["England"] },
-  { slug: "spain", label: "Tây Ban Nha", reward: 200_000, teamNames: ["Spain"] },
+  { slug: "france", label: "Pháp", reward: 100_000, loss: 200_000, teamNames: ["France"] },
+  { slug: "morocco", label: "Ma Rốc", reward: 350_000, loss: 200_000, teamNames: ["Morocco"] },
+  { slug: "norway", label: "Na Uy", reward: 350_000, loss: 200_000, teamNames: ["Norway"] },
+  { slug: "argentina", label: "Argentina", reward: 150_000, loss: 200_000, teamNames: ["Argentina"] },
+  { slug: "england", label: "Anh", reward: 200_000, loss: 200_000, teamNames: ["England"] },
+  { slug: "spain", label: "Tây Ban Nha", reward: 200_000, loss: 200_000, teamNames: ["Spain"] },
   {
     slug: "colombia-switzerland",
     label: "Switzerland",
     reward: 350_000,
+    loss: 200_000,
     teamNames: ["Switzerland"],
   },
-  { slug: "belgium", label: "Bỉ", reward: 350_000, teamNames: ["Belgium"] },
+  { slug: "belgium", label: "Bỉ", reward: 350_000, loss: 200_000, teamNames: ["Belgium"] },
+];
+
+export const CHAMPION_REOPEN_OPTIONS: ChampionOptionDefinition[] = [
+  { slug: "france", label: "Pháp", reward: 100_000, loss: 300_000, teamNames: ["France"] },
+  { slug: "england", label: "Anh", reward: 150_000, loss: 300_000, teamNames: ["England"] },
+  { slug: "spain", label: "Tây Ban Nha", reward: 150_000, loss: 300_000, teamNames: ["Spain"] },
+  { slug: "argentina", label: "Argentina", reward: 150_000, loss: 300_000, teamNames: ["Argentina"] },
 ];
 
 export const TOP_SCORER_OPTIONS: TopScorerOptionDefinition[] = [
   { slug: "mbappe", label: "Mbappe", rewardQuarterFinal: 200_000, rewardSemiFinal: 100_000 },
   { slug: "messi", label: "Messi", rewardQuarterFinal: 200_000, rewardSemiFinal: 100_000 },
-  { slug: "haaland", label: "Haaland", rewardQuarterFinal: 300_000, rewardSemiFinal: 200_000 },
   { slug: "kane", label: "Kane", rewardQuarterFinal: 300_000, rewardSemiFinal: 200_000 },
   { slug: "other", label: "Khác", rewardQuarterFinal: 500_000, rewardSemiFinal: 300_000 },
 ];
@@ -107,6 +116,12 @@ export type SideMarketAdminState = {
   pendingTopScorerPicks: number;
 };
 
+export function canJoinReopenedChampionMarket(
+  previousOutcome: SideMarketPickOutcome | null,
+) {
+  return previousOutcome === null || previousOutcome === SideMarketPickOutcome.LOST;
+}
+
 type SideMarketAvailability = {
   isOpen: boolean;
   statusLabel: string;
@@ -119,6 +134,8 @@ type SideMarketAvailability = {
 type TournamentMilestones = {
   championOpenAt: Date | null;
   championCloseAt: Date | null;
+  championReopenOpenAt: Date | null;
+  championReopenCloseAt: Date | null;
   topScorerOpenAt: Date | null;
   topScorerSemiStartAt: Date | null;
   topScorerCloseAt: Date | null;
@@ -126,58 +143,43 @@ type TournamentMilestones = {
 
 export async function ensureSideMarkets(db: SideMarketDb = prisma) {
   const existing = await db.sideMarket.findMany({
-    where: { slug: { in: [CHAMPION_MARKET_SLUG, TOP_SCORER_MARKET_SLUG] } },
+    where: {
+      slug: {
+        in: [
+          CHAMPION_MARKET_SLUG,
+          CHAMPION_REOPEN_MARKET_SLUG,
+          TOP_SCORER_MARKET_SLUG,
+        ],
+      },
+    },
     include: { options: true },
   });
 
-  if (!needsChampionSeed(existing) && !needsTopScorerSeed(existing)) return;
+  const seedOriginalChampion = needsChampionSeed(existing);
+  const seedReopenedChampion = needsChampionReopenSeed(existing);
+  const seedTopScorer = needsTopScorerSeed(existing);
+  if (!seedOriginalChampion && !seedReopenedChampion && !seedTopScorer) return;
 
-  if (needsChampionSeed(existing)) {
-    const market = await db.sideMarket.upsert({
-      where: { slug: CHAMPION_MARKET_SLUG },
-      create: {
-        slug: CHAMPION_MARKET_SLUG,
-        type: SideMarketType.CHAMPION,
-        title: "Dự đoán đội vô địch",
-        description: "Chọn một đội bạn tin sẽ lên ngôi. Chọn xong là chốt, không đổi.",
-      },
-      update: {
-        type: SideMarketType.CHAMPION,
-        title: "Dự đoán đội vô địch",
-        description: "Chọn một đội bạn tin sẽ lên ngôi. Chọn xong là chốt, không đổi.",
-        isActive: true,
-      },
+  if (seedOriginalChampion) {
+    await seedChampionMarket(db, {
+      slug: CHAMPION_MARKET_SLUG,
+      title: "Dự đoán đội vô địch",
+      description: "Chọn một đội bạn tin sẽ lên ngôi. Chọn xong là chốt, không đổi.",
+      options: CHAMPION_OPTIONS,
     });
-
-    await Promise.all(
-      CHAMPION_OPTIONS.map((option, index) =>
-        db.sideMarketOption.upsert({
-          where: {
-            marketId_slug: { marketId: market.id, slug: option.slug },
-          },
-          create: {
-            marketId: market.id,
-            slug: option.slug,
-            label: option.label,
-            rewardChampion: option.reward,
-            lossAmount: 200_000,
-            sortOrder: index,
-            metadata: { teamNames: option.teamNames },
-          },
-          update: {
-            label: option.label,
-            rewardChampion: option.reward,
-            lossAmount: 200_000,
-            sortOrder: index,
-            metadata: { teamNames: option.teamNames },
-            isActive: true,
-          },
-        }),
-      ),
-    );
   }
 
-  if (needsTopScorerSeed(existing)) {
+  if (seedReopenedChampion) {
+    await seedChampionMarket(db, {
+      slug: CHAMPION_REOPEN_MARKET_SLUG,
+      title: "Cơ hội chọn lại đội vô địch",
+      description:
+        "Dành cho người chưa chọn ở lượt trước hoặc có đội đã bị loại. Phiếu mới khóa ngay sau khi chốt.",
+      options: CHAMPION_REOPEN_OPTIONS,
+    });
+  }
+
+  if (seedTopScorer) {
     const market = await db.sideMarket.upsert({
       where: { slug: TOP_SCORER_MARKET_SLUG },
       create: {
@@ -220,7 +222,66 @@ export async function ensureSideMarkets(db: SideMarketDb = prisma) {
         }),
       ),
     );
+
+    await db.sideMarketOption.updateMany({
+      where: {
+        marketId: market.id,
+        slug: { notIn: TOP_SCORER_OPTIONS.map((option) => option.slug) },
+      },
+      data: { isActive: false },
+    });
   }
+}
+
+async function seedChampionMarket(
+  db: SideMarketDb,
+  input: {
+    slug: string;
+    title: string;
+    description: string;
+    options: ChampionOptionDefinition[];
+  },
+) {
+  const market = await db.sideMarket.upsert({
+    where: { slug: input.slug },
+    create: {
+      slug: input.slug,
+      type: SideMarketType.CHAMPION,
+      title: input.title,
+      description: input.description,
+    },
+    update: {
+      type: SideMarketType.CHAMPION,
+      title: input.title,
+      description: input.description,
+      isActive: true,
+    },
+  });
+
+  await Promise.all(
+    input.options.map((option, index) =>
+      db.sideMarketOption.upsert({
+        where: { marketId_slug: { marketId: market.id, slug: option.slug } },
+        create: {
+          marketId: market.id,
+          slug: option.slug,
+          label: option.label,
+          rewardChampion: option.reward,
+          lossAmount: option.loss,
+          sortOrder: index,
+          metadata: { teamNames: option.teamNames },
+        },
+        update: {
+          label: option.label,
+          rewardChampion: option.reward,
+          lossAmount: option.loss,
+          sortOrder: index,
+          metadata: { teamNames: option.teamNames },
+          isActive: true,
+        },
+      }),
+    ),
+  );
 }
 
 export async function getSideMarketCardsForUser(
@@ -231,7 +292,13 @@ export async function getSideMarketCardsForUser(
   const [markets, milestones] = await Promise.all([
     prisma.sideMarket.findMany({
       where: {
-        slug: { in: [CHAMPION_MARKET_SLUG, TOP_SCORER_MARKET_SLUG] },
+        slug: {
+          in: [
+            CHAMPION_MARKET_SLUG,
+            CHAMPION_REOPEN_MARKET_SLUG,
+            TOP_SCORER_MARKET_SLUG,
+          ],
+        },
         isActive: true,
       },
       orderBy: { slug: "asc" },
@@ -252,9 +319,24 @@ export async function getSideMarketCardsForUser(
     getTournamentMilestones(),
   ]);
 
+  const originalMarket = markets.find((market) => market.slug === CHAMPION_MARKET_SLUG);
+  const originalPick = originalMarket?.picks.find((pick) => pick.user.id === userId) ?? null;
+  const canUseReopenedChampion = canJoinReopenedChampionMarket(
+    originalPick?.outcome ?? null,
+  );
+
   return markets
-    .sort((a, b) => marketSortOrder(a.type) - marketSortOrder(b.type))
-    .map((market) => buildSideMarketCard(market, milestones, now, userId));
+    .sort((a, b) => marketSortOrder(a.slug) - marketSortOrder(b.slug))
+    .map((market) =>
+      buildSideMarketCard(market, milestones, now, userId, {
+        canPick:
+          market.slug !== CHAMPION_REOPEN_MARKET_SLUG || canUseReopenedChampion,
+        blockedReason:
+          market.slug === CHAMPION_REOPEN_MARKET_SLUG && !canUseReopenedChampion
+            ? "Đội bạn chọn ở lượt trước vẫn còn tranh chức vô địch."
+            : null,
+      }),
+    );
 }
 
 export async function getSideMarketAdminState(
@@ -310,11 +392,29 @@ export async function placeSideMarketPick(input: {
       throw new Error("Bạn đã chọn kèo này rồi, không thể đổi lại.");
     }
 
+    if (market.slug === CHAMPION_REOPEN_MARKET_SLUG) {
+      const originalPick = await tx.sideMarketPick.findFirst({
+        where: {
+          userId: input.userId,
+          market: { slug: CHAMPION_MARKET_SLUG },
+        },
+        select: { outcome: true },
+      });
+      if (!canJoinReopenedChampionMarket(originalPick?.outcome ?? null)) {
+        throw new Error("Đội bạn chọn ở lượt trước vẫn còn tranh chức vô địch.");
+      }
+    }
+
     const option = market.options[0];
     if (!option) throw new Error("Lựa chọn không hợp lệ.");
 
     const milestones = await getTournamentMilestones(tx);
-    const availability = getSideMarketAvailability(market.type, milestones, now);
+    const availability = getSideMarketAvailability(
+      market.type,
+      milestones,
+      now,
+      market.slug,
+    );
     if (!availability.isOpen || !availability.phase) {
       throw new Error("Kèo này đang không trong thời gian chọn.");
     }
@@ -343,15 +443,15 @@ export async function settleChampionMarketFromMatches(actorId?: string) {
   await ensureSideMarkets();
   return prisma.$transaction(
     async (tx) => {
-      const market = await tx.sideMarket.findUnique({
-        where: { slug: CHAMPION_MARKET_SLUG },
+      const markets = await tx.sideMarket.findMany({
+        where: { type: SideMarketType.CHAMPION, isActive: true },
         select: { id: true, settledAt: true },
       });
-      if (!market) return { settled: 0, skipped: "NO_MARKET" as const };
+      if (markets.length === 0) return { settled: 0, skipped: "NO_MARKET" as const };
 
       const pendingPicks = await tx.sideMarketPick.findMany({
         where: {
-          marketId: market.id,
+          marketId: { in: markets.map((market) => market.id) },
           outcome: SideMarketPickOutcome.PENDING,
         },
         include: { option: true },
@@ -392,9 +492,11 @@ export async function settleChampionMarketFromMatches(actorId?: string) {
         settled += 1;
       }
 
-      if (knockoutState.championTeam && !market.settledAt) {
-        await tx.sideMarket.update({
-          where: { id: market.id },
+      if (knockoutState.championTeam) {
+        await tx.sideMarket.updateMany({
+          where: {
+            id: { in: markets.filter((market) => !market.settledAt).map((market) => market.id) },
+          },
           data: { settledAt: new Date() },
         });
       }
@@ -405,7 +507,7 @@ export async function settleChampionMarketFromMatches(actorId?: string) {
             actorId,
             action: "SIDE_MARKET_CHAMPION_SETTLED",
             entityType: "SideMarket",
-            entityId: market.id,
+            entityId: markets.map((market) => market.id).join(","),
             details: {
               settled,
               championTeam: knockoutState.championTeam ?? "",
@@ -535,14 +637,22 @@ export function getSideMarketAvailability(
   type: SideMarketType,
   milestones: TournamentMilestones,
   now = new Date(),
+  marketSlug?: string,
 ): SideMarketAvailability {
   if (type === SideMarketType.CHAMPION) {
+    const reopened = marketSlug === CHAMPION_REOPEN_MARKET_SLUG;
     return buildAvailability({
       now,
-      openAt: milestones.championOpenAt,
-      closeAt: milestones.championCloseAt,
-      phase: SideMarketPickPhase.CHAMPION,
-      phaseLabel: "Vô địch",
+      openAt: reopened
+        ? milestones.championReopenOpenAt
+        : milestones.championOpenAt,
+      closeAt: reopened
+        ? milestones.championReopenCloseAt
+        : milestones.championCloseAt,
+      phase: reopened
+        ? SideMarketPickPhase.SEMI_FINAL
+        : SideMarketPickPhase.CHAMPION,
+      phaseLabel: reopened ? "Trước bán kết" : "Vô địch",
     });
   }
 
@@ -602,6 +712,11 @@ async function getTournamentMilestones(
         ? maxDate(qf.map((match) => match.result!.settledAt))
         : maxDate(qf.map((match) => addMinutes(match.kickoffAt, ESTIMATED_KNOCKOUT_END_MINUTES)))
       : null;
+  const championReopenOpenAt =
+    qf.length > 0 && qf.every((match) => match.result)
+      ? maxDate(qf.map((match) => match.result!.settledAt))
+      : null;
+  const championReopenCloseAt = sf[0]?.kickoffAt ?? null;
   const topScorerOpenAt = championOpenAt ?? championCloseAt;
   const topScorerSemiStartAt = quarterFinalFinishedAt ?? sf[0]?.kickoffAt ?? null;
   const topScorerCloseAt =
@@ -618,6 +733,8 @@ async function getTournamentMilestones(
   return {
     championOpenAt,
     championCloseAt,
+    championReopenOpenAt,
+    championReopenCloseAt,
     topScorerOpenAt,
     topScorerSemiStartAt,
     topScorerCloseAt,
@@ -648,8 +765,17 @@ function buildSideMarketCard(
   milestones: TournamentMilestones,
   now: Date,
   userId: string,
+  eligibility: { canPick: boolean; blockedReason: string | null } = {
+    canPick: true,
+    blockedReason: null,
+  },
 ): SideMarketCard {
-  const availability = getSideMarketAvailability(market.type, milestones, now);
+  const availability = getSideMarketAvailability(
+    market.type,
+    milestones,
+    now,
+    market.slug,
+  );
   const pick = market.picks.find((row) => row.user.id === userId) ?? null;
   const termsPhase = pick?.phase ?? availability.phase ?? fallbackPhase(market.type);
 
@@ -657,10 +783,17 @@ function buildSideMarketCard(
     slug: market.slug,
     type: market.type,
     title: market.title,
-    eyebrow: market.type === SideMarketType.CHAMPION ? "Kèo phụ" : "Kèo vui",
+    eyebrow:
+      market.slug === CHAMPION_REOPEN_MARKET_SLUG
+        ? "Cơ hội vòng hai"
+        : market.type === SideMarketType.CHAMPION
+          ? "Kèo phụ"
+          : "Kèo vui",
     description: market.description,
-    statusLabel: pick ? getPickStatusLabel(pick.outcome) : availability.statusLabel,
-    isOpen: availability.isOpen && !pick,
+    statusLabel: pick
+      ? getPickStatusLabel(pick.outcome)
+      : eligibility.blockedReason ?? availability.statusLabel,
+    isOpen: availability.isOpen && eligibility.canPick && !pick,
     isSettled: Boolean(market.settledAt),
     openAtLabel: availability.openAt ? formatVietnamTime(availability.openAt) : null,
     closeAtLabel: availability.closeAt ? formatVietnamTime(availability.closeAt) : null,
@@ -855,7 +988,35 @@ function needsChampionSeed(
       !option ||
       option.label !== definition.label ||
       option.rewardChampion !== definition.reward ||
-      option.lossAmount !== 200_000 ||
+      option.lossAmount !== definition.loss ||
+      teamNames.length !== definition.teamNames.length ||
+      teamNames.some((teamName, index) => teamName !== definition.teamNames[index])
+    );
+  });
+}
+
+function needsChampionReopenSeed(
+  existing: Array<{
+    slug: string;
+    options: Array<{
+      slug: string;
+      rewardChampion: number | null;
+      lossAmount: number | null;
+      label: string;
+      metadata: Prisma.JsonValue | null;
+    }>;
+  }>,
+) {
+  const market = existing.find((row) => row.slug === CHAMPION_REOPEN_MARKET_SLUG);
+  if (!market) return true;
+  return CHAMPION_REOPEN_OPTIONS.some((definition) => {
+    const option = market.options.find((row) => row.slug === definition.slug);
+    const teamNames = option ? getChampionTeamNames(option) : [];
+    return (
+      !option ||
+      option.label !== definition.label ||
+      option.rewardChampion !== definition.reward ||
+      option.lossAmount !== definition.loss ||
       teamNames.length !== definition.teamNames.length ||
       teamNames.some((teamName, index) => teamName !== definition.teamNames[index])
     );
@@ -870,20 +1031,28 @@ function needsTopScorerSeed(
       label: string;
       rewardQuarterFinal: number | null;
       rewardSemiFinal: number | null;
+      isActive: boolean;
     }>;
   }>,
 ) {
   const market = existing.find((row) => row.slug === TOP_SCORER_MARKET_SLUG);
   if (!market) return true;
-  return TOP_SCORER_OPTIONS.some((definition) => {
-    const option = market.options.find((row) => row.slug === definition.slug);
-    return (
-      !option ||
-      option.label !== definition.label ||
-      option.rewardQuarterFinal !== definition.rewardQuarterFinal ||
-      option.rewardSemiFinal !== definition.rewardSemiFinal
-    );
-  });
+  const configuredSlugs = new Set(TOP_SCORER_OPTIONS.map((option) => option.slug));
+  return (
+    market.options.some(
+      (option) => option.isActive && !configuredSlugs.has(option.slug),
+    ) ||
+    TOP_SCORER_OPTIONS.some((definition) => {
+      const option = market.options.find((row) => row.slug === definition.slug);
+      return (
+        !option ||
+        !option.isActive ||
+        option.label !== definition.label ||
+        option.rewardQuarterFinal !== definition.rewardQuarterFinal ||
+        option.rewardSemiFinal !== definition.rewardSemiFinal
+      );
+    })
+  );
 }
 
 function buildAvailability(input: {
@@ -987,8 +1156,10 @@ function phaseLabel(phase: SideMarketPickPhase) {
   return "Vô địch";
 }
 
-function marketSortOrder(type: SideMarketType) {
-  return type === SideMarketType.CHAMPION ? 0 : 1;
+function marketSortOrder(slug: string) {
+  if (slug === CHAMPION_REOPEN_MARKET_SLUG) return 0;
+  if (slug === TOP_SCORER_MARKET_SLUG) return 1;
+  return 2;
 }
 
 function inferAdvancedTeam(teamAFinalScore: number, teamBFinalScore: number) {
