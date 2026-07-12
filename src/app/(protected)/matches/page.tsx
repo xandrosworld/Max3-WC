@@ -141,9 +141,13 @@ export default async function MatchesPage({
         orderBy: { settlementRevision: "desc" },
       },
       miniBetPicks: {
-        where: { userId: user.id },
+        orderBy: { createdAt: "asc" },
         include: {
+          user: {
+            select: { id: true, name: true },
+          },
           lossTransactions: {
+            where: { userId: user.id },
             select: { amount: true },
             orderBy: { createdAt: "asc" },
           },
@@ -420,7 +424,9 @@ export default async function MatchesPage({
                   const participantCount = match.votes.length;
                   const justSaved = Boolean(saved && savedMatchId === match.id);
                   const miniBetEnabled = canUseMiniBets(match.round);
-                  const miniBetItems = miniBetEnabled ? buildMiniBetPanelItems(match) : [];
+                  const miniBetItems = miniBetEnabled
+                    ? buildMiniBetPanelItems(match, user.id)
+                    : [];
                   const activeMiniBetSaved =
                     savedMatchId === match.id &&
                     MINI_BET_TYPES.includes(miniBetSaved as MiniBetType)
@@ -558,10 +564,10 @@ export default async function MatchesPage({
                             />
                           ) : canPick ? (
                             <MatchVoteForm
+                              key={`${match.id}-${myVote?.choice ?? "none"}-${
+                                myVote?.hopeStar ? "star" : "normal"
+                              }`}
                               matchId={match.id}
-                              returnFilter={activeFilter}
-                              returnRound={activeFilter === "all" ? match.round : undefined}
-                              returnQ={searchTerm}
                               teamA={match.teamA}
                               teamB={match.teamB}
                               handicapLabel={formatHandicap(match)}
@@ -880,25 +886,31 @@ function getAdvancedTeamLabel(match: {
   return null;
 }
 
-function buildMiniBetPanelItems(match: {
-  teamA: string;
-  teamB: string;
-  round: RoundType;
-  miniBetPicks: Array<{
-    type: MiniBetType;
-    choice: MiniBetChoice;
-    lossTransactions: Array<{ amount: number }>;
-  }>;
-  miniBetResults: Array<{
-    type: MiniBetType;
-    winningChoice: MiniBetChoice | null;
-    voided: boolean;
-  }>;
-}): MiniBetPanelItem[] {
+function buildMiniBetPanelItems(
+  match: {
+    teamA: string;
+    teamB: string;
+    round: RoundType;
+    miniBetPicks: Array<{
+      userId: string;
+      type: MiniBetType;
+      choice: MiniBetChoice;
+      user: { id: string; name: string };
+      lossTransactions: Array<{ amount: number }>;
+    }>;
+    miniBetResults: Array<{
+      type: MiniBetType;
+      winningChoice: MiniBetChoice | null;
+      voided: boolean;
+    }>;
+  },
+  currentUserId: string,
+): MiniBetPanelItem[] {
   const playerName = getMiniBetPlayerName(match.teamA, match.teamB);
   return getMiniBetTypesForMatch(match.round, match.teamA, match.teamB).map((type) => {
     const config = getMiniBetConfig(type, playerName);
-    const pick = match.miniBetPicks.find((row) => row.type === type) ?? null;
+    const picks = match.miniBetPicks.filter((row) => row.type === type);
+    const pick = picks.find((row) => row.userId === currentUserId) ?? null;
     const result = match.miniBetResults.find((row) => row.type === type) ?? null;
     const transactionAmount =
       pick?.lossTransactions.reduce((sum, row) => sum + row.amount, 0) ?? 0;
@@ -918,6 +930,17 @@ function buildMiniBetPanelItems(match: {
       description: config.description,
       helper: config.helper,
       choices: getMiniBetChoiceOptions(type, match.teamA, match.teamB),
+      publicPicks: picks.map((row) => ({
+        voterId: row.user.id,
+        voterName: row.user.name,
+        choice: row.choice,
+        choiceLabel: miniBetChoiceLabel(
+          type,
+          row.choice,
+          match.teamA,
+          match.teamB,
+        ),
+      })),
       selectedChoice: pick?.choice ?? null,
       selectedLabel: pick
         ? miniBetChoiceLabel(type, pick.choice, match.teamA, match.teamB)

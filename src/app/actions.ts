@@ -299,6 +299,49 @@ export async function voteAction(formData: FormData) {
   redirect(`/matches?${params.toString()}#match-${matchId}`);
 }
 
+const instantVoteSchema = z.object({
+  matchId: z.string().min(1),
+  choice: z.nativeEnum(VoteChoice),
+  hopeStar: z.boolean(),
+});
+
+export async function saveVoteInstantAction(input: unknown) {
+  const user = await requireUser();
+  const parsed = instantVoteSchema.parse(input);
+  const match = await prisma.match.findUnique({ where: { id: parsed.matchId } });
+
+  if (!match || match.deletedAt) throw new Error("Không tìm thấy trận");
+  if (isVoteLocked(match, new Date())) {
+    throw new Error("Trận này đã khóa lựa chọn");
+  }
+  if (parsed.choice === VoteChoice.DRAW && !hasDrawChoice(match.handicap)) {
+    throw new Error("Kèo nửa trái chỉ có hai cửa đội A hoặc đội B");
+  }
+  if (parsed.hopeStar && !canUseHopeStar(match.round)) {
+    throw new Error("Ngôi sao hy vọng chỉ dùng từ vòng 16 trở đi");
+  }
+
+  const hopeStar = parsed.hopeStar && canUseHopeStar(match.round);
+  const vote = await prisma.vote.upsert({
+    where: {
+      userId_matchId: { userId: user.id, matchId: match.id },
+    },
+    update: { choice: parsed.choice, hopeStar },
+    create: {
+      userId: user.id,
+      matchId: match.id,
+      choice: parsed.choice,
+      hopeStar,
+    },
+  });
+
+  return {
+    choice: vote.choice,
+    hopeStar: vote.hopeStar,
+    updatedAt: vote.updatedAt.toISOString(),
+  };
+}
+
 export async function placeMiniBetPickAction(formData: FormData) {
   const user = await requireUser();
   const matchId = formString(formData, "matchId");

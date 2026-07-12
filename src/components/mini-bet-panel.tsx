@@ -9,6 +9,7 @@ import {
   Info,
   LockKeyhole,
   Sparkles,
+  UsersRound,
   X,
 } from "lucide-react";
 import { placeMiniBetPickAction } from "@/app/actions";
@@ -36,6 +37,12 @@ export type MiniBetPanelItem = {
   description: string;
   helper: string;
   choices: Array<{ choice: MiniBetChoice; label: string; shortLabel: string }>;
+  publicPicks: Array<{
+    voterId: string;
+    voterName: string;
+    choice: MiniBetChoice;
+    choiceLabel: string;
+  }>;
   selectedChoice: MiniBetChoice | null;
   selectedLabel: string | null;
   resultLabel: string | null;
@@ -301,7 +308,62 @@ function MiniBetRow({
           );
         })}
       </div>
+
+      <MiniBetPublicPicks item={item} />
     </article>
+  );
+}
+
+function MiniBetPublicPicks({ item }: { item: MiniBetPanelItem }) {
+  if (item.publicPicks.length === 0) return null;
+
+  return (
+    <div className="mt-3 rounded-xl bg-slate-50/90 p-3 ring-1 ring-slate-200/80">
+      <p className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-slate-600">
+        <UsersRound size={14} aria-hidden="true" />
+        Mọi người đã chọn ({item.publicPicks.length})
+      </p>
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        {item.choices.map((option) => {
+          const voters = item.publicPicks.filter(
+            (pick) => pick.choice === option.choice,
+          );
+
+          return (
+            <div
+              key={option.choice}
+              className="min-w-0 rounded-lg bg-white px-2.5 py-2 ring-1 ring-slate-200"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate text-xs font-black text-slate-800">
+                  {option.label}
+                </span>
+                <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black tabular-nums text-slate-600">
+                  {voters.length}
+                </span>
+              </div>
+              {voters.length > 0 ? (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {voters.map((pick) => (
+                    <span
+                      key={`${pick.voterId}-${item.type}`}
+                      className="inline-flex max-w-full rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-900 ring-1 ring-emerald-100"
+                      title={`${pick.voterName} chọn ${pick.choiceLabel}`}
+                    >
+                      <span className="max-w-36 truncate">{pick.voterName}</span>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-1.5 text-[11px] font-semibold text-slate-400">
+                  Chưa có ai chọn
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -378,7 +440,8 @@ export function MiniBetGuidePrompt({ enabled }: { enabled: boolean }) {
           </p>
           <p>
             Bạn thích kèo nào thì chọn kèo đó, không cần chọn đủ. Mỗi kèo đúng sẽ
-            giảm 20.000 Belly, sai thì góp thêm 40.000 Belly.
+            giảm 20.000 Belly, sai thì góp thêm 40.000 Belly. Mọi lựa chọn đều
+            công khai để cả nhóm cùng xem.
           </p>
           <p>
             Riêng kèo đội ghi bàn trước: nếu 90 phút hòa 0-0 thì kèo đó được hoàn,
