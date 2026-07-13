@@ -76,9 +76,9 @@ export function getMiniBetConfig(
     case MiniBetType.TOTAL_GOALS:
       return {
         type,
-        title: "Tài / Xỉu",
-        shortTitle: "Tài xỉu",
-        description: "90 phút có trên 2 bàn là Tài, từ 2 bàn trở xuống là Xỉu.",
+        title: "Tốt / Xấu",
+        shortTitle: "Tốt xấu",
+        description: "90 phút có trên 2 bàn là Tốt, từ 2 bàn trở xuống là Xấu.",
         helper: "Chỉ tính 90 phút chính thức.",
       };
     case MiniBetType.FIRST_GOAL:
@@ -156,8 +156,8 @@ export function getMiniBetChoiceOptions(
   switch (type) {
     case MiniBetType.TOTAL_GOALS:
       return [
-        { choice: MiniBetChoice.OVER, label: "Tài", shortLabel: "Tài" },
-        { choice: MiniBetChoice.UNDER, label: "Xỉu", shortLabel: "Xỉu" },
+        { choice: MiniBetChoice.OVER, label: "Tốt", shortLabel: "Tốt" },
+        { choice: MiniBetChoice.UNDER, label: "Xấu", shortLabel: "Xấu" },
       ];
     case MiniBetType.FIRST_GOAL:
     case MiniBetType.KICKOFF:

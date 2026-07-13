@@ -434,7 +434,7 @@ export function MiniBetGuidePrompt({ enabled }: { enabled: boolean }) {
         </div>
         <div className="mt-4 space-y-3 text-sm font-semibold leading-6 text-slate-600">
           <p>
-            Từ bán kết trở đi, mỗi trận có thêm vài kèo nhỏ như tài xỉu, đội mở tỷ
+            Từ bán kết trở đi, mỗi trận có thêm vài kèo nhỏ như tốt xấu, đội mở tỷ
             số, giao bóng, penalty, phạt góc và thử tài cầu thủ ghi bàn ở những trận
             đặc biệt.
           </p>
