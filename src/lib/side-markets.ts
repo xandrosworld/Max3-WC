@@ -25,6 +25,8 @@ const ESTIMATED_KNOCKOUT_END_MINUTES = 150;
 
 type SideMarketDb = Prisma.TransactionClient | typeof prisma;
 
+let sideMarketSyncPromise: Promise<void> | null = null;
+
 type ChampionOptionDefinition = {
   slug: string;
   label: string;
@@ -141,7 +143,20 @@ type TournamentMilestones = {
   topScorerCloseAt: Date | null;
 };
 
-export async function ensureSideMarkets(db: SideMarketDb = prisma) {
+export function ensureSideMarkets(db: SideMarketDb = prisma) {
+  if (db !== prisma) return syncSideMarkets(db);
+
+  if (!sideMarketSyncPromise) {
+    sideMarketSyncPromise = syncSideMarkets(prisma).catch((error) => {
+      sideMarketSyncPromise = null;
+      throw error;
+    });
+  }
+
+  return sideMarketSyncPromise;
+}
+
+async function syncSideMarkets(db: SideMarketDb) {
   const existing = await db.sideMarket.findMany({
     where: {
       slug: {

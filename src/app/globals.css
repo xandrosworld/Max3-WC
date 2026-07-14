@@ -77,6 +77,76 @@ textarea {
   }
 }
 
+@keyframes nav-progress {
+  0% {
+    left: -55%;
+  }
+  100% {
+    left: 105%;
+  }
+}
+
+@keyframes route-loading-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes route-content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes route-loading-shimmer {
+  from {
+    transform: translateX(-115%);
+  }
+  to {
+    transform: translateX(215%);
+  }
+}
+
+.route-loading-shell {
+  animation: route-loading-enter 160ms ease-out both;
+}
+
+.route-content-enter {
+  animation: route-content-enter 160ms ease-out both;
+}
+
+.route-loading-block {
+  position: relative;
+  overflow: hidden;
+}
+
+.route-loading-block::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 46%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.78), transparent);
+  animation: route-loading-shimmer 1.15s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-loading-shell,
+  .route-content-enter,
+  .route-loading-block::after {
+    animation: none;
+  }
+}
+
 @keyframes ctomChampionShine {
   0%,
   30% {

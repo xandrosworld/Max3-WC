@@ -7,21 +7,38 @@ const prismaMock = vi.hoisted(() => ({
   match: {
     findMany: vi.fn(),
   },
+  vote: {
+    findMany: vi.fn(),
+  },
+  lossTransaction: {
+    groupBy: vi.fn(),
+  },
+  payment: {
+    groupBy: vi.fn(),
+  },
+  userCosmeticEquip: {
+    findMany: vi.fn(),
+  },
 }));
 
 vi.mock("./prisma", () => ({ prisma: prismaMock }));
 
 import { getLeaderboard } from "./leaderboard";
 
+const settledAt = new Date("2026-07-10T00:00:00.000Z");
+
 describe("getLeaderboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.user.findMany.mockResolvedValue([]);
+    prismaMock.match.findMany.mockResolvedValue([]);
+    prismaMock.vote.findMany.mockResolvedValue([]);
+    prismaMock.lossTransaction.groupBy.mockResolvedValue([]);
+    prismaMock.payment.groupBy.mockResolvedValue([]);
+    prismaMock.userCosmeticEquip.findMany.mockResolvedValue([]);
   });
 
   it("không đưa quản trị viên vào bảng xếp hạng", async () => {
-    prismaMock.user.findMany.mockResolvedValue([]);
-    prismaMock.match.findMany.mockResolvedValue([]);
-
     await getLeaderboard();
 
     expect(prismaMock.user.findMany).toHaveBeenCalledWith(
@@ -29,24 +46,20 @@ describe("getLeaderboard", () => {
         where: { role: "user" },
       }),
     );
-    expect(prismaMock.match.findMany).toHaveBeenCalled();
   });
 
-  it("orders settled matches by settlement time for current streaks", async () => {
-    prismaMock.user.findMany.mockResolvedValue([]);
-    prismaMock.match.findMany.mockResolvedValue([]);
-
+  it("loads leaderboard relations as parallel flat queries", async () => {
     await getLeaderboard();
 
-    expect(prismaMock.match.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        orderBy: [
-          { result: { settledAt: "desc" } },
-          { kickoffAt: "desc" },
-          { id: "desc" },
-        ],
-      }),
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ select: expect.any(Object) }),
     );
+    expect(prismaMock.vote.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ select: expect.any(Object) }),
+    );
+    expect(prismaMock.lossTransaction.groupBy).toHaveBeenCalled();
+    expect(prismaMock.payment.groupBy).toHaveBeenCalled();
+    expect(prismaMock.userCosmeticEquip.findMany).toHaveBeenCalled();
   });
 
   it("counts settled matches without a user vote as missed", async () => {
@@ -57,13 +70,18 @@ describe("getLeaderboard", () => {
         createdAt: new Date("2026-06-01T00:00:00.000Z"),
         image: null,
         department: "Sq1",
-        votes: [],
-        lossTransactions: [{ amount: 20_000 }],
-        payments: [],
       },
     ]);
     prismaMock.match.findMany.mockResolvedValue([
-      { id: "match-1", kickoffAt: new Date("2026-06-02T00:00:00.000Z"), votes: [] },
+      {
+        id: "match-1",
+        kickoffAt: new Date("2026-06-02T00:00:00.000Z"),
+        status: "SETTLED",
+        result: { winningChoice: "TEAM_A", settledAt },
+      },
+    ]);
+    prismaMock.lossTransaction.groupBy.mockResolvedValue([
+      { userId: "user-1", _sum: { amount: 20_000 } },
     ]);
 
     const rows = await getLeaderboard();
@@ -84,9 +102,6 @@ describe("getLeaderboard", () => {
         createdAt: new Date("2026-06-01T00:00:00.000Z"),
         image: null,
         department: "BA",
-        votes: [],
-        lossTransactions: [{ amount: 220_000 }],
-        payments: [],
       },
       {
         id: "correct-player",
@@ -94,23 +109,27 @@ describe("getLeaderboard", () => {
         createdAt: new Date("2026-06-01T00:00:00.000Z"),
         image: null,
         department: "Bạ Lằng Huyện",
-        votes: [
-          {
-            choice: "TEAM_A",
-            hopeStar: false,
-            match: { result: { winningChoice: "TEAM_A" } },
-          },
-        ],
-        lossTransactions: [{ amount: 100_000 }],
-        payments: [],
       },
     ]);
     prismaMock.match.findMany.mockResolvedValue([
       {
         id: "match-1",
         kickoffAt: new Date("2026-06-02T00:00:00.000Z"),
-        votes: [{ userId: "correct-player" }],
+        status: "SETTLED",
+        result: { winningChoice: "TEAM_A", settledAt },
       },
+    ]);
+    prismaMock.vote.findMany.mockResolvedValue([
+      {
+        userId: "correct-player",
+        matchId: "match-1",
+        choice: "TEAM_A",
+        hopeStar: false,
+      },
+    ]);
+    prismaMock.lossTransaction.groupBy.mockResolvedValue([
+      { userId: "missed-heavy", _sum: { amount: 220_000 } },
+      { userId: "correct-player", _sum: { amount: 100_000 } },
     ]);
 
     const rows = await getLeaderboard();
@@ -128,23 +147,23 @@ describe("getLeaderboard", () => {
         createdAt: new Date("2026-07-01T00:00:00.000Z"),
         image: null,
         department: "Sq1",
-        votes: [],
-        lossTransactions: [],
-        payments: [],
       },
     ]);
     prismaMock.match.findMany.mockResolvedValue([
       {
         id: "old-settled-match",
         kickoffAt: new Date("2026-06-30T00:00:00.000Z"),
-        result: { winningChoice: "TEAM_A" },
-        votes: [],
+        status: "SETTLED",
+        result: { winningChoice: "TEAM_A", settledAt },
       },
       {
         id: "new-settled-match",
         kickoffAt: new Date("2026-07-02T00:00:00.000Z"),
-        result: { winningChoice: "TEAM_A" },
-        votes: [],
+        status: "SETTLED",
+        result: {
+          winningChoice: "TEAM_A",
+          settledAt: new Date("2026-07-11T00:00:00.000Z"),
+        },
       },
     ]);
 
@@ -164,45 +183,55 @@ describe("getLeaderboard", () => {
         createdAt: new Date("2026-06-01T00:00:00.000Z"),
         image: null,
         department: "Sq1",
-        votes: [
-          {
-            choice: "TEAM_A",
-            hopeStar: false,
-            match: { result: { winningChoice: "TEAM_A" } },
-          },
-          {
-            choice: "TEAM_B",
-            hopeStar: false,
-            match: { result: { winningChoice: "TEAM_B" } },
-          },
-          {
-            choice: "TEAM_A",
-            hopeStar: false,
-            match: { result: { winningChoice: "TEAM_B" } },
-          },
-        ],
-        lossTransactions: [],
-        payments: [],
       },
     ]);
     prismaMock.match.findMany.mockResolvedValue([
       {
         id: "latest",
         kickoffAt: new Date("2026-06-05T00:00:00.000Z"),
-        result: { winningChoice: "TEAM_A" },
-        votes: [{ userId: "hot-player", choice: "TEAM_A" }],
+        status: "SETTLED",
+        result: {
+          winningChoice: "TEAM_A",
+          settledAt: new Date("2026-06-05T03:00:00.000Z"),
+        },
       },
       {
         id: "previous",
         kickoffAt: new Date("2026-06-04T00:00:00.000Z"),
-        result: { winningChoice: "TEAM_B" },
-        votes: [{ userId: "hot-player", choice: "TEAM_B" }],
+        status: "SETTLED",
+        result: {
+          winningChoice: "TEAM_B",
+          settledAt: new Date("2026-06-04T03:00:00.000Z"),
+        },
       },
       {
         id: "older",
         kickoffAt: new Date("2026-06-03T00:00:00.000Z"),
-        result: { winningChoice: "TEAM_B" },
-        votes: [{ userId: "hot-player", choice: "TEAM_A" }],
+        status: "SETTLED",
+        result: {
+          winningChoice: "TEAM_B",
+          settledAt: new Date("2026-06-03T03:00:00.000Z"),
+        },
+      },
+    ]);
+    prismaMock.vote.findMany.mockResolvedValue([
+      {
+        userId: "hot-player",
+        matchId: "latest",
+        choice: "TEAM_A",
+        hopeStar: false,
+      },
+      {
+        userId: "hot-player",
+        matchId: "previous",
+        choice: "TEAM_B",
+        hopeStar: false,
+      },
+      {
+        userId: "hot-player",
+        matchId: "older",
+        choice: "TEAM_A",
+        hopeStar: false,
       },
     ]);
 

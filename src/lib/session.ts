@@ -1,15 +1,24 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 
-export async function getCurrentUser() {
+const getCurrentUserForRequest = cache(async () => {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return null;
+  return {
+    ...session.user,
+    image: session.user.image ?? null,
+    department: session.user.department ?? "",
+    mustChangePassword: session.user.mustChangePassword ?? false,
+    autoFollowUserId: session.user.autoFollowUserId ?? null,
+    banned: session.user.banned ?? false,
+    role: session.user.role ?? "user",
+  };
+});
 
-  return prisma.user.findUnique({
-    where: { id: session.user.id },
-  });
+export async function getCurrentUser() {
+  return getCurrentUserForRequest();
 }
 
 export async function requireUser() {

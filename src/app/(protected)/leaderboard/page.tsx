@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { unstable_cache } from "next/cache";
 import { Award, Crown, Flame, Medal, Sparkles, Trophy, Zap } from "lucide-react";
 import {
   CosmeticAvatar,
@@ -16,6 +17,17 @@ import { requireUser } from "@/lib/session";
 import { getCtomLeaderboard } from "@/lib/shop";
 
 export const dynamic = "force-dynamic";
+
+const getCachedLeaderboard = unstable_cache(
+  getLeaderboard,
+  ["leaderboard-page-v2"],
+  { revalidate: 30 },
+);
+const getCachedCtomChampion = unstable_cache(
+  () => getCtomLeaderboard(1),
+  ["leaderboard-ctom-champion-v2"],
+  { revalidate: 30 },
+);
 
 type LeaderboardRow = Awaited<ReturnType<typeof getLeaderboard>>[number];
 type RankedRow = LeaderboardRow & {
@@ -36,8 +48,8 @@ export default async function LeaderboardPage({
       ? "contribution"
       : "prediction";
   const [rows, ctomRows] = await Promise.all([
-    getLeaderboard(),
-    getCtomLeaderboard(1),
+    getCachedLeaderboard(),
+    getCachedCtomChampion(),
   ]);
   const ctomChampionId =
     ctomRows[0] && ctomRows[0].totalCtom > 0 ? ctomRows[0].id : null;

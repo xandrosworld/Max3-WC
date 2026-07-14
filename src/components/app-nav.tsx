@@ -1,9 +1,9 @@
 "use client";
 
 import { Gem, Sparkles } from "lucide-react";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 const GROUPS_TAB_ANNOUNCEMENT_VERSION = "2026-06-24";
 const GROUPS_TAB_FIXED_UNTIL = new Date("2026-06-24T23:59:59.999+07:00").getTime();
@@ -57,6 +57,12 @@ export function AppNav({
   viewerId: string;
 }) {
   const pathname = usePathname();
+  const [pendingNavigation, setPendingNavigation] = useState<{
+    href: string;
+    fromPath: string;
+  } | null>(null);
+  const pendingHref =
+    pendingNavigation?.fromPath === pathname ? pendingNavigation.href : null;
   const groupsSeen = useSyncExternalStore(
     subscribeGroupsSeen,
     () => getGroupsSeenSnapshot(viewerId),
@@ -78,22 +84,38 @@ export function AppNav({
     if (isGroupsPath) markGroupsSeen(viewerId);
   }, [isGroupsPath, viewerId]);
 
+  useEffect(() => {
+    if (!pendingNavigation) return;
+
+    const timeout = window.setTimeout(() => setPendingNavigation(null), 15_000);
+    return () => window.clearTimeout(timeout);
+  }, [pendingNavigation]);
+
   return (
     <nav className="flex w-full max-w-full min-w-0 items-center gap-1 overflow-x-auto text-sm font-semibold" aria-label="Điều hướng chính">
       {items.map((item) => {
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const visuallyActive = pendingHref
+          ? pendingHref === item.href
+          : active;
         const isShop = item.href === "/shop";
         const showNewBadge = item.href === "/groups" && showGroupsNew && !active;
         return (
           <Link
             key={item.href}
-            className={`relative inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 ${
-              active
+            className={`relative inline-flex shrink-0 items-center gap-1.5 overflow-hidden rounded-xl px-3 py-2 ${
+              visuallyActive
                 ? "bg-white text-emerald-950"
                 : "text-emerald-50 hover:bg-white/10 hover:text-white"
-            } ${isShop ? "shop-nav-link" : ""} ${isShop && active ? "shop-nav-link-active shadow-[0_0_18px_rgba(251,191,36,0.28)] ring-1 ring-amber-200/70" : ""}`}
+            } ${isShop ? "shop-nav-link" : ""} ${isShop && visuallyActive ? "shop-nav-link-active shadow-[0_0_18px_rgba(251,191,36,0.28)] ring-1 ring-amber-200/70" : ""}`}
             href={item.href}
-            onClick={item.href === "/groups" ? () => markGroupsSeen(viewerId) : undefined}
+            aria-current={active ? "page" : undefined}
+            onClick={() => {
+              if (!active) {
+                setPendingNavigation({ href: item.href, fromPath: pathname });
+              }
+              if (item.href === "/groups") markGroupsSeen(viewerId);
+            }}
           >
             {isShop && (
               <span className={`shop-nav-gem relative inline-flex shrink-0 ${active ? "shop-nav-gem-active text-amber-500" : "text-amber-200"}`}>
@@ -115,9 +137,26 @@ export function AppNav({
                 Mới
               </span>
             )}
+            <NavLinkPending forcePending={pendingHref === item.href} />
           </Link>
         );
       })}
     </nav>
+  );
+}
+
+function NavLinkPending({ forcePending }: { forcePending: boolean }) {
+  const { pending } = useLinkStatus();
+  const visible = pending || forcePending;
+
+  return (
+    <span
+      aria-hidden="true"
+      className={`pointer-events-none absolute inset-x-2 bottom-0 h-0.5 overflow-hidden rounded-full bg-current/15 transition-opacity duration-150 ${
+        visible ? "opacity-100" : "opacity-0"
+      }`}
+    >
+      <span className="absolute inset-y-0 w-1/2 rounded-full bg-current motion-safe:animate-[nav-progress_700ms_ease-in-out_infinite]" />
+    </span>
   );
 }

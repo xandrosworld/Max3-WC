@@ -439,9 +439,54 @@ export function toEquippedCosmeticsMap(
   return result;
 }
 
-export async function ensureDefaultShopCatalog() {
+let catalogSyncPromise: Promise<void> | null = null;
+
+export function ensureDefaultShopCatalog() {
+  if (!catalogSyncPromise) {
+    catalogSyncPromise = syncDefaultShopCatalog().catch((error) => {
+      catalogSyncPromise = null;
+      throw error;
+    });
+  }
+
+  return catalogSyncPromise;
+}
+
+async function syncDefaultShopCatalog() {
+  const existingItems = await prisma.shopItem.findMany({
+    where: { slug: { in: DEFAULT_SHOP_ITEMS.map((item) => item.slug) } },
+    select: {
+      slug: true,
+      type: true,
+      rarity: true,
+      name: true,
+      description: true,
+      priceCtom: true,
+      visualKey: true,
+      sortOrder: true,
+      isActive: true,
+    },
+  });
+  const existingBySlug = new Map(existingItems.map((item) => [item.slug, item]));
+  const changedItems = DEFAULT_SHOP_ITEMS.filter((item) => {
+    const existing = existingBySlug.get(item.slug);
+    return (
+      !existing ||
+      existing.type !== item.type ||
+      existing.rarity !== item.rarity ||
+      existing.name !== item.name ||
+      existing.description !== item.description ||
+      existing.priceCtom !== item.priceCtom ||
+      existing.visualKey !== item.visualKey ||
+      existing.sortOrder !== item.sortOrder ||
+      !existing.isActive
+    );
+  });
+
+  if (changedItems.length === 0) return;
+
   await Promise.all(
-    DEFAULT_SHOP_ITEMS.map((item) =>
+    changedItems.map((item) =>
       prisma.shopItem.upsert({
         where: { slug: item.slug },
         update: {
@@ -486,7 +531,37 @@ export async function getCtomTotal(userId: string) {
   return Math.max(0, aggregate._sum.amount ?? 0);
 }
 
+const CTOM_LEADERBOARD_CACHE_MS = 30_000;
+let ctomLeaderboardCache: {
+  expiresAt: number;
+  promise: ReturnType<typeof loadCtomLeaderboardRows>;
+} | null = null;
+
+export function invalidateCtomLeaderboardCache() {
+  ctomLeaderboardCache = null;
+}
+
 export async function getCtomLeaderboard(take = 12) {
+  const now = Date.now();
+  if (!ctomLeaderboardCache || ctomLeaderboardCache.expiresAt <= now) {
+    const promise = loadCtomLeaderboardRows().catch((error) => {
+      ctomLeaderboardCache = null;
+      throw error;
+    });
+    ctomLeaderboardCache = {
+      expiresAt: now + CTOM_LEADERBOARD_CACHE_MS,
+      promise,
+    };
+  }
+
+  const rows = await ctomLeaderboardCache.promise;
+  return rows.slice(0, take).map((row, index) => ({
+    ...row,
+    rank: index + 1,
+  }));
+}
+
+async function loadCtomLeaderboardRows() {
   const users = await prisma.user.findMany({
     where: { role: "user", banned: false },
     orderBy: { name: "asc" },
@@ -505,7 +580,10 @@ export async function getCtomLeaderboard(take = 12) {
       image: user.image,
       totalCtom: Math.max(
         0,
-        user.ctomTransactions.reduce((sum, transaction) => sum + transaction.amount, 0),
+        user.ctomTransactions.reduce(
+          (sum, transaction) => sum + transaction.amount,
+          0,
+        ),
       ),
       itemCount: user.shopInventory.length,
       cosmetics: toEquippedCosmeticsMap(user.equippedCosmetics),
@@ -516,9 +594,7 @@ export async function getCtomLeaderboard(take = 12) {
         b.totalCtom - a.totalCtom ||
         b.itemCount - a.itemCount ||
         a.name.localeCompare(b.name, "vi"),
-    )
-    .slice(0, take)
-    .map((row, index) => ({ ...row, rank: index + 1 }));
+    );
 }
 
 export async function getShopPageData(userId: string) {
@@ -564,7 +640,7 @@ export async function purchaseShopItems(userId: string, itemIds: string[]) {
   const uniqueItemIds = Array.from(new Set(itemIds.filter(Boolean)));
   if (uniqueItemIds.length === 0) return [];
 
-  return prisma.$transaction(async (tx) => {
+  const results = await prisma.$transaction(async (tx) => {
     const results: Array<{ item: ShopItem; purchased: boolean }> = [];
 
     for (const itemId of uniqueItemIds) {
@@ -610,6 +686,9 @@ export async function purchaseShopItems(userId: string, itemIds: string[]) {
 
     return results;
   });
+
+  invalidateCtomLeaderboardCache();
+  return results;
 }
 
 export async function purchaseShopItem(userId: string, itemId: string) {
@@ -619,7 +698,7 @@ export async function purchaseShopItem(userId: string, itemId: string) {
 }
 
 export async function equipShopItem(userId: string, itemId: string) {
-  return prisma.$transaction(async (tx) => {
+  const item = await prisma.$transaction(async (tx) => {
     const owned = await tx.userShopItem.findUnique({
       where: { userId_itemId: { userId, itemId } },
       include: { item: true },
@@ -636,10 +715,14 @@ export async function equipShopItem(userId: string, itemId: string) {
 
     return owned.item;
   });
+
+  invalidateCtomLeaderboardCache();
+  return item;
 }
 
 export async function unequipShopItem(userId: string, type: ShopItemType) {
   await prisma.userCosmeticEquip.deleteMany({
     where: { userId, type },
   });
+  invalidateCtomLeaderboardCache();
 }

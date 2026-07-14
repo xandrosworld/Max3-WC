@@ -25,6 +25,11 @@ export const auth = betterAuth({
         defaultValue: false,
         input: false,
       },
+      autoFollowUserId: {
+        type: "string",
+        required: false,
+        input: false,
+      },
     },
   },
   plugins: [
