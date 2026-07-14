@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   CheckCircle2,
   ChevronRight,
@@ -93,6 +94,7 @@ export function MiniBetPanel({
     ),
   );
   const savingTypesRef = useRef(new Set<MiniBetType>());
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const choices = new Map<MiniBetType, MiniBetChoice | null>(
@@ -104,6 +106,29 @@ export function MiniBetPanel({
     savingTypesRef.current.clear();
     setSaveStates({});
   }, [items]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousDocumentOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousDocumentOverflow;
+    };
+  }, [open]);
 
   const selectedCount = liveItems.filter((item) => item.selectedChoice).length;
   const settledCount = liveItems.filter((item) => item.resultState).length;
@@ -192,97 +217,109 @@ export function MiniBetPanel({
         </span>
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={`mini-bet-title-${matchId}`}
-            className="max-h-[92vh] w-full overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-950/30 sm:max-w-3xl sm:rounded-3xl"
+      {open &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-end justify-center overscroll-contain bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setOpen(false);
+            }}
           >
-            <div className="sticky top-0 z-10 border-b border-slate-100 bg-white px-4 py-4 sm:px-5">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-amber-900 ring-1 ring-amber-100">
-                    <Sparkles size={13} aria-hidden="true" />
-                    Kèo vui thêm
-                  </p>
-                  <h2
-                    id={`mini-bet-title-${matchId}`}
-                    className="mt-2 text-2xl font-black text-slate-950"
+            <section
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={`mini-bet-title-${matchId}`}
+              className="flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-950/30 sm:max-w-3xl sm:rounded-3xl"
+            >
+              <div className="z-10 shrink-0 border-b border-slate-100 bg-white px-4 py-4 sm:px-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-amber-900 ring-1 ring-amber-100">
+                      <Sparkles size={13} aria-hidden="true" />
+                      Kèo vui thêm
+                    </p>
+                    <h2
+                      id={`mini-bet-title-${matchId}`}
+                      className="mt-2 text-2xl font-black text-slate-950"
+                    >
+                      Kèo Mini
+                    </h2>
+                    <p className="mt-1 text-sm font-semibold text-slate-500">
+                      {teamA} vs {teamB}
+                    </p>
+                  </div>
+                  <button
+                    ref={closeButtonRef}
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="grid size-10 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    aria-label="Đóng kèo mini"
                   >
-                    Kèo Mini
-                  </h2>
-                  <p className="mt-1 text-sm font-semibold text-slate-500">
-                    {teamA} vs {teamB}
-                  </p>
+                    <X size={18} aria-hidden="true" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="grid size-10 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  aria-label="Đóng kèo mini"
-                >
-                  <X size={18} aria-hidden="true" />
-                </button>
-              </div>
 
-              <div className="mt-3 grid gap-2 text-xs font-bold sm:grid-cols-3">
-                <MiniBetFact
-                  label="Thắng"
-                  value="Giảm 20.000 Belly"
-                  tone="win"
-                />
-                <MiniBetFact
-                  label="Thua"
-                  value="Góp +40.000 Belly"
-                  tone="lose"
-                />
-                <MiniBetFact
-                  label="Chọn"
-                  value="Không bắt buộc đủ 5 kèo"
-                  tone="neutral"
-                />
-              </div>
-            </div>
-
-            <div className="max-h-[calc(92vh-170px)] overflow-y-auto px-4 py-4 sm:px-5">
-              {settledCount > 0 && (
-                <div
-                  className={`mb-4 rounded-2xl px-4 py-3 text-sm font-bold ${
-                    totalChange > 0
-                      ? "bg-red-50 text-red-800 ring-1 ring-red-100"
-                      : totalChange < 0
-                        ? "bg-emerald-50 text-emerald-900 ring-1 ring-emerald-100"
-                        : "bg-slate-50 text-slate-700 ring-1 ring-slate-100"
-                  }`}
-                >
-                  Tổng mini bet trận này: {formatMiniBetChange(totalChange)}
-                </div>
-              )}
-
-              {!canPick && selectedCount === 0 && (
-                <div className="mb-4 flex items-start gap-2 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600 ring-1 ring-slate-100">
-                  <LockKeyhole size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
-                  Trận này đã khóa, bạn chưa chọn kèo mini nào.
-                </div>
-              )}
-
-              <div className="grid gap-3">
-                {liveItems.map((item) => (
-                  <MiniBetRow
-                    key={item.type}
-                    canPick={canPick}
-                    item={item}
-                    saveState={saveStates[item.type]}
-                    onPick={chooseMiniBet}
+                <div className="mt-3 grid gap-2 text-xs font-bold sm:grid-cols-3">
+                  <MiniBetFact
+                    label="Thắng"
+                    value="Giảm 20.000 Belly"
+                    tone="win"
                   />
-                ))}
+                  <MiniBetFact
+                    label="Thua"
+                    value="Góp +40.000 Belly"
+                    tone="lose"
+                  />
+                  <MiniBetFact
+                    label="Chọn"
+                    value="Không bắt buộc đủ 5 kèo"
+                    tone="neutral"
+                  />
+                </div>
               </div>
-            </div>
-          </section>
-        </div>
-      )}
+
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-5">
+                {settledCount > 0 && (
+                  <div
+                    className={`mb-4 rounded-2xl px-4 py-3 text-sm font-bold ${
+                      totalChange > 0
+                        ? "bg-red-50 text-red-800 ring-1 ring-red-100"
+                        : totalChange < 0
+                          ? "bg-emerald-50 text-emerald-900 ring-1 ring-emerald-100"
+                          : "bg-slate-50 text-slate-700 ring-1 ring-slate-100"
+                    }`}
+                  >
+                    Tổng mini bet trận này: {formatMiniBetChange(totalChange)}
+                  </div>
+                )}
+
+                {!canPick && selectedCount === 0 && (
+                  <div className="mb-4 flex items-start gap-2 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600 ring-1 ring-slate-100">
+                    <LockKeyhole
+                      size={18}
+                      className="mt-0.5 shrink-0"
+                      aria-hidden="true"
+                    />
+                    Trận này đã khóa, bạn chưa chọn kèo mini nào.
+                  </div>
+                )}
+
+                <div className="grid gap-3">
+                  {liveItems.map((item) => (
+                    <MiniBetRow
+                      key={item.type}
+                      canPick={canPick}
+                      item={item}
+                      saveState={saveStates[item.type]}
+                      onPick={chooseMiniBet}
+                    />
+                  ))}
+                </div>
+              </div>
+            </section>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

@@ -122,7 +122,7 @@ textarea {
 }
 
 .route-content-enter {
-  animation: route-content-enter 160ms ease-out both;
+  animation: route-content-enter 160ms ease-out;
 }
 
 .route-loading-block {
