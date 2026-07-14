@@ -1,3 +1,5 @@
+import { RouteLoadingStatus } from "@/components/route-loading-status";
+
 export default function ProtectedRouteLoading() {
   return (
     <div
@@ -8,25 +10,7 @@ export default function ProtectedRouteLoading() {
     >
       <span className="sr-only">Đang tải nội dung</span>
 
-      <section className="overflow-hidden rounded-2xl border border-emerald-950/10 bg-white shadow-sm">
-        <div className="h-2 bg-emerald-800" />
-        <div className="space-y-4 p-5 sm:p-7">
-          <LoadingBlock className="h-3 w-28" />
-          <LoadingBlock className="h-8 w-3/5 max-w-sm" />
-          <LoadingBlock className="h-4 w-4/5 max-w-xl" />
-          <div className="grid grid-cols-2 gap-3 pt-2 sm:grid-cols-4">
-            {Array.from({ length: 4 }, (_, index) => (
-              <div
-                key={index}
-                className="rounded-xl border border-slate-200 bg-slate-50 p-3"
-              >
-                <LoadingBlock className="h-3 w-16" />
-                <LoadingBlock className="mt-3 h-6 w-20" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <RouteLoadingStatus />
 
       <div className="flex gap-2 overflow-hidden" aria-hidden="true">
         {Array.from({ length: 5 }, (_, index) => (

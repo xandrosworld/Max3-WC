@@ -139,11 +139,318 @@ textarea {
   animation: route-loading-shimmer 1.15s ease-in-out infinite;
 }
 
+@keyframes route-loading-ball-bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -4px;
+  }
+}
+
+@keyframes route-loading-ball-roll {
+  from {
+    rotate: -9deg;
+  }
+  to {
+    rotate: 9deg;
+  }
+}
+
+@keyframes route-loading-checkpoint-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(5, 150, 105, 0);
+  }
+}
+
+.route-loading-status {
+  position: relative;
+  min-height: 15rem;
+  overflow: hidden;
+  border: 1px solid rgba(6, 78, 59, 0.12);
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+}
+
+.route-loading-status::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 4;
+  height: 0.4rem;
+  background: #087757;
+}
+
+.route-loading-status-placeholder,
+.route-loading-status-content {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(13rem, 0.85fr) minmax(0, 1.45fr);
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 4rem);
+  padding: 1.5rem clamp(1.5rem, 4vw, 3.5rem);
+  transition: opacity 180ms ease, visibility 180ms ease;
+}
+
+.route-loading-status-placeholder {
+  opacity: 1;
+  visibility: visible;
+}
+
+.route-loading-status-content {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.route-loading-status[data-revealed="true"] .route-loading-status-placeholder {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.route-loading-status[data-revealed="true"] .route-loading-status-content {
+  opacity: 1;
+  visibility: visible;
+}
+
+.route-loading-placeholder-visual {
+  width: min(100%, 19rem);
+  aspect-ratio: 2 / 1;
+  justify-self: center;
+  border-radius: 1rem;
+  background: #e2e8f0;
+}
+
+.route-loading-placeholder-copy {
+  width: min(100%, 36rem);
+}
+
+.route-loading-illustration {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.route-loading-illustration img {
+  display: block;
+  width: min(100%, 20rem);
+  height: auto;
+  object-fit: contain;
+  filter: saturate(0.96);
+}
+
+.route-loading-status-copy {
+  min-width: 0;
+}
+
+.route-loading-status-message {
+  min-height: 4.5rem;
+}
+
+.route-loading-status-title {
+  color: #075985;
+  font-size: 1.55rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.route-loading-status-detail {
+  margin-top: 0.55rem;
+  color: #475569;
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.route-loading-track {
+  position: relative;
+  height: 4.5rem;
+  margin-top: 1.2rem;
+}
+
+.route-loading-track-line {
+  position: absolute;
+  left: 3%;
+  right: 3%;
+  top: 50%;
+  height: 0.22rem;
+  border-radius: 999px;
+  background: #cfe8c8;
+  transform: translateY(-50%);
+}
+
+.route-loading-track-line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 1rem,
+    rgba(255, 255, 255, 0.88) 1rem 1.35rem
+  );
+}
+
+.route-loading-checkpoint {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  width: 1.45rem;
+  height: 1.45rem;
+  place-items: center;
+  border: 2px solid #b9ddbd;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: transparent;
+  transform: translate(-50%, -50%) scale(0.92);
+  transition: background-color 260ms ease, border-color 260ms ease,
+    color 260ms ease, transform 260ms ease;
+}
+
+.route-loading-checkpoint:nth-of-type(1) {
+  left: 10%;
+}
+
+.route-loading-checkpoint:nth-of-type(2) {
+  left: 33%;
+}
+
+.route-loading-checkpoint:nth-of-type(3) {
+  left: 56%;
+}
+
+.route-loading-checkpoint[data-active="true"] {
+  border-color: #059669;
+  background: #059669;
+  color: #ffffff;
+  transform: translate(-50%, -50%) scale(1);
+  animation: route-loading-checkpoint-pulse 1.8s ease-in-out infinite;
+}
+
+.route-loading-checkpoint svg {
+  width: 0.88rem;
+  height: 0.88rem;
+}
+
+.route-loading-checkpoint path {
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.route-loading-moving-ball {
+  position: absolute;
+  left: var(--route-loading-ball-position);
+  top: 50%;
+  z-index: 3;
+  width: 2.7rem;
+  height: 2.7rem;
+  transform: translate(-50%, -50%);
+  transition: left 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: route-loading-ball-bob 1.3s ease-in-out infinite;
+}
+
+.route-loading-moving-ball img {
+  width: 100%;
+  height: 100%;
+  animation: route-loading-ball-roll 1.3s ease-in-out infinite alternate;
+}
+
+.route-loading-goal {
+  position: absolute;
+  right: 2%;
+  top: 50%;
+  width: 2.35rem;
+  height: 2rem;
+  border: 3px solid #d7a635;
+  border-bottom-width: 5px;
+  border-radius: 0.35rem 0.35rem 0.1rem 0.1rem;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 0.4rem, rgba(215, 166, 53, 0.28) 0.4rem 0.48rem),
+    repeating-linear-gradient(0deg, transparent 0 0.35rem, rgba(215, 166, 53, 0.25) 0.35rem 0.43rem);
+  transform: translateY(-50%) perspective(2rem) rotateY(-8deg);
+  box-shadow: 0 5px 10px rgba(120, 53, 15, 0.16);
+}
+
+@media (max-width: 639px) {
+  .route-loading-status {
+    min-height: 17rem;
+  }
+
+  .route-loading-status-placeholder,
+  .route-loading-status-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: 7.5rem minmax(0, 1fr);
+    gap: 0.25rem;
+    padding: 1rem;
+  }
+
+  .route-loading-placeholder-visual {
+    width: min(76%, 15.5rem);
+    height: 6.5rem;
+  }
+
+  .route-loading-placeholder-copy {
+    align-self: start;
+  }
+
+  .route-loading-illustration img {
+    width: min(84%, 16.5rem);
+    max-height: 7.5rem;
+  }
+
+  .route-loading-status-copy {
+    align-self: start;
+    text-align: center;
+  }
+
+  .route-loading-status-message {
+    min-height: 4.2rem;
+  }
+
+  .route-loading-status-title {
+    font-size: 1.25rem;
+  }
+
+  .route-loading-status-detail {
+    margin-top: 0.35rem;
+    font-size: 0.82rem;
+  }
+
+  .route-loading-track {
+    height: 3.6rem;
+    margin-top: 0.45rem;
+  }
+
+  .route-loading-moving-ball {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .route-loading-goal {
+    width: 1.9rem;
+    height: 1.65rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .route-loading-shell,
   .route-content-enter,
-  .route-loading-block::after {
+  .route-loading-block::after,
+  .route-loading-checkpoint,
+  .route-loading-moving-ball,
+  .route-loading-moving-ball img {
     animation: none;
+    transition: none;
   }
 }
 
