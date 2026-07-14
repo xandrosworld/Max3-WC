@@ -109,10 +109,6 @@ function normalizeVoteReturnRound(value: string) {
     : null;
 }
 
-function normalizeVoteReturnStage(value: string) {
-  return value === "group" || value === "knockout" ? value : null;
-}
-
 function vietnamLocalToUtc(value: string) {
   const normalized = value.length === 16 ? `${value}:00` : value;
   const result = new Date(`${normalized}+07:00`);
@@ -342,42 +338,51 @@ export async function saveVoteInstantAction(input: unknown) {
   };
 }
 
-export async function placeMiniBetPickAction(formData: FormData) {
+const instantMiniBetPickSchema = z.object({
+  matchId: z.string().min(1),
+  type: z.nativeEnum(MiniBetType),
+  choice: z.nativeEnum(MiniBetChoice),
+});
+
+export async function saveMiniBetPickInstantAction(input: unknown) {
   const user = await requireUser();
-  const matchId = formString(formData, "matchId");
-  const returnFilter = normalizeVoteReturnFilter(formString(formData, "returnFilter"));
-  const returnQ = formString(formData, "returnQ").trim().slice(0, 80);
-  const returnStage = normalizeVoteReturnStage(formString(formData, "returnStage"));
-  const returnRound = normalizeVoteReturnRound(formString(formData, "returnRound"));
-  const params = new URLSearchParams({ match: matchId });
-  if (returnFilter !== "open") params.set("filter", returnFilter);
-  if (returnQ) params.set("q", returnQ);
-  if (returnFilter === "all" && returnStage) params.set("stage", returnStage);
-  if (returnFilter === "all" && !returnStage && returnRound) params.set("round", returnRound);
+  const parsed = instantMiniBetPickSchema.safeParse(input);
+
+  if (!parsed.success || !isValidMiniBetChoice(parsed.data.type, parsed.data.choice)) {
+    return { ok: false as const, error: "Lựa chọn kèo mini không hợp lệ." };
+  }
 
   let pick: Awaited<ReturnType<typeof placeMiniBetPick>>;
   try {
-    const type = z.nativeEnum(MiniBetType).parse(formString(formData, "type"));
-    const choice = z.nativeEnum(MiniBetChoice).parse(formString(formData, "choice"));
-    if (!isValidMiniBetChoice(type, choice)) {
-      throw new Error("Lựa chọn kèo mini không hợp lệ.");
-    }
-    pick = await placeMiniBetPick({ userId: user.id, matchId, type, choice });
+    pick = await placeMiniBetPick({
+      userId: user.id,
+      matchId: parsed.data.matchId,
+      type: parsed.data.type,
+      choice: parsed.data.choice,
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Không thể lưu lựa chọn kèo mini.";
-    params.set("miniBetError", message);
-    redirect(`/matches?${params.toString()}#match-${matchId}`);
+    return { ok: false as const, error: message };
   }
 
-  await audit(user.id, "MINI_BET_PICKED", "Match", matchId, {
-    type: pick.type,
-    choice: pick.choice,
-  });
-  revalidatePath("/matches");
-  revalidatePath("/leaderboard");
-  params.set("miniBetSaved", pick.type);
-  redirect(`/matches?${params.toString()}#match-${matchId}`);
+  try {
+    await audit(user.id, "MINI_BET_PICKED", "Match", parsed.data.matchId, {
+      type: pick.type,
+      choice: pick.choice,
+    });
+  } catch (error) {
+    console.error("Could not write mini bet audit log", error);
+  }
+
+  return {
+    ok: true as const,
+    pick: {
+      type: pick.type,
+      choice: pick.choice,
+      updatedAt: pick.updatedAt.toISOString(),
+    },
+  };
 }
 
 export async function placeSideMarketPickAction(formData: FormData) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CheckCircle2,
   ChevronRight,
@@ -8,11 +8,13 @@ import {
   Dices,
   Info,
   LockKeyhole,
+  LoaderCircle,
   Sparkles,
+  TriangleAlert,
   UsersRound,
   X,
 } from "lucide-react";
-import { placeMiniBetPickAction } from "@/app/actions";
+import { saveMiniBetPickInstantAction } from "@/app/actions";
 
 type MiniBetType =
   | "TOTAL_GOALS"
@@ -50,36 +52,131 @@ export type MiniBetPanelItem = {
   transactionAmount: number;
 };
 
+type MiniBetSaveState = {
+  status: "saving" | "saved" | "error";
+  error?: string;
+};
+
+type MiniBetViewer = {
+  id: string;
+  name: string;
+};
+
 export function MiniBetPanel({
   matchId,
   teamA,
   teamB,
   canPick,
-  miniBetSaved,
-  miniBetError,
-  returnFilter,
-  returnStage,
-  returnRound,
-  returnQ,
+  currentUser,
   items,
 }: {
   matchId: string;
   teamA: string;
   teamB: string;
   canPick: boolean;
-  miniBetSaved: string | null;
-  miniBetError: string | null;
-  returnFilter: string;
-  returnStage?: string | null;
-  returnRound?: string | null;
-  returnQ?: string;
+  currentUser: MiniBetViewer;
   items: MiniBetPanelItem[];
 }) {
-  const [open, setOpen] = useState(Boolean(miniBetSaved || miniBetError));
-  const selectedCount = items.filter((item) => item.selectedChoice).length;
-  const settledCount = items.filter((item) => item.resultState).length;
-  const totalChange = items.reduce((sum, item) => sum + item.transactionAmount, 0);
-  const savedItem = items.find((item) => item.type === miniBetSaved);
+  const [open, setOpen] = useState(false);
+  const [liveItems, setLiveItems] = useState(items);
+  const [saveStates, setSaveStates] = useState<
+    Partial<Record<MiniBetType, MiniBetSaveState>>
+  >({});
+  const persistedChoicesRef = useRef(
+    new Map<MiniBetType, MiniBetChoice | null>(
+      items.map((item) => [item.type, item.selectedChoice]),
+    ),
+  );
+  const latestChoicesRef = useRef(
+    new Map<MiniBetType, MiniBetChoice | null>(
+      items.map((item) => [item.type, item.selectedChoice]),
+    ),
+  );
+  const savingTypesRef = useRef(new Set<MiniBetType>());
+
+  useEffect(() => {
+    const choices = new Map<MiniBetType, MiniBetChoice | null>(
+      items.map((item) => [item.type, item.selectedChoice]),
+    );
+    setLiveItems(items);
+    persistedChoicesRef.current = choices;
+    latestChoicesRef.current = new Map(choices);
+    savingTypesRef.current.clear();
+    setSaveStates({});
+  }, [items]);
+
+  const selectedCount = liveItems.filter((item) => item.selectedChoice).length;
+  const settledCount = liveItems.filter((item) => item.resultState).length;
+  const totalChange = liveItems.reduce(
+    (sum, item) => sum + item.transactionAmount,
+    0,
+  );
+  function showChoice(type: MiniBetType, choice: MiniBetChoice | null) {
+    setLiveItems((current) =>
+      updateMiniBetChoice(current, type, choice, currentUser),
+    );
+  }
+
+  async function flushMiniBet(type: MiniBetType) {
+    if (savingTypesRef.current.has(type)) return;
+    savingTypesRef.current.add(type);
+    setSaveStates((current) => ({
+      ...current,
+      [type]: { status: "saving" },
+    }));
+
+    try {
+      while (true) {
+        const latestChoice = latestChoicesRef.current.get(type) ?? null;
+        const persistedChoice = persistedChoicesRef.current.get(type) ?? null;
+        if (!latestChoice || latestChoice === persistedChoice) break;
+
+        const result = await saveMiniBetPickInstantAction({
+          matchId,
+          type,
+          choice: latestChoice,
+        });
+        if (!result.ok) throw new Error(result.error);
+
+        persistedChoicesRef.current.set(type, result.pick.choice);
+        if (latestChoicesRef.current.get(type) === result.pick.choice) break;
+      }
+
+      setSaveStates((current) => ({
+        ...current,
+        [type]: { status: "saved" },
+      }));
+    } catch (error) {
+      const persistedChoice = persistedChoicesRef.current.get(type) ?? null;
+      latestChoicesRef.current.set(type, persistedChoice);
+      showChoice(type, persistedChoice);
+      setSaveStates((current) => ({
+        ...current,
+        [type]: {
+          status: "error",
+          error:
+            error instanceof Error
+              ? error.message
+              : "Chưa lưu được, hãy thử lại.",
+        },
+      }));
+    } finally {
+      savingTypesRef.current.delete(type);
+      if (
+        latestChoicesRef.current.get(type) !==
+        persistedChoicesRef.current.get(type)
+      ) {
+        void flushMiniBet(type);
+      }
+    }
+  }
+
+  function chooseMiniBet(type: MiniBetType, choice: MiniBetChoice) {
+    if (latestChoicesRef.current.get(type) === choice) return;
+    latestChoicesRef.current.set(type, choice);
+    showChoice(type, choice);
+    void flushMiniBet(type);
+  }
 
   return (
     <>
@@ -94,18 +191,6 @@ export function MiniBetPanel({
           {selectedCount}/{items.length}
         </span>
       </button>
-
-      {(miniBetSaved || miniBetError) && (
-        <p
-          className={`mt-2 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold ${
-            miniBetError
-              ? "bg-red-50 text-red-700 ring-1 ring-red-100"
-              : "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100"
-          }`}
-        >
-          {miniBetError ? miniBetError : `Đã lưu ${savedItem?.shortTitle ?? "kèo mini"}.`}
-        </p>
-      )}
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-4">
@@ -184,16 +269,13 @@ export function MiniBetPanel({
               )}
 
               <div className="grid gap-3">
-                {items.map((item) => (
+                {liveItems.map((item) => (
                   <MiniBetRow
                     key={item.type}
-                    matchId={matchId}
                     canPick={canPick}
                     item={item}
-                    returnFilter={returnFilter}
-                    returnStage={returnStage}
-                    returnRound={returnRound}
-                    returnQ={returnQ}
+                    saveState={saveStates[item.type]}
+                    onPick={chooseMiniBet}
                   />
                 ))}
               </div>
@@ -206,21 +288,15 @@ export function MiniBetPanel({
 }
 
 function MiniBetRow({
-  matchId,
   canPick,
   item,
-  returnFilter,
-  returnStage,
-  returnRound,
-  returnQ,
+  saveState,
+  onPick,
 }: {
-  matchId: string;
   canPick: boolean;
   item: MiniBetPanelItem;
-  returnFilter: string;
-  returnStage?: string | null;
-  returnRound?: string | null;
-  returnQ?: string;
+  saveState?: MiniBetSaveState;
+  onPick: (type: MiniBetType, choice: MiniBetChoice) => void;
 }) {
   return (
     <article
@@ -260,6 +336,18 @@ function MiniBetRow({
               {item.resultLabel}
             </span>
           )}
+          {saveState?.status === "saving" && (
+            <span className="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1 text-[11px] font-black text-emerald-800 ring-1 ring-emerald-200">
+              <LoaderCircle className="animate-spin" size={13} aria-hidden="true" />
+              Đang lưu
+            </span>
+          )}
+          {saveState?.status === "saved" && (
+            <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1 text-[11px] font-black text-emerald-900 ring-1 ring-emerald-200">
+              <CheckCircle2 size={13} aria-hidden="true" />
+              Đã lưu
+            </span>
+          )}
         </div>
       </div>
 
@@ -267,33 +355,24 @@ function MiniBetRow({
         {item.choices.map((option) => {
           const selected = item.selectedChoice === option.choice;
           return canPick ? (
-            <form key={option.choice} action={placeMiniBetPickAction}>
-              <input type="hidden" name="matchId" value={matchId} />
-              <input type="hidden" name="type" value={item.type} />
-              <input type="hidden" name="choice" value={option.choice} />
-              <input type="hidden" name="returnFilter" value={returnFilter} />
-              {returnStage && (
-                <input type="hidden" name="returnStage" value={returnStage} />
+            <button
+              key={option.choice}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onPick(item.type, option.choice)}
+              className={`flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-3 text-sm font-black ring-1 transition active:scale-[0.98] ${
+                selected
+                  ? "bg-emerald-700 text-white ring-emerald-700 shadow-sm shadow-emerald-900/20"
+                  : "bg-white text-emerald-900 ring-emerald-200 hover:bg-emerald-50"
+              }`}
+            >
+              {selected ? (
+                <CheckCircle2 size={17} aria-hidden="true" />
+              ) : (
+                <ChevronRight size={17} aria-hidden="true" />
               )}
-              {returnRound && (
-                <input type="hidden" name="returnRound" value={returnRound} />
-              )}
-              {returnQ && <input type="hidden" name="returnQ" value={returnQ} />}
-              <button
-                className={`flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-3 text-sm font-black ring-1 transition ${
-                  selected
-                    ? "bg-emerald-700 text-white ring-emerald-700 shadow-sm shadow-emerald-900/20"
-                    : "bg-white text-emerald-900 ring-emerald-200 hover:bg-emerald-50"
-                }`}
-              >
-                {selected ? (
-                  <CheckCircle2 size={17} aria-hidden="true" />
-                ) : (
-                  <ChevronRight size={17} aria-hidden="true" />
-                )}
-                <span className="truncate">{option.label}</span>
-              </button>
-            </form>
+              <span className="truncate">{option.label}</span>
+            </button>
           ) : (
             <span
               key={option.choice}
@@ -309,9 +388,53 @@ function MiniBetRow({
         })}
       </div>
 
+      {saveState?.status === "error" && (
+        <p
+          aria-live="polite"
+          className="mt-2 flex items-start gap-1.5 rounded-lg bg-red-50 px-2.5 py-2 text-xs font-bold text-red-700 ring-1 ring-red-100"
+        >
+          <TriangleAlert className="mt-0.5 shrink-0" size={14} aria-hidden="true" />
+          {saveState.error ?? "Chưa lưu được, hãy thử lại."}
+        </p>
+      )}
+
       <MiniBetPublicPicks item={item} />
     </article>
   );
+}
+
+function updateMiniBetChoice(
+  items: MiniBetPanelItem[],
+  type: MiniBetType,
+  choice: MiniBetChoice | null,
+  currentUser: MiniBetViewer,
+) {
+  return items.map((item) => {
+    if (item.type !== type) return item;
+
+    const option = item.choices.find((row) => row.choice === choice) ?? null;
+    const otherPicks = item.publicPicks.filter(
+      (pick) => pick.voterId !== currentUser.id,
+    );
+
+    return {
+      ...item,
+      selectedChoice: choice,
+      selectedLabel: option?.label ?? null,
+      publicPicks:
+        choice && option
+          ? [
+              ...otherPicks,
+              {
+                voterId: currentUser.id,
+                voterName: currentUser.name,
+                choice,
+                choiceLabel: option.label,
+              },
+            ]
+          : otherPicks,
+    };
+  });
 }
 
 function MiniBetPublicPicks({ item }: { item: MiniBetPanelItem }) {

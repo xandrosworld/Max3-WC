@@ -36,7 +36,6 @@ import {
   ROUND_LABELS,
 } from "@/lib/domain";
 import {
-  MINI_BET_TYPES,
   canUseMiniBets,
   getMiniBetChoiceOptions,
   getMiniBetConfig,
@@ -104,10 +103,6 @@ export default async function MatchesPage({
     typeof params.sideMarketSaved === "string" ? params.sideMarketSaved : null;
   const sideMarketError =
     typeof params.sideMarketError === "string" ? params.sideMarketError : null;
-  const miniBetSaved =
-    typeof params.miniBetSaved === "string" ? params.miniBetSaved : null;
-  const miniBetError =
-    typeof params.miniBetError === "string" ? params.miniBetError : null;
   const now = new Date();
   const activeExtraFilter = extraFilters.find((filter) => filter.id === activeFilter);
   const [autoFollowTarget, sideMarkets] = await Promise.all([
@@ -427,14 +422,6 @@ export default async function MatchesPage({
                   const miniBetItems = miniBetEnabled
                     ? buildMiniBetPanelItems(match, user.id)
                     : [];
-                  const activeMiniBetSaved =
-                    savedMatchId === match.id &&
-                    MINI_BET_TYPES.includes(miniBetSaved as MiniBetType)
-                      ? miniBetSaved
-                      : null;
-                  const activeMiniBetError =
-                    savedMatchId === match.id ? miniBetError : null;
-
                   return (
                     <article
                       id={`match-${match.id}`}
@@ -532,12 +519,7 @@ export default async function MatchesPage({
                                 teamA={match.teamA}
                                 teamB={match.teamB}
                                 canPick={canPick}
-                                miniBetSaved={activeMiniBetSaved}
-                                miniBetError={activeMiniBetError}
-                                returnFilter={activeFilter}
-                                returnStage={selectedStage}
-                                returnRound={activeFilter === "all" ? match.round : null}
-                                returnQ={searchTerm}
+                                currentUser={{ id: user.id, name: user.name }}
                                 items={miniBetItems}
                               />
                             </div>
