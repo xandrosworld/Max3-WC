@@ -126,7 +126,7 @@ export function MatchVoteForm({
             <label key={option} className="block">
               <input
                 type="radio"
-                name="choice"
+                name={`choice-${matchId}`}
                 value={option}
                 required
                 checked={selected}
