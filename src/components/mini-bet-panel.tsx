@@ -111,11 +111,11 @@ export function MiniBetPanel({
     if (!open) return;
 
     const previousBodyOverflow = document.body.style.overflow;
-    const previousDocumentOverflow = document.documentElement.style.overflow;
 
     document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-    closeButtonRef.current?.focus();
+    const focusFrame = window.requestAnimationFrame(() => {
+      closeButtonRef.current?.focus({ preventScroll: true });
+    });
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
@@ -124,9 +124,9 @@ export function MiniBetPanel({
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      window.cancelAnimationFrame(focusFrame);
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = previousBodyOverflow;
-      document.documentElement.style.overflow = previousDocumentOverflow;
     };
   }, [open]);
 
@@ -208,7 +208,9 @@ export function MiniBetPanel({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-slate-950 px-3 text-xs font-black text-white shadow-sm shadow-slate-950/15 ring-1 ring-white/60 transition hover:bg-emerald-800"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        className="inline-flex min-h-10 touch-manipulation items-center gap-2 rounded-xl bg-slate-950 px-3 text-xs font-black text-white shadow-sm shadow-slate-950/15 ring-1 ring-white/60 transition hover:bg-emerald-800"
       >
         <Dices size={16} aria-hidden="true" />
         <span>Kèo Mini</span>
@@ -220,7 +222,7 @@ export function MiniBetPanel({
       {open &&
         createPortal(
           <div
-            className="fixed inset-0 z-[100] flex items-end justify-center overscroll-contain bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+            className="mini-bet-modal-viewport fixed inset-0 z-[100] flex items-end justify-center overscroll-contain bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-4"
             onMouseDown={(event) => {
               if (event.target === event.currentTarget) setOpen(false);
             }}
@@ -229,7 +231,7 @@ export function MiniBetPanel({
               role="dialog"
               aria-modal="true"
               aria-labelledby={`mini-bet-title-${matchId}`}
-              className="flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-950/30 sm:max-w-3xl sm:rounded-3xl"
+              className="mini-bet-modal-dialog flex w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-950/30 sm:max-w-3xl sm:rounded-3xl"
             >
               <div className="z-10 shrink-0 border-b border-slate-100 bg-white px-4 py-4 sm:px-5">
                 <div className="flex items-start justify-between gap-3">

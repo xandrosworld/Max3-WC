@@ -45,6 +45,24 @@ summary {
   cursor: pointer;
 }
 
+.mini-bet-modal-viewport {
+  height: 100vh;
+}
+
+.mini-bet-modal-dialog {
+  max-height: 92vh;
+}
+
+@supports (height: 100dvh) {
+  .mini-bet-modal-viewport {
+    height: 100dvh;
+  }
+
+  .mini-bet-modal-dialog {
+    max-height: 92dvh;
+  }
+}
+
 input,
 select,
 textarea {
