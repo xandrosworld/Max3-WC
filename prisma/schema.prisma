@@ -72,12 +72,14 @@ enum MatchDecisionMethod {
 enum SideMarketType {
   CHAMPION
   TOP_SCORER
+  CONTRIBUTOR
 }
 
 enum SideMarketPickPhase {
   CHAMPION
   QUARTER_FINAL
   SEMI_FINAL
+  FINAL
 }
 
 enum SideMarketPickOutcome {
@@ -93,6 +95,12 @@ enum MiniBetType {
   PENALTY_90
   CORNERS_8
   PLAYER_GOAL
+  PLAYER_GOAL_OR_ASSIST
+  POSSESSION
+  YELLOW_CARDS_3
+  OFFSIDES_3
+  EXTRA_TIME
+  EXACT_SCORE
 }
 
 enum MiniBetChoice {
@@ -102,6 +110,15 @@ enum MiniBetChoice {
   TEAM_B
   YES
   NO
+  SCORE_0_0
+  SCORE_1_0
+  SCORE_1_1
+  SCORE_2_0
+  SCORE_2_1
+  SCORE_2_2
+  SCORE_3_0
+  SCORE_3_1
+  SCORE_3_2
 }
 
 model User {

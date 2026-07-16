@@ -9,6 +9,7 @@ import {
   canJoinReopenedChampionMarket,
   getSideMarketAvailability,
   getSideMarketContributionChange,
+  getContributorWinnerIds,
   resolveChampionOptionOutcome,
 } from "./side-markets";
 
@@ -72,6 +73,8 @@ describe("side market availability", () => {
     topScorerOpenAt: new Date("2026-07-07T03:00:00.000Z"),
     topScorerSemiStartAt: new Date("2026-07-12T03:00:00.000Z"),
     topScorerCloseAt: new Date("2026-07-15T03:00:00.000Z"),
+    contributorOpenAt: new Date("2026-07-16T03:00:00.000Z"),
+    contributorCloseAt: new Date("2026-07-20T02:00:00.000Z"),
   };
 
   it("opens champion voting only inside its short window", () => {
@@ -134,5 +137,48 @@ describe("side market availability", () => {
       isOpen: true,
       phase: SideMarketPickPhase.SEMI_FINAL,
     });
+  });
+
+  it("opens contributor predictions only after both semi-finals and before the final", () => {
+    const before = getSideMarketAvailability(
+      SideMarketType.CONTRIBUTOR,
+      milestones,
+      new Date("2026-07-16T02:59:59.000Z"),
+    );
+    const open = getSideMarketAvailability(
+      SideMarketType.CONTRIBUTOR,
+      milestones,
+      new Date("2026-07-18T12:00:00.000Z"),
+    );
+    const closed = getSideMarketAvailability(
+      SideMarketType.CONTRIBUTOR,
+      milestones,
+      new Date("2026-07-20T02:00:00.000Z"),
+    );
+
+    expect(before.isOpen).toBe(false);
+    expect(open).toMatchObject({
+      isOpen: true,
+      phase: SideMarketPickPhase.FINAL,
+    });
+    expect(closed.isOpen).toBe(false);
+  });
+});
+
+describe("contributor market winners", () => {
+  const balances = [
+    { userId: "a", balance: 500_000 },
+    { userId: "b", balance: 800_000 },
+    { userId: "c", balance: 800_000 },
+    { userId: "d", balance: 200_000 },
+    { userId: "e", balance: 200_000 },
+  ];
+
+  it("keeps every tied highest contributor as a winning answer", () => {
+    expect([...getContributorWinnerIds(balances, "highest")].sort()).toEqual(["b", "c"]);
+  });
+
+  it("keeps every tied lowest contributor as a winning answer", () => {
+    expect([...getContributorWinnerIds(balances, "lowest")].sort()).toEqual(["d", "e"]);
   });
 });

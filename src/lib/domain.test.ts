@@ -12,6 +12,8 @@ import {
   isValidHandicap,
   isPlaceholderTeamName,
   isVoteLocked,
+  matchHasDrawChoice,
+  usesOverallWinner,
 } from "./domain";
 
 describe("contribution by round", () => {
@@ -23,6 +25,16 @@ describe("contribution by round", () => {
     expect(getContributionAmount(RoundType.SEMI_FINAL)).toBe(150_000);
     expect(getContributionAmount(RoundType.THIRD_PLACE)).toBe(150_000);
     expect(getContributionAmount(RoundType.FINAL)).toBe(200_000);
+  });
+});
+
+describe("overall winner markets", () => {
+  it("uses only two team choices for third place and the final", () => {
+    expect(usesOverallWinner(RoundType.THIRD_PLACE)).toBe(true);
+    expect(usesOverallWinner(RoundType.FINAL)).toBe(true);
+    expect(matchHasDrawChoice(RoundType.THIRD_PLACE, 0)).toBe(false);
+    expect(matchHasDrawChoice(RoundType.FINAL, 0)).toBe(false);
+    expect(matchHasDrawChoice(RoundType.SEMI_FINAL, 0)).toBe(true);
   });
 });
 

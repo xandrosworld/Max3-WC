@@ -5,12 +5,14 @@ import {
   Prisma,
   RoundType,
   TeamSide,
+  VoteChoice,
 } from "@prisma/client";
 import {
   calculateWinningChoice,
   clampContributionBalance,
   getContributionChangeForVote,
   MAX_CONTRIBUTION_BALANCE,
+  usesOverallWinner,
 } from "./domain";
 import { prisma } from "./prisma";
 
@@ -54,7 +56,7 @@ export async function settleMatch(input: {
         !Number.isInteger(teamAFinalScore) ||
         !Number.isInteger(teamBFinalScore)
       ) {
-        throw new Error("Tá»· sá»‘ cuá»‘i cÃ¹ng khÃ´ng há»£p lá»‡");
+        throw new Error("Tỷ số chung cuộc không hợp lệ");
       }
       const inferredAdvancedTeam =
         teamAFinalScore > teamBFinalScore
@@ -65,13 +67,29 @@ export async function settleMatch(input: {
       const advancedTeam = isKnockoutRound(match.round)
         ? (input.advancedTeam ?? inferredAdvancedTeam)
         : null;
+      if (
+        inferredAdvancedTeam &&
+        advancedTeam &&
+        inferredAdvancedTeam !== advancedTeam
+      ) {
+        throw new Error("Đội thắng chung cuộc không khớp với tỷ số đã nhập.");
+      }
+      if (usesOverallWinner(match.round) && !advancedTeam) {
+        throw new Error(
+          "Tranh hạng ba và chung kết phải xác định đội thắng chung cuộc.",
+        );
+      }
 
-      const winningChoice = calculateWinningChoice({
-        teamAScore: input.teamAScore,
-        teamBScore: input.teamBScore,
-        handicap: match.handicap,
-        handicappedTeam: match.handicappedTeam,
-      });
+      const winningChoice = usesOverallWinner(match.round)
+        ? advancedTeam === TeamSide.TEAM_A
+          ? VoteChoice.TEAM_A
+          : VoteChoice.TEAM_B
+        : calculateWinningChoice({
+            teamAScore: input.teamAScore,
+            teamBScore: input.teamBScore,
+            handicap: match.handicap,
+            handicappedTeam: match.handicappedTeam,
+          });
 
       if (
         match.result &&

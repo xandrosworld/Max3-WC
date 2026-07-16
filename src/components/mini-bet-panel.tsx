@@ -23,7 +23,13 @@ type MiniBetType =
   | "KICKOFF"
   | "PENALTY_90"
   | "CORNERS_8"
-  | "PLAYER_GOAL";
+  | "PLAYER_GOAL"
+  | "PLAYER_GOAL_OR_ASSIST"
+  | "POSSESSION"
+  | "YELLOW_CARDS_3"
+  | "OFFSIDES_3"
+  | "EXTRA_TIME"
+  | "EXACT_SCORE";
 
 type MiniBetChoice =
   | "OVER"
@@ -31,7 +37,16 @@ type MiniBetChoice =
   | "TEAM_A"
   | "TEAM_B"
   | "YES"
-  | "NO";
+  | "NO"
+  | "SCORE_0_0"
+  | "SCORE_1_0"
+  | "SCORE_1_1"
+  | "SCORE_2_0"
+  | "SCORE_2_1"
+  | "SCORE_2_2"
+  | "SCORE_3_0"
+  | "SCORE_3_1"
+  | "SCORE_3_2";
 
 export type MiniBetPanelItem = {
   type: MiniBetType;
@@ -39,6 +54,8 @@ export type MiniBetPanelItem = {
   shortTitle: string;
   description: string;
   helper: string;
+  rewardAmount: number;
+  lossAmount: number;
   choices: Array<{ choice: MiniBetChoice; label: string; shortLabel: string }>;
   publicPicks: Array<{
     voterId: string;
@@ -136,6 +153,7 @@ export function MiniBetPanel({
     (sum, item) => sum + item.transactionAmount,
     0,
   );
+  const commonTerms = getCommonMiniBetTerms(liveItems);
   function showChoice(type: MiniBetType, choice: MiniBetChoice | null) {
     setLiveItems((current) =>
       updateMiniBetChoice(current, type, choice, currentUser),
@@ -264,17 +282,25 @@ export function MiniBetPanel({
                 <div className="mt-3 grid gap-2 text-xs font-bold sm:grid-cols-3">
                   <MiniBetFact
                     label="Thắng"
-                    value="Giảm 20.000 Belly"
+                    value={
+                      commonTerms
+                        ? `Giảm ${formatBelly(commonTerms.rewardAmount)}`
+                        : "Xem theo từng kèo"
+                    }
                     tone="win"
                   />
                   <MiniBetFact
                     label="Thua"
-                    value="Góp +40.000 Belly"
+                    value={
+                      commonTerms
+                        ? `Góp +${formatBelly(commonTerms.lossAmount)}`
+                        : "Xem theo từng kèo"
+                    }
                     tone="lose"
                   />
                   <MiniBetFact
                     label="Chọn"
-                    value="Không bắt buộc đủ 5 kèo"
+                    value={`Không bắt buộc đủ ${items.length} kèo`}
                     tone="neutral"
                   />
                 </div>
@@ -357,6 +383,9 @@ function MiniBetRow({
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
+          <span className="inline-flex rounded-lg bg-amber-50 px-2.5 py-1 text-[11px] font-black text-amber-900 ring-1 ring-amber-100">
+            Đúng -{formatBelly(item.rewardAmount)} · Sai +{formatBelly(item.lossAmount)}
+          </span>
           {item.selectedLabel && (
             <span className="inline-flex rounded-lg bg-white px-2.5 py-1 text-[11px] font-black text-emerald-800 ring-1 ring-emerald-200">
               Đã chọn: {item.selectedLabel}
@@ -390,7 +419,11 @@ function MiniBetRow({
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div
+        className={`mt-3 grid gap-2 ${
+          item.choices.length > 4 ? "grid-cols-3" : "grid-cols-2"
+        }`}
+      >
         {item.choices.map((option) => {
           const selected = item.selectedChoice === option.choice;
           return canPick ? (
@@ -601,9 +634,9 @@ export function MiniBetGuidePrompt({ enabled }: { enabled: boolean }) {
             đặc biệt.
           </p>
           <p>
-            Bạn thích kèo nào thì chọn kèo đó, không cần chọn đủ. Mỗi kèo đúng sẽ
-            giảm 20.000 Belly, sai thì góp thêm 40.000 Belly. Mọi lựa chọn đều
-            công khai để cả nhóm cùng xem.
+            Bạn thích kèo nào thì chọn kèo đó, không cần chọn đủ. Mức giảm khi
+            đúng và mức góp khi sai được ghi ngay trên từng kèo. Mọi lựa chọn
+            đều công khai để cả nhóm cùng xem.
           </p>
           <p>
             Riêng kèo đội ghi bàn trước: nếu 90 phút hòa 0-0 thì kèo đó được hoàn,
@@ -628,4 +661,20 @@ function formatMiniBetChange(amount: number) {
   if (amount > 0) return `góp thêm ${value}`;
   if (amount < 0) return `giảm đóng góp ${value}`;
   return "không đổi Belly";
+}
+
+function formatBelly(amount: number) {
+  return `${new Intl.NumberFormat("vi-VN").format(amount)} Belly`;
+}
+
+function getCommonMiniBetTerms(items: MiniBetPanelItem[]) {
+  const first = items[0];
+  if (!first) return null;
+  return items.every(
+    (item) =>
+      item.rewardAmount === first.rewardAmount &&
+      item.lossAmount === first.lossAmount,
+  )
+    ? { rewardAmount: first.rewardAmount, lossAmount: first.lossAmount }
+    : null;
 }

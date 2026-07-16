@@ -17,6 +17,10 @@ import { prisma } from "./prisma";
 
 export const MINI_BET_WIN_REWARD = 20_000;
 export const MINI_BET_LOSS_AMOUNT = 40_000;
+export const FINAL_MINI_BET_WIN_REWARD = 50_000;
+export const FINAL_MINI_BET_LOSS_AMOUNT = 75_000;
+export const FINAL_EXACT_SCORE_WIN_REWARD = 200_000;
+export const FINAL_EXACT_SCORE_LOSS_AMOUNT = 200_000;
 
 export const MINI_BET_TYPES: MiniBetType[] = [
   MiniBetType.TOTAL_GOALS,
@@ -25,6 +29,12 @@ export const MINI_BET_TYPES: MiniBetType[] = [
   MiniBetType.PENALTY_90,
   MiniBetType.CORNERS_8,
   MiniBetType.PLAYER_GOAL,
+  MiniBetType.PLAYER_GOAL_OR_ASSIST,
+  MiniBetType.POSSESSION,
+  MiniBetType.YELLOW_CARDS_3,
+  MiniBetType.OFFSIDES_3,
+  MiniBetType.EXTRA_TIME,
+  MiniBetType.EXACT_SCORE,
 ];
 
 export type MiniBetChoiceOption = {
@@ -123,13 +133,64 @@ export function getMiniBetConfig(
         helper: "Không tính bàn trong hiệp phụ hoặc loạt luân lưu.",
       };
     }
+    case MiniBetType.PLAYER_GOAL_OR_ASSIST: {
+      const player = playerName?.trim() || "Messi";
+      return {
+        type,
+        title: `${player} ghi bàn hoặc kiến tạo`,
+        shortTitle: `${player} bàn/kiến tạo`,
+        description: `Chọn ${player} có ghi bàn hoặc kiến tạo trong 90 phút chính thức hay không.`,
+        helper: "Không tính hiệp phụ hoặc loạt luân lưu.",
+      };
+    }
+    case MiniBetType.POSSESSION:
+      return {
+        type,
+        title: "Đội cầm bóng nhiều hơn",
+        shortTitle: "Cầm bóng",
+        description: "Chọn đội có tỷ lệ kiểm soát bóng cao hơn trong 90 phút.",
+        helper: "Nếu hai đội bằng nhau, kèo được hoàn.",
+      };
+    case MiniBetType.YELLOW_CARDS_3:
+      return {
+        type,
+        title: "Ít nhất 3 thẻ vàng",
+        shortTitle: "3+ thẻ vàng",
+        description: "Chọn tổng số thẻ vàng của hai đội trong 90 phút có đạt từ 3 thẻ không.",
+        helper: "Tính tổng thẻ vàng trong 90 phút chính thức.",
+      };
+    case MiniBetType.OFFSIDES_3:
+      return {
+        type,
+        title: "Ít nhất 3 lần việt vị",
+        shortTitle: "3+ việt vị",
+        description: "Chọn tổng số lần việt vị của hai đội trong 90 phút có đạt từ 3 lần không.",
+        helper: "Tính tổng việt vị trong 90 phút chính thức.",
+      };
+    case MiniBetType.EXTRA_TIME:
+      return {
+        type,
+        title: "Trận đấu bước vào hiệp phụ",
+        shortTitle: "Hiệp phụ",
+        description: "Chọn Có nếu tỷ số hòa sau 90 phút và trận phải bước vào hiệp phụ.",
+        helper: "Xác định ngay sau 90 phút chính thức.",
+      };
+    case MiniBetType.EXACT_SCORE:
+      return {
+        type,
+        title: "Dự đoán tỷ số chung cuộc",
+        shortTitle: "Tỷ số chung cuộc",
+        description: "Chọn đúng một tỷ số theo thứ tự đội bên trái - đội bên phải.",
+        helper: "Tính sau hiệp phụ; không cộng số bàn trong loạt luân lưu. Kết quả ngoài danh sách được hoàn.",
+      };
   }
 }
 
 export function getMiniBetPlayerName(teamA: string, teamB: string) {
   const teams = new Set([normalizeTeamName(teamA), normalizeTeamName(teamB)]);
   if (teams.has("france") && teams.has("spain")) return "Mbappe";
-  if (teams.has("argentina") && teams.has("england")) return "Messi";
+  if (teams.has("england") && teams.has("argentina")) return "Messi";
+  if (teams.has("spain") && teams.has("argentina")) return "Messi";
   return null;
 }
 
@@ -139,11 +200,25 @@ export function getMiniBetTypesForMatch(
   teamB: string,
 ): MiniBetType[] {
   if (!canUseMiniBets(round)) return [];
-  const types: MiniBetType[] = MINI_BET_TYPES.filter(
-    (type) => type !== MiniBetType.PLAYER_GOAL,
-  );
+  const types: MiniBetType[] = [
+    MiniBetType.TOTAL_GOALS,
+    MiniBetType.FIRST_GOAL,
+    MiniBetType.KICKOFF,
+    MiniBetType.PENALTY_90,
+    MiniBetType.CORNERS_8,
+  ];
   if (round === RoundType.SEMI_FINAL && getMiniBetPlayerName(teamA, teamB)) {
     types.push(MiniBetType.PLAYER_GOAL);
+  }
+  if (round === RoundType.FINAL) {
+    types.push(
+      MiniBetType.PLAYER_GOAL_OR_ASSIST,
+      MiniBetType.POSSESSION,
+      MiniBetType.YELLOW_CARDS_3,
+      MiniBetType.OFFSIDES_3,
+      MiniBetType.EXTRA_TIME,
+      MiniBetType.EXACT_SCORE,
+    );
   }
   return types;
 }
@@ -161,6 +236,7 @@ export function getMiniBetChoiceOptions(
       ];
     case MiniBetType.FIRST_GOAL:
     case MiniBetType.KICKOFF:
+    case MiniBetType.POSSESSION:
       return [
         { choice: MiniBetChoice.TEAM_A, label: teamA, shortLabel: "Đội A" },
         { choice: MiniBetChoice.TEAM_B, label: teamB, shortLabel: "Đội B" },
@@ -168,9 +244,25 @@ export function getMiniBetChoiceOptions(
     case MiniBetType.PENALTY_90:
     case MiniBetType.CORNERS_8:
     case MiniBetType.PLAYER_GOAL:
+    case MiniBetType.PLAYER_GOAL_OR_ASSIST:
+    case MiniBetType.YELLOW_CARDS_3:
+    case MiniBetType.OFFSIDES_3:
+    case MiniBetType.EXTRA_TIME:
       return [
         { choice: MiniBetChoice.YES, label: "Có", shortLabel: "Có" },
         { choice: MiniBetChoice.NO, label: "Không", shortLabel: "Không" },
+      ];
+    case MiniBetType.EXACT_SCORE:
+      return [
+        { choice: MiniBetChoice.SCORE_0_0, label: "0-0", shortLabel: "0-0" },
+        { choice: MiniBetChoice.SCORE_1_0, label: "1-0", shortLabel: "1-0" },
+        { choice: MiniBetChoice.SCORE_1_1, label: "1-1", shortLabel: "1-1" },
+        { choice: MiniBetChoice.SCORE_2_0, label: "2-0", shortLabel: "2-0" },
+        { choice: MiniBetChoice.SCORE_2_1, label: "2-1", shortLabel: "2-1" },
+        { choice: MiniBetChoice.SCORE_2_2, label: "2-2", shortLabel: "2-2" },
+        { choice: MiniBetChoice.SCORE_3_0, label: "3-0", shortLabel: "3-0" },
+        { choice: MiniBetChoice.SCORE_3_1, label: "3-1", shortLabel: "3-1" },
+        { choice: MiniBetChoice.SCORE_3_2, label: "3-2", shortLabel: "3-2" },
       ];
   }
 }
@@ -185,25 +277,52 @@ export function miniBetChoiceLabel(
   teamA: string,
   teamB: string,
 ) {
-  if (!choice) return type === MiniBetType.FIRST_GOAL ? "Hoàn kèo 0-0" : "Chưa chốt";
+  if (!choice) {
+    if (type === MiniBetType.FIRST_GOAL) return "Hoàn kèo 0-0";
+    if (type === MiniBetType.POSSESSION) return "Hoàn kèo đồng tỷ lệ";
+    if (type === MiniBetType.EXACT_SCORE) return "Kết quả ngoài danh sách - hoàn kèo";
+    return "Chưa chốt";
+  }
   return getMiniBetChoiceOptions(type, teamA, teamB).find((option) => option.choice === choice)
     ?.label ?? choice;
 }
 
 export function getMiniBetContributionChange(input: {
+  round: RoundType;
+  type: MiniBetType;
   pickChoice: MiniBetChoice;
   winningChoice: MiniBetChoice | null;
   voided?: boolean;
   currentBalance?: number;
 }) {
   if (input.voided || !input.winningChoice) return 0;
+  const terms = getMiniBetTerms(input.round, input.type);
   if (input.pickChoice === input.winningChoice) {
     return -Math.min(
-      MINI_BET_WIN_REWARD,
+      terms.rewardAmount,
       clampContributionBalance(input.currentBalance ?? 0),
     );
   }
-  return MINI_BET_LOSS_AMOUNT;
+  return terms.lossAmount;
+}
+
+export function getMiniBetTerms(round: RoundType, type: MiniBetType) {
+  if (type === MiniBetType.EXACT_SCORE) {
+    return {
+      rewardAmount: FINAL_EXACT_SCORE_WIN_REWARD,
+      lossAmount: FINAL_EXACT_SCORE_LOSS_AMOUNT,
+    };
+  }
+  if (round === RoundType.FINAL) {
+    return {
+      rewardAmount: FINAL_MINI_BET_WIN_REWARD,
+      lossAmount: FINAL_MINI_BET_LOSS_AMOUNT,
+    };
+  }
+  return {
+    rewardAmount: MINI_BET_WIN_REWARD,
+    lossAmount: MINI_BET_LOSS_AMOUNT,
+  };
 }
 
 export async function placeMiniBetPick(input: {
@@ -330,6 +449,8 @@ export async function settleMiniBetResults(input: {
           const balances = await getBalances(tx, picks.map((pick) => pick.userId));
           const losses = picks.flatMap((pick) => {
             const rawAmount = getMiniBetContributionChange({
+              round: match.round,
+              type: resultInput.type,
               pickChoice: pick.choice,
               winningChoice: resultInput.winningChoice,
               currentBalance: balances.get(pick.userId) ?? 0,
@@ -393,11 +514,28 @@ function getValidChoices(type: MiniBetType): MiniBetChoice[] {
       return [MiniBetChoice.OVER, MiniBetChoice.UNDER];
     case MiniBetType.FIRST_GOAL:
     case MiniBetType.KICKOFF:
+    case MiniBetType.POSSESSION:
       return [MiniBetChoice.TEAM_A, MiniBetChoice.TEAM_B];
     case MiniBetType.PENALTY_90:
     case MiniBetType.CORNERS_8:
     case MiniBetType.PLAYER_GOAL:
+    case MiniBetType.PLAYER_GOAL_OR_ASSIST:
+    case MiniBetType.YELLOW_CARDS_3:
+    case MiniBetType.OFFSIDES_3:
+    case MiniBetType.EXTRA_TIME:
       return [MiniBetChoice.YES, MiniBetChoice.NO];
+    case MiniBetType.EXACT_SCORE:
+      return [
+        MiniBetChoice.SCORE_0_0,
+        MiniBetChoice.SCORE_1_0,
+        MiniBetChoice.SCORE_1_1,
+        MiniBetChoice.SCORE_2_0,
+        MiniBetChoice.SCORE_2_1,
+        MiniBetChoice.SCORE_2_2,
+        MiniBetChoice.SCORE_3_0,
+        MiniBetChoice.SCORE_3_1,
+        MiniBetChoice.SCORE_3_2,
+      ];
   }
 }
 

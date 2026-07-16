@@ -1,6 +1,7 @@
 "use server";
 
 import {
+  MatchDecisionMethod,
   MatchStatus,
   MiniBetChoice,
   MiniBetType,
@@ -22,7 +23,7 @@ import {
 import {
   canUseHopeStar,
   getContributionAmount,
-  hasDrawChoice,
+  matchHasDrawChoice,
   isValidHandicap,
   isPlaceholderTeamName,
   isVoteLocked,
@@ -30,7 +31,7 @@ import {
 import { parseMatchImport } from "@/lib/match-import";
 import { backfillMissedLossesForUser } from "@/lib/missed-losses";
 import {
-  MINI_BET_TYPES,
+  getMiniBetTypesForMatch,
   isValidMiniBetChoice,
   placeMiniBetPick,
   settleMiniBetResults,
@@ -42,6 +43,7 @@ import { syncWorldCupFixturesFromFootballData } from "@/lib/fixture-sync";
 import {
   placeSideMarketPick,
   settleChampionMarketFromMatches,
+  settleContributorMarkets,
   settleTopScorerMarket,
 } from "@/lib/side-markets";
 import {
@@ -264,7 +266,7 @@ export async function voteAction(formData: FormData) {
   const match = await prisma.match.findUnique({ where: { id: matchId } });
   if (!match || match.deletedAt) throw new Error("Không tìm thấy trận");
   if (isVoteLocked(match, new Date())) throw new Error("Trận này đã khóa lựa chọn");
-  if (choice === VoteChoice.DRAW && !hasDrawChoice(match.handicap)) {
+  if (choice === VoteChoice.DRAW && !matchHasDrawChoice(match.round, match.handicap)) {
     throw new Error("Kèo nửa trái chỉ có hai cửa đội A hoặc đội B");
   }
   if (requestedHopeStar && !canUseHopeStar(match.round)) {
@@ -310,7 +312,10 @@ export async function saveVoteInstantAction(input: unknown) {
   if (isVoteLocked(match, new Date())) {
     throw new Error("Trận này đã khóa lựa chọn");
   }
-  if (parsed.choice === VoteChoice.DRAW && !hasDrawChoice(match.handicap)) {
+  if (
+    parsed.choice === VoteChoice.DRAW &&
+    !matchHasDrawChoice(match.round, match.handicap)
+  ) {
     throw new Error("Kèo nửa trái chỉ có hai cửa đội A hoặc đội B");
   }
   if (parsed.hopeStar && !canUseHopeStar(match.round)) {
@@ -442,7 +447,9 @@ export async function upsertMatchAction(formData: FormData) {
     handicap: formString(formData, "handicap"),
     handicappedTeam: rawHandicapped ? rawHandicapped : null,
   });
-  if (data.handicap > 0 && !data.handicappedTeam) {
+  const overallWinnerMarket =
+    data.round === RoundType.THIRD_PLACE || data.round === RoundType.FINAL;
+  if (!overallWinnerMarket && data.handicap > 0 && !data.handicappedTeam) {
     throw new Error("Phải chọn đội bị chấp");
   }
   if (data.teamA.localeCompare(data.teamB, "vi", { sensitivity: "base" }) === 0) {
@@ -455,8 +462,9 @@ export async function upsertMatchAction(formData: FormData) {
     kickoffAt: vietnamLocalToUtc(data.kickoffLocal),
     round: data.round,
     contributionAmount: getContributionAmount(data.round),
-    handicap: data.handicap,
-    handicappedTeam: data.handicap === 0 ? null : data.handicappedTeam,
+    handicap: overallWinnerMarket ? 0 : data.handicap,
+    handicappedTeam:
+      overallWinnerMarket || data.handicap === 0 ? null : data.handicappedTeam,
   };
 
   let savedId = data.id;
@@ -820,11 +828,23 @@ export async function settleMatchAction(formData: FormData) {
     matchId: z.string().min(1),
     teamAScore: z.coerce.number().int().min(0).max(99),
     teamBScore: z.coerce.number().int().min(0).max(99),
+    teamAFinalScore: z.coerce.number().int().min(0).max(99).optional(),
+    teamBFinalScore: z.coerce.number().int().min(0).max(99).optional(),
+    decisionMethod: z.nativeEnum(MatchDecisionMethod).optional(),
+    advancedTeam: z.nativeEnum(TeamSide).nullable().optional(),
   });
+  const finalScoreA = formString(formData, "teamAFinalScore");
+  const finalScoreB = formString(formData, "teamBFinalScore");
+  const decisionMethod = formString(formData, "decisionMethod");
+  const advancedTeam = formString(formData, "advancedTeam");
   const data = scoreSchema.parse({
     matchId: formString(formData, "matchId"),
     teamAScore: formString(formData, "teamAScore"),
     teamBScore: formString(formData, "teamBScore"),
+    teamAFinalScore: finalScoreA ? finalScoreA : undefined,
+    teamBFinalScore: finalScoreB ? finalScoreB : undefined,
+    decisionMethod: decisionMethod || undefined,
+    advancedTeam: advancedTeam || null,
   });
   await settleMatch({ ...data, adminId: admin.id });
   await settleChampionMarketFromMatches(admin.id);
@@ -837,13 +857,18 @@ export async function settleMiniBetResultsAction(formData: FormData) {
   const admin = await requireAdmin();
   const matchId = z.string().min(1).parse(formString(formData, "matchId"));
   const matchFilter = formString(formData, "matchFilter") || "all";
+  const match = await prisma.match.findUnique({
+    where: { id: matchId },
+    select: { round: true, teamA: true, teamB: true, deletedAt: true },
+  });
+  if (!match || match.deletedAt) throw new Error("Không tìm thấy trận");
   const results: Array<{
     type: MiniBetType;
     winningChoice: MiniBetChoice | null;
     voided: boolean;
   }> = [];
 
-  for (const type of MINI_BET_TYPES) {
+  for (const type of getMiniBetTypesForMatch(match.round, match.teamA, match.teamB)) {
     const raw = formString(formData, `miniBet_${type}`);
     if (!raw) continue;
     if (raw === "VOID") {
@@ -914,6 +939,31 @@ export async function settleTopScorerMarketAction(formData: FormData) {
       result.settled
     }#side-markets-admin`,
   );
+}
+
+export async function settleContributorMarketsAction() {
+  const admin = await requireAdmin();
+
+  let result: Awaited<ReturnType<typeof settleContributorMarkets>>;
+  try {
+    result = await settleContributorMarkets({ adminId: admin.id });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Không thể chốt dự đoán người góp quỹ.";
+    redirect(`/admin?sideMarketError=${encodeURIComponent(message)}#side-markets-admin`);
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/matches");
+  revalidatePath("/leaderboard");
+  const params = new URLSearchParams({
+    contributorSettled: String(result.settled),
+    contributorHighest: result.highest.join(", "),
+    contributorLowest: result.lowest.join(", "),
+  });
+  redirect(`/admin?${params.toString()}#side-markets-admin`);
 }
 
 export async function createUserAction(formData: FormData) {

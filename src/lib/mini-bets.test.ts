@@ -33,6 +33,27 @@ describe("mini bets eligibility", () => {
       getMiniBetTypesForMatch(RoundType.QUARTER_FINAL, "France", "Spain"),
     ).not.toContain(MiniBetType.PLAYER_GOAL);
   });
+
+  it("adds the complete final-only market set", () => {
+    const types = getMiniBetTypesForMatch(
+      RoundType.FINAL,
+      "Spain",
+      "Argentina",
+    );
+
+    expect(types).toEqual(
+      expect.arrayContaining([
+        MiniBetType.PLAYER_GOAL_OR_ASSIST,
+        MiniBetType.POSSESSION,
+        MiniBetType.YELLOW_CARDS_3,
+        MiniBetType.OFFSIDES_3,
+        MiniBetType.EXTRA_TIME,
+        MiniBetType.EXACT_SCORE,
+      ]),
+    );
+    expect(types).not.toContain(MiniBetType.PLAYER_GOAL);
+    expect(getMiniBetPlayerName("Spain", "Argentina")).toBe("Messi");
+  });
 });
 
 describe("mini bets choices", () => {
@@ -49,6 +70,8 @@ describe("mini bets money rule", () => {
   it("reduces contribution by 20k when correct", () => {
     expect(
       getMiniBetContributionChange({
+        round: RoundType.THIRD_PLACE,
+        type: MiniBetType.TOTAL_GOALS,
         pickChoice: MiniBetChoice.OVER,
         winningChoice: MiniBetChoice.OVER,
         currentBalance: 100_000,
@@ -59,6 +82,8 @@ describe("mini bets money rule", () => {
   it("does not reduce below zero", () => {
     expect(
       getMiniBetContributionChange({
+        round: RoundType.THIRD_PLACE,
+        type: MiniBetType.PENALTY_90,
         pickChoice: MiniBetChoice.YES,
         winningChoice: MiniBetChoice.YES,
         currentBalance: 10_000,
@@ -69,6 +94,8 @@ describe("mini bets money rule", () => {
   it("adds 40k when wrong", () => {
     expect(
       getMiniBetContributionChange({
+        round: RoundType.THIRD_PLACE,
+        type: MiniBetType.PENALTY_90,
         pickChoice: MiniBetChoice.NO,
         winningChoice: MiniBetChoice.YES,
         currentBalance: 100_000,
@@ -79,11 +106,55 @@ describe("mini bets money rule", () => {
   it("voids without money change", () => {
     expect(
       getMiniBetContributionChange({
+        round: RoundType.THIRD_PLACE,
+        type: MiniBetType.FIRST_GOAL,
         pickChoice: MiniBetChoice.TEAM_A,
         winningChoice: null,
         voided: true,
         currentBalance: 100_000,
       }),
     ).toBe(0);
+  });
+
+  it("uses 50k reward and 75k loss for regular final mini bets", () => {
+    expect(
+      getMiniBetContributionChange({
+        round: RoundType.FINAL,
+        type: MiniBetType.POSSESSION,
+        pickChoice: MiniBetChoice.TEAM_A,
+        winningChoice: MiniBetChoice.TEAM_A,
+        currentBalance: 500_000,
+      }),
+    ).toBe(-50_000);
+    expect(
+      getMiniBetContributionChange({
+        round: RoundType.FINAL,
+        type: MiniBetType.EXTRA_TIME,
+        pickChoice: MiniBetChoice.NO,
+        winningChoice: MiniBetChoice.YES,
+        currentBalance: 500_000,
+      }),
+    ).toBe(75_000);
+  });
+
+  it("uses the final 200k/200k rule for exact score", () => {
+    expect(
+      getMiniBetContributionChange({
+        round: RoundType.FINAL,
+        type: MiniBetType.EXACT_SCORE,
+        pickChoice: MiniBetChoice.SCORE_2_1,
+        winningChoice: MiniBetChoice.SCORE_2_1,
+        currentBalance: 500_000,
+      }),
+    ).toBe(-200_000);
+    expect(
+      getMiniBetContributionChange({
+        round: RoundType.FINAL,
+        type: MiniBetType.EXACT_SCORE,
+        pickChoice: MiniBetChoice.SCORE_1_1,
+        winningChoice: MiniBetChoice.SCORE_2_1,
+        currentBalance: 500_000,
+      }),
+    ).toBe(200_000);
   });
 });

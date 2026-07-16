@@ -398,4 +398,76 @@ describe("settleMatch hope star", () => {
       }),
     });
   });
+
+  it("tinh tran chung ket theo doi thang chung cuoc ke ca khi hoa 90 phut", async () => {
+    txMock.user.findMany.mockResolvedValue([
+      { id: "team-a-picker", autoFollowUserId: null },
+      { id: "team-b-picker", autoFollowUserId: null },
+    ]);
+    txMock.match.findUnique.mockResolvedValue(
+      baseMatch({
+        round: RoundType.FINAL,
+        contributionAmount: 200_000,
+        votes: [
+          { userId: "team-a-picker", choice: VoteChoice.TEAM_A, hopeStar: false },
+          { userId: "team-b-picker", choice: VoteChoice.TEAM_B, hopeStar: true },
+        ],
+      }),
+    );
+
+    await settleMatch({
+      matchId: "match-1",
+      teamAScore: 1,
+      teamBScore: 1,
+      decisionMethod: MatchDecisionMethod.PENALTY_SHOOTOUT,
+      teamAFinalScore: 4,
+      teamBFinalScore: 5,
+      advancedTeam: TeamSide.TEAM_B,
+      adminId: "admin-1",
+    });
+
+    expect(txMock.lossTransaction.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          userId: "team-a-picker",
+          amount: 200_000,
+          type: LossTransactionType.LOSS,
+        }),
+      ],
+    });
+    expect(txMock.resultRevision.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        winningChoice: VoteChoice.TEAM_B,
+        decisionMethod: MatchDecisionMethod.PENALTY_SHOOTOUT,
+        teamAFinalScore: 4,
+        teamBFinalScore: 5,
+        advancedTeam: TeamSide.TEAM_B,
+      }),
+    });
+  });
+
+  it("tu choi doi thang chung cuoc neu mau thuan voi ty so da nhap", async () => {
+    txMock.match.findUnique.mockResolvedValue(
+      baseMatch({
+        round: RoundType.FINAL,
+        contributionAmount: 200_000,
+      }),
+    );
+
+    await expect(
+      settleMatch({
+        matchId: "match-1",
+        teamAScore: 1,
+        teamBScore: 1,
+        decisionMethod: MatchDecisionMethod.PENALTY_SHOOTOUT,
+        teamAFinalScore: 4,
+        teamBFinalScore: 5,
+        advancedTeam: TeamSide.TEAM_A,
+        adminId: "admin-1",
+      }),
+    ).rejects.toThrow("Đội thắng chung cuộc không khớp với tỷ số đã nhập.");
+
+    expect(txMock.resultRevision.create).not.toHaveBeenCalled();
+    expect(txMock.matchResult.upsert).not.toHaveBeenCalled();
+  });
 });

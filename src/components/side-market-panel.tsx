@@ -1,5 +1,8 @@
 import { CircleDollarSign, Sparkles, Trophy, UsersRound } from "lucide-react";
-import { SideMarketPickForm } from "@/components/side-market-pick-form";
+import {
+  SideMarketPickForm,
+  SideMarketSelectPickForm,
+} from "@/components/side-market-pick-form";
 import { SideMarketCard, SideMarketPickCard } from "@/lib/side-markets";
 
 export function SideMarketPanel({
@@ -106,6 +109,19 @@ function SideMarketCardView({ market }: { market: SideMarketCard }) {
               Thua: +{market.pick.lossLabel}
             </span>
           </div>
+        </div>
+      ) : market.compactOptions ? (
+        <div className="mt-4 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
+          <SideMarketSelectPickForm
+            marketSlug={market.slug}
+            options={market.options}
+            disabled={!market.isOpen}
+          />
+          {!market.isOpen && (
+            <p className="mt-2 text-xs font-bold text-slate-500">
+              Danh sách sẽ mở sau khi hai trận bán kết đã được chốt.
+            </p>
+          )}
         </div>
       ) : (
         <div className="mt-4 grid gap-3">

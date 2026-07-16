@@ -1,4 +1,10 @@
-import { MatchStatus, MiniBetType, RoundType, TeamSide } from "@prisma/client";
+import {
+  MatchDecisionMethod,
+  MatchStatus,
+  MiniBetType,
+  RoundType,
+  TeamSide,
+} from "@prisma/client";
 import {
   addPaymentAction,
   bulkImportUsersAction,
@@ -12,6 +18,7 @@ import {
   settleMiniBetResultsAction,
   settleMatchFromApiAction,
   settleMatchAction,
+  settleContributorMarketsAction,
   settleTopScorerMarketAction,
   syncOddsSuggestionsAction,
   syncWorldCupFixturesAction,
@@ -27,12 +34,14 @@ import {
   isPlaceholderTeamName,
   ROUND_LABELS,
   toVietnamDateTimeLocal,
+  usesOverallWinner,
 } from "@/lib/domain";
 import { FOOTBALL_DATA_SOURCE } from "@/lib/football-data";
 import {
   getMiniBetChoiceOptions,
   getMiniBetConfig,
   getMiniBetPlayerName,
+  getMiniBetTerms,
   getMiniBetTypesForMatch,
   miniBetChoiceLabel,
 } from "@/lib/mini-bets";
@@ -103,6 +112,12 @@ export default async function AdminPage({
     typeof params.sideMarketCount === "string" ? params.sideMarketCount : null;
   const sideMarketError =
     typeof params.sideMarketError === "string" ? params.sideMarketError : null;
+  const contributorSettled =
+    typeof params.contributorSettled === "string" ? params.contributorSettled : null;
+  const contributorHighest =
+    typeof params.contributorHighest === "string" ? params.contributorHighest : null;
+  const contributorLowest =
+    typeof params.contributorLowest === "string" ? params.contributorLowest : null;
   const miniBetSettled =
     typeof params.miniBetSettled === "string" ? params.miniBetSettled : null;
   const miniBetPicks =
@@ -194,7 +209,7 @@ export default async function AdminPage({
       <AdminSection
         id="side-markets-admin"
         title="Kèo phụ"
-        description="Theo dõi kèo đội vô địch và chốt thủ công kèo Vua phá lưới khi có kết quả cuối."
+        description="Theo dõi các kèo dài hạn; chốt Vua phá lưới và bảng góp quỹ sau khi có kết quả cuối."
       >
         {sideMarketError && (
           <p className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
@@ -204,6 +219,11 @@ export default async function AdminPage({
         {sideMarketSettled && (
           <p className="mb-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-900">
             Đã chốt Vua phá lưới: {sideMarketSettled}. Đã tính {sideMarketCount ?? 0} phiếu.
+          </p>
+        )}
+        {contributorSettled && (
+          <p className="mb-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-900">
+            Đã tính {contributorSettled} phiếu dự đoán bảng góp quỹ. Nhiều nhất: {contributorHighest ?? "-"}. Ít nhất: {contributorLowest ?? "-"}.
           </p>
         )}
 
@@ -254,6 +274,23 @@ export default async function AdminPage({
           </div>
           <button className="self-end rounded-xl bg-amber-600 px-4 py-2 text-sm font-black text-white hover:bg-amber-700">
             Chốt kèo
+          </button>
+        </form>
+
+        <form
+          action={settleContributorMarketsAction}
+          className="mt-4 grid gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 sm:grid-cols-[1fr_auto]"
+        >
+          <div>
+            <p className="text-sm font-black text-emerald-950">
+              Chốt dự đoán người góp quỹ
+            </p>
+            <p className="mt-2 text-xs font-semibold leading-5 text-emerald-900">
+              Có {sideMarketAdmin.pendingContributorPicks} phiếu đang chờ tính. Hệ thống tự lấy số Belly thực tế sau khi chung kết và toàn bộ kèo mini chung kết đã chốt; các trường hợp đồng hạng đều được tính đúng.
+            </p>
+          </div>
+          <button className="self-end rounded-xl bg-emerald-700 px-4 py-2 text-sm font-black text-white hover:bg-emerald-800">
+            Tính bảng cuối
           </button>
         </form>
       </AdminSection>
@@ -488,7 +525,30 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                     <p className="text-xs font-extrabold uppercase tracking-wide text-emerald-800">
                       1. Đặt mức chấp trước trận
                     </p>
-                    {match._count.votes > 0 ? (
+                    {usesOverallWinner(match.round) ? (
+                      <div className="mt-3 rounded-xl border border-emerald-200 bg-white px-3 py-3">
+                        <p className="font-extrabold text-emerald-950">
+                          Kèo thắng chung cuộc, không chấp
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-slate-600">
+                          Người chơi chọn một trong hai đội. Kết quả tính cả hiệp phụ và luân lưu nếu có.
+                        </p>
+                        {match.status === MatchStatus.DRAFT && match._count.votes === 0 && (
+                          <form action={upsertMatchAction} className="mt-3">
+                            <input type="hidden" name="saveKind" value="handicap" />
+                            <input type="hidden" name="matchFilter" value={matchFilter} />
+                            <input type="hidden" name="id" value={match.id} />
+                            <input type="hidden" name="teamA" value={match.teamA} />
+                            <input type="hidden" name="teamB" value={match.teamB} />
+                            <input type="hidden" name="kickoffLocal" value={toVietnamDateTimeLocal(match.kickoffAt)} />
+                            <input type="hidden" name="round" value={match.round} />
+                            <input type="hidden" name="handicap" value="0" />
+                            <input type="hidden" name="handicappedTeam" value="" />
+                            <button className={buttonClass}>Mở dự đoán không chấp</button>
+                          </form>
+                        )}
+                      </div>
+                    ) : match._count.votes > 0 ? (
                       <div className="mt-3 rounded-xl border border-emerald-200 bg-white px-3 py-3">
                         <p className="font-extrabold text-emerald-950">
                           Mức chấp đã chốt: {formatHandicap(match)}
@@ -608,11 +668,40 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                     <summary className="cursor-pointer font-bold text-slate-700">
                       Nhập tay tỷ số nếu cần
                     </summary>
-                    <form action={settleMatchAction} className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                    <form action={settleMatchAction} className="mt-3 grid gap-2 sm:grid-cols-2">
                       <input type="hidden" name="matchId" value={match.id} />
                       <input name="teamAScore" required type="number" min="0" defaultValue={match.result?.teamAScore ?? ""} placeholder={`Bàn ${match.teamA}`} className={inputClass} />
                       <input name="teamBScore" required type="number" min="0" defaultValue={match.result?.teamBScore ?? ""} placeholder={`Bàn ${match.teamB}`} className={inputClass} />
-                      <button className="rounded-xl bg-amber-600 px-3 py-2 text-sm font-bold text-white hover:bg-amber-700">
+                      {usesOverallWinner(match.round) && (
+                        <>
+                          <p className="rounded-xl bg-amber-50 px-3 py-2 font-bold text-amber-900 sm:col-span-2">
+                            Hai ô trên chỉ là tỷ số 90 phút. Nhập thêm tỷ số chung cuộc và đội thắng để tính kèo chính.
+                          </p>
+                          <input name="teamAFinalScore" required type="number" min="0" defaultValue={match.result?.teamAFinalScore ?? ""} placeholder={`Chung cuộc ${match.teamA}`} className={inputClass} />
+                          <input name="teamBFinalScore" required type="number" min="0" defaultValue={match.result?.teamBFinalScore ?? ""} placeholder={`Chung cuộc ${match.teamB}`} className={inputClass} />
+                          <select
+                            name="decisionMethod"
+                            required
+                            defaultValue={match.result?.decisionMethod ?? MatchDecisionMethod.REGULAR}
+                            className={inputClass}
+                          >
+                            <option value={MatchDecisionMethod.REGULAR}>Kết thúc trong 90 phút</option>
+                            <option value={MatchDecisionMethod.EXTRA_TIME}>Sau hiệp phụ</option>
+                            <option value={MatchDecisionMethod.PENALTY_SHOOTOUT}>Sau luân lưu</option>
+                          </select>
+                          <select
+                            name="advancedTeam"
+                            required
+                            defaultValue={match.result?.advancedTeam ?? ""}
+                            className={inputClass}
+                          >
+                            <option value="">Chọn đội thắng chung cuộc</option>
+                            <option value={TeamSide.TEAM_A}>{match.teamA}</option>
+                            <option value={TeamSide.TEAM_B}>{match.teamB}</option>
+                          </select>
+                        </>
+                      )}
+                      <button className="rounded-xl bg-amber-600 px-3 py-2 text-sm font-bold text-white hover:bg-amber-700 sm:col-span-2">
                         Tính kết quả
                       </button>
                     </form>
@@ -626,8 +715,8 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                           4. Chốt Kèo Mini
                         </p>
                         <p className="mt-2 text-xs leading-5 text-slate-600">
-                          Mỗi kèo đúng giảm 20.000 Belly, sai góp +40.000 Belly.
-                          Riêng kèo ghi bàn trước có thể chọn hoàn nếu 90 phút là 0-0.
+                          Kèo giải ba giữ mức hiện tại; kèo chung kết hiển thị mức thưởng/phạt riêng theo từng loại.
+                          Các kèo mini dùng dữ liệu 90 phút, riêng tỷ số chung cuộc lấy sau hiệp phụ và không cộng bàn luân lưu.
                         </p>
                       </div>
                       <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-violet-800 ring-1 ring-violet-100">
@@ -643,6 +732,7 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                           getMiniBetPlayerName(match.teamA, match.teamB),
                         );
                         const current = match.miniBetResults.find((row) => row.type === type);
+                        const terms = getMiniBetTerms(match.round, type);
                         const defaultValue = current?.voided
                           ? "VOID"
                           : current?.winningChoice ?? "";
@@ -655,8 +745,10 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                               className={inputClass}
                             >
                               <option value="">Chưa chốt / giữ nguyên</option>
-                              {type === MiniBetType.FIRST_GOAL && (
-                                <option value="VOID">Hoàn kèo 0-0</option>
+                              {(type === MiniBetType.FIRST_GOAL ||
+                                type === MiniBetType.POSSESSION ||
+                                type === MiniBetType.EXACT_SCORE) && (
+                                <option value="VOID">Hoàn kèo</option>
                               )}
                               {getMiniBetChoiceOptions(type, match.teamA, match.teamB).map((option) => (
                                 <option key={option.choice} value={option.choice}>
@@ -664,6 +756,9 @@ Brazil,Serbia,2026-06-15 02:00,Vòng bảng,2,Đội A,Mở`}
                                 </option>
                               ))}
                             </select>
+                            <span className="text-[11px] font-semibold text-slate-500">
+                              Đúng -{formatCurrency(terms.rewardAmount)} · Sai +{formatCurrency(terms.lossAmount)}
+                            </span>
                             {current && (
                               <span className="text-[11px] font-semibold text-violet-700">
                                 Đang chốt:{" "}

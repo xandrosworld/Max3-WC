@@ -30,16 +30,18 @@ import {
   formatCurrency,
   formatVietnamTime,
   formatHandicap,
-  hasDrawChoice,
+  matchHasDrawChoice,
   isVoteLocked,
   LOCK_MINUTES,
   ROUND_LABELS,
+  usesOverallWinner,
 } from "@/lib/domain";
 import {
   canUseMiniBets,
   getMiniBetChoiceOptions,
   getMiniBetConfig,
   getMiniBetPlayerName,
+  getMiniBetTerms,
   getMiniBetTypesForMatch,
   miniBetChoiceLabel,
   shouldShowMiniBetGuide,
@@ -413,7 +415,10 @@ export default async function MatchesPage({
                   const isScheduled = match.status === MatchStatus.DRAFT;
                   const canPick = match.status === MatchStatus.OPEN && !locked;
                   const hopeStarAllowed = canUseHopeStar(match.round);
-                  const availableChoices = hasDrawChoice(match.handicap)
+                  const availableChoices = matchHasDrawChoice(
+                    match.round,
+                    match.handicap,
+                  )
                     ? [VoteChoice.TEAM_A, VoteChoice.DRAW, VoteChoice.TEAM_B]
                     : [VoteChoice.TEAM_A, VoteChoice.TEAM_B];
                   const participantCount = match.votes.length;
@@ -552,7 +557,11 @@ export default async function MatchesPage({
                               matchId={match.id}
                               teamA={match.teamA}
                               teamB={match.teamB}
-                              handicapLabel={formatHandicap(match)}
+                              handicapLabel={
+                                usesOverallWinner(match.round)
+                                  ? "Thắng chung cuộc"
+                                  : formatHandicap(match)
+                              }
                               contributionLabel={formatCurrency(match.contributionAmount)}
                               participantLabel={
                                 participantCount > 0
@@ -564,7 +573,10 @@ export default async function MatchesPage({
                               selectedChoice={myVote?.choice ?? null}
                               selectedHopeStar={Boolean(myVote?.hopeStar)}
                               hopeStarAllowed={hopeStarAllowed}
-                              hasDrawChoice={hasDrawChoice(match.handicap)}
+                              hasDrawChoice={matchHasDrawChoice(
+                                match.round,
+                                match.handicap,
+                              )}
                             />
                           ) : (
                             <LockedMatchSummary
@@ -870,9 +882,9 @@ function getAdvancedTeamLabel(match: {
 
 function buildMiniBetPanelItems(
   match: {
+    round: RoundType;
     teamA: string;
     teamB: string;
-    round: RoundType;
     miniBetPicks: Array<{
       userId: string;
       type: MiniBetType;
@@ -891,6 +903,7 @@ function buildMiniBetPanelItems(
   const playerName = getMiniBetPlayerName(match.teamA, match.teamB);
   return getMiniBetTypesForMatch(match.round, match.teamA, match.teamB).map((type) => {
     const config = getMiniBetConfig(type, playerName);
+    const terms = getMiniBetTerms(match.round, type);
     const picks = match.miniBetPicks.filter((row) => row.type === type);
     const pick = picks.find((row) => row.userId === currentUserId) ?? null;
     const result = match.miniBetResults.find((row) => row.type === type) ?? null;
@@ -911,6 +924,8 @@ function buildMiniBetPanelItems(
       shortTitle: config.shortTitle,
       description: config.description,
       helper: config.helper,
+      rewardAmount: terms.rewardAmount,
+      lossAmount: terms.lossAmount,
       choices: getMiniBetChoiceOptions(type, match.teamA, match.teamB),
       publicPicks: picks.map((row) => ({
         voterId: row.user.id,
@@ -1037,6 +1052,7 @@ function SettledMatchSummary({
   followedVote,
 }: {
   match: {
+    round: RoundType;
     teamA: string;
     teamB: string;
     handicap: number;
@@ -1088,7 +1104,9 @@ function SettledMatchSummary({
         )}
         <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
           <span className="rounded-lg bg-amber-50 px-2.5 py-1.5 text-amber-900 ring-1 ring-amber-100">
-            Chấp: {formatHandicap(match)}
+            {usesOverallWinner(match.round)
+              ? "Kèo: Thắng chung cuộc"
+              : `Chấp: ${formatHandicap(match)}`}
           </span>
           <span className="rounded-lg bg-white px-2.5 py-1.5 text-slate-600 ring-1 ring-slate-200">
             Đóng góp {formatCurrency(match.contributionAmount)}
@@ -1168,6 +1186,7 @@ function LockedMatchSummary({
   followedVote,
 }: {
   match: {
+    round: RoundType;
     teamA: string;
     teamB: string;
     handicap: number;
@@ -1189,7 +1208,9 @@ function LockedMatchSummary({
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-wrap gap-2 text-xs font-bold">
         <span className="rounded-lg bg-amber-50 px-2.5 py-1.5 text-amber-900 ring-1 ring-amber-100">
-          {formatHandicap(match)}
+          {usesOverallWinner(match.round)
+            ? "Kèo: Thắng chung cuộc"
+            : formatHandicap(match)}
         </span>
         <span className="rounded-lg bg-white px-2.5 py-1.5 text-slate-600 ring-1 ring-slate-200">
           Đóng góp {formatCurrency(match.contributionAmount)}

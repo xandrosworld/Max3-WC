@@ -56,6 +56,14 @@ export function hasDrawChoice(handicap: number) {
   return Number.isInteger(handicap);
 }
 
+export function usesOverallWinner(round: RoundType) {
+  return round === RoundType.THIRD_PLACE || round === RoundType.FINAL;
+}
+
+export function matchHasDrawChoice(round: RoundType, handicap: number) {
+  return !usesOverallWinner(round) && hasDrawChoice(handicap);
+}
+
 export function isVoteLocked(
   match: { status: MatchStatus; kickoffAt: Date },
   now = new Date(),

@@ -15,10 +15,16 @@ import {
   MAX_CONTRIBUTION_BALANCE,
 } from "./domain";
 import { prisma } from "./prisma";
+import { getMiniBetTypesForMatch } from "./mini-bets";
 
 export const CHAMPION_MARKET_SLUG = "world-cup-2026-champion";
 export const CHAMPION_REOPEN_MARKET_SLUG = "world-cup-2026-champion-semi-final";
 export const TOP_SCORER_MARKET_SLUG = "world-cup-2026-top-scorer";
+export const TOP_CONTRIBUTOR_MARKET_SLUG = "world-cup-2026-top-contributor";
+export const BOTTOM_CONTRIBUTOR_MARKET_SLUG = "world-cup-2026-bottom-contributor";
+
+const CONTRIBUTOR_REWARD_AMOUNT = 150_000;
+const CONTRIBUTOR_LOSS_AMOUNT = 250_000;
 
 const SIDE_MARKET_SETTLEMENT_REVISION = 1;
 const ESTIMATED_KNOCKOUT_END_MINUTES = 150;
@@ -110,12 +116,14 @@ export type SideMarketCard = {
   pick: SideMarketPickCard | null;
   publicPicks: SideMarketPickCard[];
   options: SideMarketOptionCard[];
+  compactOptions: boolean;
 };
 
 export type SideMarketAdminState = {
   cards: SideMarketCard[];
   topScorerOptions: Array<{ slug: string; label: string }>;
   pendingTopScorerPicks: number;
+  pendingContributorPicks: number;
 };
 
 export function canJoinReopenedChampionMarket(
@@ -141,6 +149,8 @@ type TournamentMilestones = {
   topScorerOpenAt: Date | null;
   topScorerSemiStartAt: Date | null;
   topScorerCloseAt: Date | null;
+  contributorOpenAt: Date | null;
+  contributorCloseAt: Date | null;
 };
 
 export function ensureSideMarkets(db: SideMarketDb = prisma) {
@@ -164,6 +174,8 @@ async function syncSideMarkets(db: SideMarketDb) {
           CHAMPION_MARKET_SLUG,
           CHAMPION_REOPEN_MARKET_SLUG,
           TOP_SCORER_MARKET_SLUG,
+          TOP_CONTRIBUTOR_MARKET_SLUG,
+          BOTTOM_CONTRIBUTOR_MARKET_SLUG,
         ],
       },
     },
@@ -173,8 +185,6 @@ async function syncSideMarkets(db: SideMarketDb) {
   const seedOriginalChampion = needsChampionSeed(existing);
   const seedReopenedChampion = needsChampionReopenSeed(existing);
   const seedTopScorer = needsTopScorerSeed(existing);
-  if (!seedOriginalChampion && !seedReopenedChampion && !seedTopScorer) return;
-
   if (seedOriginalChampion) {
     await seedChampionMarket(db, {
       slug: CHAMPION_MARKET_SLUG,
@@ -246,6 +256,150 @@ async function syncSideMarkets(db: SideMarketDb) {
       data: { isActive: false },
     });
   }
+
+  await syncContributorMarkets(db, existing);
+}
+
+async function syncContributorMarkets(
+  db: SideMarketDb,
+  existing: Array<{
+    slug: string;
+    isActive: boolean;
+    title: string;
+    description: string;
+    options: Array<{
+      slug: string;
+      label: string;
+      rewardChampion: number | null;
+      lossAmount: number | null;
+      metadata: Prisma.JsonValue | null;
+      isActive: boolean;
+    }>;
+  }>,
+) {
+  const users = await db.user.findMany({
+    where: { role: "user", banned: false },
+    orderBy: [{ name: "asc" }, { id: "asc" }],
+    select: {
+      id: true,
+      name: true,
+      username: true,
+      displayUsername: true,
+    },
+  });
+  const candidates = users.filter((user) => !isExcludedContributorCandidate(user));
+
+  await Promise.all([
+    syncContributorMarket(db, existing, candidates, {
+      slug: TOP_CONTRIBUTOR_MARKET_SLUG,
+      title: "Dự đoán người góp quỹ nhiều nhất",
+      description:
+        "Chọn người sẽ đứng đầu tổng góp quỹ sau chung kết. Nếu đồng hạng, mọi người cùng mức cao nhất đều được tính đúng.",
+    }),
+    syncContributorMarket(db, existing, candidates, {
+      slug: BOTTOM_CONTRIBUTOR_MARKET_SLUG,
+      title: "Dự đoán người góp quỹ ít nhất",
+      description:
+        "Chọn người sẽ có tổng góp quỹ thấp nhất sau chung kết. Nếu đồng hạng, mọi người cùng mức thấp nhất đều được tính đúng.",
+    }),
+  ]);
+}
+
+async function syncContributorMarket(
+  db: SideMarketDb,
+  existing: Array<{
+    slug: string;
+    isActive: boolean;
+    title: string;
+    description: string;
+    options: Array<{
+      slug: string;
+      label: string;
+      rewardChampion: number | null;
+      lossAmount: number | null;
+      metadata: Prisma.JsonValue | null;
+      isActive: boolean;
+    }>;
+  }>,
+  candidates: Array<{ id: string; name: string }>,
+  definition: { slug: string; title: string; description: string },
+) {
+  const current = existing.find((market) => market.slug === definition.slug);
+  const expectedSlugs = new Set(candidates.map((user) => contributorOptionSlug(user.id)));
+  const isCurrent =
+    current?.isActive === true &&
+    current.title === definition.title &&
+    current.description === definition.description &&
+    current.options.filter((option) => option.isActive).length === candidates.length &&
+    candidates.every((user) => {
+      const option = current.options.find(
+        (row) => row.slug === contributorOptionSlug(user.id),
+      );
+      return (
+        option?.isActive === true &&
+        option.label === user.name &&
+        option.rewardChampion === CONTRIBUTOR_REWARD_AMOUNT &&
+        option.lossAmount === CONTRIBUTOR_LOSS_AMOUNT &&
+        getContributorUserId(option.metadata) === user.id
+      );
+    }) &&
+    current.options.every((option) => !option.isActive || expectedSlugs.has(option.slug));
+
+  if (isCurrent) return;
+
+  const market = await db.sideMarket.upsert({
+    where: { slug: definition.slug },
+    create: {
+      slug: definition.slug,
+      type: SideMarketType.CONTRIBUTOR,
+      title: definition.title,
+      description: definition.description,
+    },
+    update: {
+      type: SideMarketType.CONTRIBUTOR,
+      title: definition.title,
+      description: definition.description,
+      isActive: true,
+    },
+  });
+
+  await Promise.all(
+    candidates.map((user, index) =>
+      db.sideMarketOption.upsert({
+        where: {
+          marketId_slug: {
+            marketId: market.id,
+            slug: contributorOptionSlug(user.id),
+          },
+        },
+        create: {
+          marketId: market.id,
+          slug: contributorOptionSlug(user.id),
+          label: user.name,
+          rewardChampion: CONTRIBUTOR_REWARD_AMOUNT,
+          lossAmount: CONTRIBUTOR_LOSS_AMOUNT,
+          sortOrder: index,
+          metadata: { userId: user.id },
+        },
+        update: {
+          label: user.name,
+          rewardChampion: CONTRIBUTOR_REWARD_AMOUNT,
+          lossAmount: CONTRIBUTOR_LOSS_AMOUNT,
+          sortOrder: index,
+          metadata: { userId: user.id },
+          isActive: true,
+        },
+      }),
+    ),
+  );
+
+  await db.sideMarketOption.updateMany({
+    where: {
+      marketId: market.id,
+      slug: { notIn: [...expectedSlugs] },
+    },
+    data: { isActive: false },
+  });
 }
 
 async function seedChampionMarket(
@@ -312,6 +466,8 @@ export async function getSideMarketCardsForUser(
             CHAMPION_MARKET_SLUG,
             CHAMPION_REOPEN_MARKET_SLUG,
             TOP_SCORER_MARKET_SLUG,
+            TOP_CONTRIBUTOR_MARKET_SLUG,
+            BOTTOM_CONTRIBUTOR_MARKET_SLUG,
           ],
         },
         isActive: true,
@@ -358,7 +514,7 @@ export async function getSideMarketAdminState(
   now = new Date(),
 ): Promise<SideMarketAdminState> {
   await ensureSideMarkets();
-  const [cards, topScorerMarket] = await Promise.all([
+  const [cards, topScorerMarket, pendingContributorPicks] = await Promise.all([
     getSideMarketCardsForUser("__admin_preview__", now),
     prisma.sideMarket.findUnique({
       where: { slug: TOP_SCORER_MARKET_SLUG },
@@ -374,12 +530,23 @@ export async function getSideMarketAdminState(
         },
       },
     }),
+    prisma.sideMarketPick.count({
+      where: {
+        market: {
+          slug: {
+            in: [TOP_CONTRIBUTOR_MARKET_SLUG, BOTTOM_CONTRIBUTOR_MARKET_SLUG],
+          },
+        },
+        outcome: SideMarketPickOutcome.PENDING,
+      },
+    }),
   ]);
 
   return {
     cards,
     topScorerOptions: topScorerMarket?.options ?? [],
     pendingTopScorerPicks: topScorerMarket?.picks.length ?? 0,
+    pendingContributorPicks,
   };
 }
 
@@ -618,6 +785,162 @@ export async function settleTopScorerMarket(input: {
   );
 }
 
+export function getContributorWinnerIds(
+  balances: Array<{ userId: string; balance: number }>,
+  direction: "highest" | "lowest",
+) {
+  if (balances.length === 0) return new Set<string>();
+  const target =
+    direction === "highest"
+      ? Math.max(...balances.map((row) => row.balance))
+      : Math.min(...balances.map((row) => row.balance));
+  return new Set(
+    balances.filter((row) => row.balance === target).map((row) => row.userId),
+  );
+}
+
+export async function settleContributorMarkets(input: { adminId: string }) {
+  await ensureSideMarkets();
+  return prisma.$transaction(
+    async (tx) => {
+      const [markets, finalMatch] = await Promise.all([
+        tx.sideMarket.findMany({
+          where: {
+            slug: {
+              in: [TOP_CONTRIBUTOR_MARKET_SLUG, BOTTOM_CONTRIBUTOR_MARKET_SLUG],
+            },
+            isActive: true,
+          },
+          include: {
+            options: { where: { isActive: true } },
+            picks: {
+              where: { outcome: SideMarketPickOutcome.PENDING },
+              include: { option: true },
+            },
+          },
+        }),
+        tx.match.findFirst({
+          where: {
+            round: RoundType.FINAL,
+            deletedAt: null,
+            status: { not: MatchStatus.CANCELLED },
+          },
+          orderBy: { kickoffAt: "desc" },
+          include: { result: true, miniBetResults: true },
+        }),
+      ]);
+
+      if (markets.length !== 2) {
+        throw new Error("Chưa có đủ hai kèo dự đoán người góp quỹ.");
+      }
+      if (!finalMatch?.result) {
+        throw new Error("Chỉ chốt kèo người góp quỹ sau khi chung kết đã có kết quả.");
+      }
+
+      const requiredMiniTypes = getMiniBetTypesForMatch(
+        finalMatch.round,
+        finalMatch.teamA,
+        finalMatch.teamB,
+      );
+      const settledMiniTypes = new Set(finalMatch.miniBetResults.map((row) => row.type));
+      const missingMiniTypes = requiredMiniTypes.filter(
+        (type) => !settledMiniTypes.has(type),
+      );
+      if (missingMiniTypes.length > 0) {
+        throw new Error(
+          `Cần chốt đủ ${missingMiniTypes.length} kèo mini chung kết trước khi tính bảng góp quỹ.`,
+        );
+      }
+
+      const candidateOptions = markets.flatMap((market) => market.options);
+      const candidateIds = [
+        ...new Set(
+          candidateOptions
+            .map((option) => getContributorUserId(option.metadata))
+            .filter((userId): userId is string => Boolean(userId)),
+        ),
+      ];
+      if (candidateIds.length === 0) {
+        throw new Error("Không có người chơi hợp lệ để tính kèo góp quỹ.");
+      }
+
+      const voterIds = markets.flatMap((market) =>
+        market.picks.map((pick) => pick.userId),
+      );
+      const balances = await getBalances(tx, [...candidateIds, ...voterIds]);
+      const candidateBalances = candidateIds.map((userId) => ({
+        userId,
+        balance: balances.get(userId) ?? 0,
+      }));
+      const highestIds = getContributorWinnerIds(candidateBalances, "highest");
+      const lowestIds = getContributorWinnerIds(candidateBalances, "lowest");
+      let settled = 0;
+
+      for (const market of markets) {
+        const winningIds =
+          market.slug === TOP_CONTRIBUTOR_MARKET_SLUG ? highestIds : lowestIds;
+        for (const pick of market.picks) {
+          const selectedUserId = getContributorUserId(pick.option.metadata);
+          const outcome =
+            selectedUserId && winningIds.has(selectedUserId)
+              ? SideMarketPickOutcome.WON
+              : SideMarketPickOutcome.LOST;
+          await settleSideMarketPick(tx, {
+            pickId: pick.id,
+            userId: pick.userId,
+            outcome,
+            rawAmount:
+              outcome === SideMarketPickOutcome.WON
+                ? -pick.rewardAmount
+                : pick.stakeLoss,
+            balances,
+            note:
+              outcome === SideMarketPickOutcome.WON
+                ? `Dự đoán bảng góp quỹ đúng; giảm đóng góp ${formatCurrency(pick.rewardAmount)}`
+                : `Dự đoán bảng góp quỹ sai; đóng góp +${formatCurrency(pick.stakeLoss)}`,
+          });
+          settled += 1;
+        }
+      }
+
+      await tx.sideMarket.updateMany({
+        where: { id: { in: markets.map((market) => market.id) } },
+        data: { settledAt: new Date() },
+      });
+      await tx.auditLog.create({
+        data: {
+          actorId: input.adminId,
+          action: "SIDE_MARKET_CONTRIBUTORS_SETTLED",
+          entityType: "SideMarket",
+          entityId: markets.map((market) => market.id).join(","),
+          details: {
+            settled,
+            highestUserIds: [...highestIds],
+            lowestUserIds: [...lowestIds],
+          },
+        },
+      });
+
+      const candidateNames = new Map(
+        candidateOptions.map((option) => [
+          getContributorUserId(option.metadata),
+          option.label,
+        ]),
+      );
+      return {
+        settled,
+        highest: [...highestIds].map((id) => candidateNames.get(id) ?? id),
+        lowest: [...lowestIds].map((id) => candidateNames.get(id) ?? id),
+      };
+    },
+    {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      maxWait: 10_000,
+      timeout: 30_000,
+    },
+  );
+}
+
 export function getSideMarketContributionChange(
   currentBalance: number,
   rawAmount: number,
@@ -668,6 +991,16 @@ export function getSideMarketAvailability(
         ? SideMarketPickPhase.SEMI_FINAL
         : SideMarketPickPhase.CHAMPION,
       phaseLabel: reopened ? "Trước bán kết" : "Vô địch",
+    });
+  }
+
+  if (type === SideMarketType.CONTRIBUTOR) {
+    return buildAvailability({
+      now,
+      openAt: milestones.contributorOpenAt,
+      closeAt: milestones.contributorCloseAt,
+      phase: SideMarketPickPhase.FINAL,
+      phaseLabel: "Trước chung kết",
     });
   }
 
@@ -744,6 +1077,11 @@ async function getTournamentMilestones(
           ),
         )
       : final[0]?.kickoffAt ?? null;
+  const contributorOpenAt =
+    sf.length > 0 && sf.every((match) => match.result)
+      ? maxDate(sf.map((match) => match.result!.settledAt))
+      : null;
+  const contributorCloseAt = final[0]?.kickoffAt ?? null;
 
   return {
     championOpenAt,
@@ -753,6 +1091,8 @@ async function getTournamentMilestones(
     topScorerOpenAt,
     topScorerSemiStartAt,
     topScorerCloseAt,
+    contributorOpenAt,
+    contributorCloseAt,
   };
 }
 
@@ -803,6 +1143,8 @@ function buildSideMarketCard(
         ? "Cơ hội vòng hai"
         : market.type === SideMarketType.CHAMPION
           ? "Kèo phụ"
+          : market.type === SideMarketType.CONTRIBUTOR
+            ? "Dự đoán bảng xếp hạng"
           : "Kèo vui",
     description: market.description,
     statusLabel: pick
@@ -850,6 +1192,7 @@ function buildSideMarketCard(
         detail: optionDetail(market.type, option, termsPhase),
       };
     }),
+    compactOptions: market.type === SideMarketType.CONTRIBUTOR,
   };
 }
 
@@ -867,6 +1210,13 @@ function getSideMarketTerms(input: {
     return {
       rewardAmount: input.option.rewardChampion ?? 0,
       lossAmount: input.option.lossAmount ?? 200_000,
+    };
+  }
+
+  if (input.type === SideMarketType.CONTRIBUTOR) {
+    return {
+      rewardAmount: input.option.rewardChampion ?? CONTRIBUTOR_REWARD_AMOUNT,
+      lossAmount: input.option.lossAmount ?? CONTRIBUTOR_LOSS_AMOUNT,
     };
   }
 
@@ -1138,6 +1488,10 @@ function optionDetail(
       : `Thắng nếu ${teamNames[0] ?? option.label} vô địch.`;
   }
 
+  if (type === SideMarketType.CONTRIBUTOR) {
+    return "Phiếu được tính theo tổng Belly thực tế sau khi chung kết và toàn bộ kèo mini đã chốt.";
+  }
+
   return phase === SideMarketPickPhase.SEMI_FINAL
     ? "Đang ở mốc bán kết: thưởng thấp hơn, thua trừ nhiều hơn."
     : "Đang ở mốc tứ kết: thưởng cao hơn, thua trừ nhẹ hơn.";
@@ -1160,21 +1514,52 @@ function getChampionTeamNames(option: { metadata: Prisma.JsonValue | null; label
 }
 
 function fallbackPhase(type: SideMarketType) {
-  return type === SideMarketType.CHAMPION
-    ? SideMarketPickPhase.CHAMPION
-    : SideMarketPickPhase.QUARTER_FINAL;
+  if (type === SideMarketType.CHAMPION) return SideMarketPickPhase.CHAMPION;
+  if (type === SideMarketType.CONTRIBUTOR) return SideMarketPickPhase.FINAL;
+  return SideMarketPickPhase.QUARTER_FINAL;
 }
 
 function phaseLabel(phase: SideMarketPickPhase) {
   if (phase === SideMarketPickPhase.SEMI_FINAL) return "Bán kết";
   if (phase === SideMarketPickPhase.QUARTER_FINAL) return "Tứ kết";
+  if (phase === SideMarketPickPhase.FINAL) return "Chung kết";
   return "Vô địch";
 }
 
 function marketSortOrder(slug: string) {
   if (slug === CHAMPION_REOPEN_MARKET_SLUG) return 0;
   if (slug === TOP_SCORER_MARKET_SLUG) return 1;
-  return 2;
+  if (slug === TOP_CONTRIBUTOR_MARKET_SLUG) return 2;
+  if (slug === BOTTOM_CONTRIBUTOR_MARKET_SLUG) return 3;
+  return 4;
+}
+
+function contributorOptionSlug(userId: string) {
+  return `user-${userId}`;
+}
+
+function getContributorUserId(metadata: Prisma.JsonValue | null) {
+  if (
+    metadata &&
+    typeof metadata === "object" &&
+    !Array.isArray(metadata) &&
+    "userId" in metadata &&
+    typeof (metadata as { userId?: unknown }).userId === "string"
+  ) {
+    return (metadata as { userId: string }).userId;
+  }
+  return null;
+}
+
+function isExcludedContributorCandidate(user: {
+  name: string;
+  username: string | null;
+  displayUsername: string | null;
+}) {
+  const excluded = new Set(["meocon", "meocon1234"]);
+  return [user.name, user.username, user.displayUsername]
+    .filter((value): value is string => Boolean(value))
+    .some((value) => excluded.has(normalizeTeamName(value).replace(/\s+/g, "")));
 }
 
 function inferAdvancedTeam(teamAFinalScore: number, teamBFinalScore: number) {
