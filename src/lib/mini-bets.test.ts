@@ -137,7 +137,7 @@ describe("mini bets money rule", () => {
     ).toBe(75_000);
   });
 
-  it("uses the final 200k/200k rule for exact score", () => {
+  it("uses the final 200k/75k rule for exact score", () => {
     expect(
       getMiniBetContributionChange({
         round: RoundType.FINAL,
@@ -155,6 +155,6 @@ describe("mini bets money rule", () => {
         winningChoice: MiniBetChoice.SCORE_2_1,
         currentBalance: 500_000,
       }),
-    ).toBe(200_000);
+    ).toBe(75_000);
   });
 });

@@ -112,6 +112,19 @@ function SideMarketCardView({ market }: { market: SideMarketCard }) {
         </div>
       ) : market.compactOptions ? (
         <div className="mt-4 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
+          <div className="mb-3 flex flex-wrap gap-2 text-xs font-black">
+            <span className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-emerald-800 ring-1 ring-emerald-100">
+              Đúng: giảm {market.options[0]?.rewardLabel ?? "200.000 Belly"}
+            </span>
+            <span className="rounded-lg bg-red-50 px-2.5 py-1.5 text-red-700 ring-1 ring-red-100">
+              Sai: góp thêm {market.options[0]?.lossLabel ?? "50.000 Belly"}
+            </span>
+          </div>
+          {market.closeAtLabel && (
+            <p className="mb-3 text-xs font-bold text-amber-800">
+              ⏰ Đóng trước giờ bắt đầu trận tranh hạng ba ({market.closeAtLabel})
+            </p>
+          )}
           <SideMarketSelectPickForm
             marketSlug={market.slug}
             options={market.options}

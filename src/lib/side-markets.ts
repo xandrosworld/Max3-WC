@@ -23,8 +23,8 @@ export const TOP_SCORER_MARKET_SLUG = "world-cup-2026-top-scorer";
 export const TOP_CONTRIBUTOR_MARKET_SLUG = "world-cup-2026-top-contributor";
 export const BOTTOM_CONTRIBUTOR_MARKET_SLUG = "world-cup-2026-bottom-contributor";
 
-const CONTRIBUTOR_REWARD_AMOUNT = 150_000;
-const CONTRIBUTOR_LOSS_AMOUNT = 250_000;
+const CONTRIBUTOR_REWARD_AMOUNT = 200_000;
+const CONTRIBUTOR_LOSS_AMOUNT = 50_000;
 
 const SIDE_MARKET_SETTLEMENT_REVISION = 1;
 const ESTIMATED_KNOCKOUT_END_MINUTES = 150;
@@ -1000,7 +1000,7 @@ export function getSideMarketAvailability(
       openAt: milestones.contributorOpenAt,
       closeAt: milestones.contributorCloseAt,
       phase: SideMarketPickPhase.FINAL,
-      phaseLabel: "Trước chung kết",
+      phaseLabel: "Trước trận tranh hạng ba",
     });
   }
 
@@ -1031,6 +1031,7 @@ async function getTournamentMilestones(
           RoundType.ROUND_OF_16,
           RoundType.QUARTER_FINAL,
           RoundType.SEMI_FINAL,
+          RoundType.THIRD_PLACE,
           RoundType.FINAL,
         ],
       },
@@ -1047,6 +1048,7 @@ async function getTournamentMilestones(
   const r16 = byRound(RoundType.ROUND_OF_16);
   const qf = byRound(RoundType.QUARTER_FINAL);
   const sf = byRound(RoundType.SEMI_FINAL);
+  const thirdPlace = byRound(RoundType.THIRD_PLACE);
   const final = byRound(RoundType.FINAL);
 
   const championOpenAt =
@@ -1081,7 +1083,7 @@ async function getTournamentMilestones(
     sf.length > 0 && sf.every((match) => match.result)
       ? maxDate(sf.map((match) => match.result!.settledAt))
       : null;
-  const contributorCloseAt = final[0]?.kickoffAt ?? null;
+  const contributorCloseAt = thirdPlace[0]?.kickoffAt ?? final[0]?.kickoffAt ?? null;
 
   return {
     championOpenAt,

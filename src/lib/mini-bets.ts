@@ -20,7 +20,8 @@ export const MINI_BET_LOSS_AMOUNT = 40_000;
 export const FINAL_MINI_BET_WIN_REWARD = 50_000;
 export const FINAL_MINI_BET_LOSS_AMOUNT = 75_000;
 export const FINAL_EXACT_SCORE_WIN_REWARD = 200_000;
-export const FINAL_EXACT_SCORE_LOSS_AMOUNT = 200_000;
+export const FINAL_EXACT_SCORE_LOSS_AMOUNT = 75_000;
+export const MAX_EXACT_SCORE_PICKS = 3;
 
 export const MINI_BET_TYPES: MiniBetType[] = [
   MiniBetType.TOTAL_GOALS,
@@ -348,12 +349,17 @@ export async function placeMiniBetPick(input: {
     throw new Error("Lựa chọn kèo mini không hợp lệ.");
   }
 
+  if (input.type === MiniBetType.EXACT_SCORE) {
+    return placeExactScorePick(input.userId, input.matchId, input.choice);
+  }
+
   return prisma.miniBetPick.upsert({
     where: {
-      userId_matchId_type: {
+      userId_matchId_type_choice: {
         userId: input.userId,
         matchId: input.matchId,
         type: input.type,
+        choice: input.choice,
       },
     },
     update: { choice: input.choice },
@@ -364,6 +370,45 @@ export async function placeMiniBetPick(input: {
       choice: input.choice,
     },
   });
+}
+
+async function placeExactScorePick(
+  userId: string,
+  matchId: string,
+  choice: MiniBetChoice,
+) {
+  return prisma.$transaction(
+    async (tx) => {
+      const existing = await tx.miniBetPick.findMany({
+        where: { userId, matchId, type: MiniBetType.EXACT_SCORE },
+        orderBy: { createdAt: "asc" },
+      });
+
+      if (existing.some((pick) => pick.choice === choice)) {
+        throw new Error("Tỷ số này đã được chọn.");
+      }
+
+      if (existing.length >= MAX_EXACT_SCORE_PICKS) {
+        throw new Error(
+          `Bạn đã chọn đủ ${MAX_EXACT_SCORE_PICKS} tỷ số, không thể thêm.`,
+        );
+      }
+
+      return tx.miniBetPick.create({
+        data: {
+          userId,
+          matchId,
+          type: MiniBetType.EXACT_SCORE,
+          choice,
+        },
+      });
+    },
+    {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      maxWait: 5_000,
+      timeout: 10_000,
+    },
+  );
 }
 
 export async function settleMiniBetResults(input: {
@@ -447,34 +492,80 @@ export async function settleMiniBetResults(input: {
 
         if (!voided && picks.length > 0) {
           const balances = await getBalances(tx, picks.map((pick) => pick.userId));
-          const losses = picks.flatMap((pick) => {
-            const rawAmount = getMiniBetContributionChange({
-              round: match.round,
-              type: resultInput.type,
-              pickChoice: pick.choice,
-              winningChoice: resultInput.winningChoice,
-              currentBalance: balances.get(pick.userId) ?? 0,
-            });
-            const amount = getBalanceAwareChange(balances, pick.userId, rawAmount);
-            if (amount === 0) return [];
-            return {
-              userId: pick.userId,
-              miniBetPickId: pick.id,
-              amount,
-              type: LossTransactionType.LOSS,
-              settlementRevision: revision,
-              note: getMiniBetTransactionNote({
-                type: resultInput.type,
-                amount,
-                winningChoice: resultInput.winningChoice,
-                teamA: match.teamA,
-                teamB: match.teamB,
-              }),
-            };
-          });
 
-          if (losses.length > 0) {
-            await tx.lossTransaction.createMany({ data: losses });
+          if (resultInput.type === MiniBetType.EXACT_SCORE) {
+            const userPicks = new Map<string, typeof picks>();
+            for (const pick of picks) {
+              const group = userPicks.get(pick.userId) ?? [];
+              group.push(pick);
+              userPicks.set(pick.userId, group);
+            }
+
+            const losses: Array<{
+              userId: string;
+              miniBetPickId: string;
+              amount: number;
+              type: LossTransactionType;
+              settlementRevision: number;
+              note: string;
+            }> = [];
+
+            for (const [userId, userGroup] of userPicks) {
+              const matchingPick = userGroup.find(
+                (pick) => pick.choice === resultInput.winningChoice,
+              );
+              const won = Boolean(matchingPick);
+              const terms = getMiniBetTerms(match.round, MiniBetType.EXACT_SCORE);
+              const rawAmount = won ? -terms.rewardAmount : terms.lossAmount;
+              const amount = getBalanceAwareChange(balances, userId, rawAmount);
+              if (amount === 0) continue;
+
+              const representativePick = matchingPick ?? userGroup[0];
+              losses.push({
+                userId,
+                miniBetPickId: representativePick.id,
+                amount,
+                type: LossTransactionType.LOSS,
+                settlementRevision: revision,
+                note: won
+                  ? `Dự đoán tỷ số chung cuộc đúng; giảm đóng góp ${formatCurrency(Math.abs(amount))}`
+                  : `Dự đoán tỷ số chung cuộc sai; đóng góp +${formatCurrency(amount)}`,
+              });
+            }
+
+            if (losses.length > 0) {
+              await tx.lossTransaction.createMany({ data: losses });
+            }
+          } else {
+            const losses = picks.flatMap((pick) => {
+              const rawAmount = getMiniBetContributionChange({
+                round: match.round,
+                type: resultInput.type,
+                pickChoice: pick.choice,
+                winningChoice: resultInput.winningChoice,
+                currentBalance: balances.get(pick.userId) ?? 0,
+              });
+              const amount = getBalanceAwareChange(balances, pick.userId, rawAmount);
+              if (amount === 0) return [];
+              return {
+                userId: pick.userId,
+                miniBetPickId: pick.id,
+                amount,
+                type: LossTransactionType.LOSS,
+                settlementRevision: revision,
+                note: getMiniBetTransactionNote({
+                  type: resultInput.type,
+                  amount,
+                  winningChoice: resultInput.winningChoice,
+                  teamA: match.teamA,
+                  teamB: match.teamB,
+                }),
+              };
+            });
+
+            if (losses.length > 0) {
+              await tx.lossTransaction.createMany({ data: losses });
+            }
           }
         }
 

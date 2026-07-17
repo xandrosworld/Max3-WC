@@ -68,6 +68,10 @@ export type MiniBetPanelItem = {
   resultLabel: string | null;
   resultState: "won" | "lost" | "void" | null;
   transactionAmount: number;
+  multiPick?: boolean;
+  maxPicks?: number;
+  selectedChoices?: MiniBetChoice[];
+  selectedLabels?: string[];
 };
 
 type MiniBetSaveState = {
@@ -102,12 +106,17 @@ export function MiniBetPanel({
   >({});
   const persistedChoicesRef = useRef(
     new Map<MiniBetType, MiniBetChoice | null>(
-      items.map((item) => [item.type, item.selectedChoice]),
+      items.filter((item) => !item.multiPick).map((item) => [item.type, item.selectedChoice]),
     ),
   );
   const latestChoicesRef = useRef(
     new Map<MiniBetType, MiniBetChoice | null>(
-      items.map((item) => [item.type, item.selectedChoice]),
+      items.filter((item) => !item.multiPick).map((item) => [item.type, item.selectedChoice]),
+    ),
+  );
+  const persistedMultiRef = useRef(
+    new Map<MiniBetType, MiniBetChoice[]>(
+      items.filter((item) => item.multiPick).map((item) => [item.type, item.selectedChoices ?? []]),
     ),
   );
   const savingTypesRef = useRef(new Set<MiniBetType>());
@@ -115,11 +124,15 @@ export function MiniBetPanel({
 
   useEffect(() => {
     const choices = new Map<MiniBetType, MiniBetChoice | null>(
-      items.map((item) => [item.type, item.selectedChoice]),
+      items.filter((item) => !item.multiPick).map((item) => [item.type, item.selectedChoice]),
+    );
+    const multiChoices = new Map<MiniBetType, MiniBetChoice[]>(
+      items.filter((item) => item.multiPick).map((item) => [item.type, item.selectedChoices ?? []]),
     );
     setLiveItems(items);
     persistedChoicesRef.current = choices;
     latestChoicesRef.current = new Map(choices);
+    persistedMultiRef.current = multiChoices;
     savingTypesRef.current.clear();
     setSaveStates({});
   }, [items]);
@@ -215,10 +228,95 @@ export function MiniBetPanel({
   }
 
   function chooseMiniBet(type: MiniBetType, choice: MiniBetChoice) {
+    const item = liveItems.find((row) => row.type === type);
+    if (item?.multiPick) {
+      chooseMultiMiniBet(type, choice);
+      return;
+    }
     if (latestChoicesRef.current.get(type) === choice) return;
     latestChoicesRef.current.set(type, choice);
     showChoice(type, choice);
     void flushMiniBet(type);
+  }
+
+  function chooseMultiMiniBet(type: MiniBetType, choice: MiniBetChoice) {
+    const current = liveItems.find((row) => row.type === type);
+    if (!current) return;
+    const selected = current.selectedChoices ?? [];
+    const maxPicks = current.maxPicks ?? 3;
+
+    if (selected.includes(choice)) {
+      return;
+    }
+
+    if (selected.length >= maxPicks) {
+      return;
+    }
+
+    const newSelected = [...selected, choice];
+    const labels = newSelected
+      .map((c) => current.choices.find((opt) => opt.choice === c)?.label ?? c)
+      .filter(Boolean);
+
+    setLiveItems((items) =>
+      items.map((item) => {
+        if (item.type !== type) return item;
+        return {
+          ...item,
+          selectedChoices: newSelected,
+          selectedLabels: labels,
+          selectedChoice: newSelected[0] ?? null,
+          selectedLabel: labels.join(", "),
+          publicPicks: updateMultiPublicPicks(item, newSelected, currentUser),
+        };
+      }),
+    );
+
+    setSaveStates((current) => ({
+      ...current,
+      [type]: { status: "saving" },
+    }));
+
+    saveMiniBetPickInstantAction({
+      matchId,
+      type,
+      choice,
+    }).then((result) => {
+      if (!result.ok) {
+        setLiveItems((items) =>
+          items.map((item) => {
+            if (item.type !== type) return item;
+            const reverted = (item.selectedChoices ?? []).filter((c) => c !== choice);
+            return {
+              ...item,
+              selectedChoices: reverted,
+              selectedLabels: reverted.map(
+                (c) => item.choices.find((opt) => opt.choice === c)?.label ?? c,
+              ),
+              selectedChoice: reverted[0] ?? null,
+              selectedLabel: reverted.map(
+                (c) => item.choices.find((opt) => opt.choice === c)?.label ?? c,
+              ).join(", "),
+              publicPicks: updateMultiPublicPicks(item, reverted, currentUser),
+            };
+          }),
+        );
+        setSaveStates((current) => ({
+          ...current,
+          [type]: { status: "error", error: result.error },
+        }));
+      } else {
+        setSaveStates((current) => ({
+          ...current,
+          [type]: { status: "saved" },
+        }));
+      }
+    }).catch(() => {
+      setSaveStates((current) => ({
+        ...current,
+        [type]: { status: "error", error: "Chưa lưu được, hãy thử lại." },
+      }));
+    });
   }
 
   return (
@@ -388,7 +486,9 @@ function MiniBetRow({
           </span>
           {item.selectedLabel && (
             <span className="inline-flex rounded-lg bg-white px-2.5 py-1 text-[11px] font-black text-emerald-800 ring-1 ring-emerald-200">
-              Đã chọn: {item.selectedLabel}
+              {item.multiPick
+                ? `Đã chọn ${(item.selectedChoices ?? []).length}/${item.maxPicks ?? 3}: ${item.selectedLabel}`
+                : `Đã chọn: ${item.selectedLabel}`}
             </span>
           )}
           {item.resultLabel && (
@@ -425,17 +525,25 @@ function MiniBetRow({
         }`}
       >
         {item.choices.map((option) => {
-          const selected = item.selectedChoice === option.choice;
+          const isMulti = item.multiPick;
+          const multiSelected = item.selectedChoices ?? [];
+          const selected = isMulti
+            ? multiSelected.includes(option.choice)
+            : item.selectedChoice === option.choice;
+          const atMax = isMulti && multiSelected.length >= (item.maxPicks ?? 3) && !selected;
           return canPick ? (
             <button
               key={option.choice}
               type="button"
               aria-pressed={selected}
+              disabled={atMax}
               onClick={() => onPick(item.type, option.choice)}
               className={`flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-3 text-sm font-black ring-1 transition active:scale-[0.98] ${
                 selected
                   ? "bg-emerald-700 text-white ring-emerald-700 shadow-sm shadow-emerald-900/20"
-                  : "bg-white text-emerald-900 ring-emerald-200 hover:bg-emerald-50"
+                  : atMax
+                    ? "cursor-not-allowed bg-slate-100 text-slate-400 ring-slate-200"
+                    : "bg-white text-emerald-900 ring-emerald-200 hover:bg-emerald-50"
               }`}
             >
               {selected ? (
@@ -507,6 +615,26 @@ function updateMiniBetChoice(
           : otherPicks,
     };
   });
+}
+
+function updateMultiPublicPicks(
+  item: MiniBetPanelItem,
+  selectedChoices: MiniBetChoice[],
+  currentUser: MiniBetViewer,
+) {
+  const otherPicks = item.publicPicks.filter(
+    (pick) => pick.voterId !== currentUser.id,
+  );
+  const myPicks = selectedChoices.map((choice) => {
+    const option = item.choices.find((row) => row.choice === choice);
+    return {
+      voterId: currentUser.id,
+      voterName: currentUser.name,
+      choice,
+      choiceLabel: option?.label ?? String(choice),
+    };
+  });
+  return [...otherPicks, ...myPicks];
 }
 
 function MiniBetPublicPicks({ item }: { item: MiniBetPanelItem }) {

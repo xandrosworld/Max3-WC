@@ -43,6 +43,7 @@ import {
   getMiniBetPlayerName,
   getMiniBetTerms,
   getMiniBetTypesForMatch,
+  MAX_EXACT_SCORE_PICKS,
   miniBetChoiceLabel,
   shouldShowMiniBetGuide,
 } from "@/lib/mini-bets";
@@ -905,8 +906,65 @@ function buildMiniBetPanelItems(
     const config = getMiniBetConfig(type, playerName);
     const terms = getMiniBetTerms(match.round, type);
     const picks = match.miniBetPicks.filter((row) => row.type === type);
-    const pick = picks.find((row) => row.userId === currentUserId) ?? null;
     const result = match.miniBetResults.find((row) => row.type === type) ?? null;
+
+    const isMulti = type === MiniBetType.EXACT_SCORE;
+
+    if (isMulti) {
+      const myPicks = picks.filter((row) => row.userId === currentUserId);
+      const selectedChoices = myPicks.map((row) => row.choice);
+      const selectedLabels = myPicks.map((row) =>
+        miniBetChoiceLabel(type, row.choice, match.teamA, match.teamB),
+      );
+      const transactionAmount =
+        myPicks.reduce(
+          (sum, row) => sum + row.lossTransactions.reduce((s, t) => s + t.amount, 0),
+          0,
+        );
+      const hasAnyWin = result && !result.voided && result.winningChoice
+        ? myPicks.some((row) => row.choice === result.winningChoice)
+        : false;
+      const resultState =
+        result && result.voided
+          ? "void" as const
+          : result && myPicks.length > 0 && result.winningChoice
+            ? hasAnyWin
+              ? "won" as const
+              : "lost" as const
+            : null;
+
+      return {
+        type,
+        title: config.title,
+        shortTitle: config.shortTitle,
+        description: `Chọn tối đa ${MAX_EXACT_SCORE_PICKS} tỷ số theo thứ tự ${match.teamA} - ${match.teamB}. Chỉ cần một tỷ số đúng là thắng.`,
+        helper: config.helper,
+        rewardAmount: terms.rewardAmount,
+        lossAmount: terms.lossAmount,
+        choices: getMiniBetChoiceOptions(type, match.teamA, match.teamB),
+        publicPicks: picks.map((row) => ({
+          voterId: row.user.id,
+          voterName: row.user.name,
+          choice: row.choice,
+          choiceLabel: miniBetChoiceLabel(type, row.choice, match.teamA, match.teamB),
+        })),
+        selectedChoice: selectedChoices[0] ?? null,
+        selectedLabel: selectedLabels.length > 0 ? selectedLabels.join(", ") : null,
+        resultLabel: result
+          ? result.voided
+            ? "Hoàn kèo"
+            : `Kết quả: ${miniBetChoiceLabel(type, result.winningChoice, match.teamA, match.teamB)}`
+          : null,
+        resultState,
+        transactionAmount,
+        multiPick: true,
+        maxPicks: MAX_EXACT_SCORE_PICKS,
+        selectedChoices,
+        selectedLabels,
+      };
+    }
+
+    const pick = picks.find((row) => row.userId === currentUserId) ?? null;
     const transactionAmount =
       pick?.lossTransactions.reduce((sum, row) => sum + row.amount, 0) ?? 0;
     const resultState =
