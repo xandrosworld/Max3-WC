@@ -11,7 +11,6 @@ import {
   calculateWinningChoice,
   clampContributionBalance,
   getContributionChangeForVote,
-  MAX_CONTRIBUTION_BALANCE,
   usesOverallWinner,
 } from "./domain";
 import { prisma } from "./prisma";
@@ -255,9 +254,6 @@ export async function settleMatch(input: {
         const current = balances.get(userId) ?? 0;
         let amount = rawAmount;
 
-        if (rawAmount > 0) {
-          amount = Math.min(rawAmount, MAX_CONTRIBUTION_BALANCE - current);
-        }
         if (rawAmount < 0) {
           amount = -Math.min(Math.abs(rawAmount), current);
         }

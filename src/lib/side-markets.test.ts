@@ -14,9 +14,9 @@ import {
 } from "./side-markets";
 
 describe("side market contribution changes", () => {
-  it("caps losing side-market charges at the max Belly balance", () => {
-    expect(getSideMarketContributionChange(2_450_000, 200_000)).toBe(50_000);
-    expect(getSideMarketContributionChange(2_500_000, 200_000)).toBe(0);
+  it("keeps the full losing charge above the former Belly cap", () => {
+    expect(getSideMarketContributionChange(2_450_000, 200_000)).toBe(200_000);
+    expect(getSideMarketContributionChange(2_500_000, 200_000)).toBe(200_000);
   });
 
   it("caps winning rewards at the current Belly balance", () => {

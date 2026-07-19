@@ -12,7 +12,6 @@ import {
   clampContributionBalance,
   formatCurrency,
   formatVietnamTime,
-  MAX_CONTRIBUTION_BALANCE,
 } from "./domain";
 import { prisma } from "./prisma";
 import { getMiniBetTypesForMatch } from "./mini-bets";
@@ -946,7 +945,7 @@ export function getSideMarketContributionChange(
   rawAmount: number,
 ) {
   const current = clampContributionBalance(currentBalance);
-  if (rawAmount > 0) return Math.min(rawAmount, MAX_CONTRIBUTION_BALANCE - current);
+  if (rawAmount > 0) return rawAmount;
   if (rawAmount < 0) {
     const reward = Math.min(Math.abs(rawAmount), current);
     return reward > 0 ? -reward : 0;

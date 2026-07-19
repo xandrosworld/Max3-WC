@@ -6,7 +6,6 @@ import {
 } from "@prisma/client";
 
 export const LOCK_MINUTES = 5;
-export const MAX_CONTRIBUTION_BALANCE = 2_500_000;
 
 export const ROUND_LABELS: Record<RoundType, string> = {
   GROUP: "Vòng bảng",
@@ -119,7 +118,7 @@ export function getLossAmountForVote(
 
 export function clampContributionBalance(amount: number) {
   if (!Number.isFinite(amount)) return 0;
-  return Math.max(0, Math.min(MAX_CONTRIBUTION_BALANCE, amount));
+  return Math.max(0, amount);
 }
 
 export function getContributionChangeForVote(input: {

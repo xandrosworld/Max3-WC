@@ -3,6 +3,7 @@ import { MatchStatus, RoundType, TeamSide, VoteChoice } from "@prisma/client";
 import {
   calculateWinningChoice,
   canUseHopeStar,
+  clampContributionBalance,
   formatCurrency,
   getContributionChangeForVote,
   getContributionAmount,
@@ -246,6 +247,11 @@ describe("settlement money rule", () => {
 
   it("đơn vị hiển thị là Belly", () => {
     expect(formatCurrency(2_500_000)).toBe("2.500.000 Belly");
+  });
+
+  it("không giới hạn số dư Belly tối đa nhưng vẫn giữ đáy 0", () => {
+    expect(clampContributionBalance(3_250_000)).toBe(3_250_000);
+    expect(clampContributionBalance(-50_000)).toBe(0);
   });
 });
 

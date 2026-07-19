@@ -11,7 +11,6 @@ import {
   formatCurrency,
   formatVietnamTime,
   isVoteLocked,
-  MAX_CONTRIBUTION_BALANCE,
 } from "./domain";
 import { prisma } from "./prisma";
 
@@ -686,7 +685,6 @@ function getBalanceAwareChange(
 ) {
   const current = balances.get(userId) ?? 0;
   let amount = rawAmount;
-  if (rawAmount > 0) amount = Math.min(rawAmount, MAX_CONTRIBUTION_BALANCE - current);
   if (rawAmount < 0) amount = -Math.min(Math.abs(rawAmount), current);
   if (amount === 0) return 0;
   balances.set(userId, clampContributionBalance(current + amount));

@@ -252,7 +252,7 @@ describe("settleMatch hope star", () => {
     });
   });
 
-  it("không cộng vượt trần đóng góp 2,5 triệu", async () => {
+  it("ghi đủ khoản đóng góp khi số dư đã vượt 2,5 triệu", async () => {
     txMock.lossTransaction.groupBy.mockResolvedValue([
       { userId: "near-cap", _sum: { amount: 2_490_000 } },
     ]);
@@ -274,7 +274,7 @@ describe("settleMatch hope star", () => {
       data: [
         expect.objectContaining({
           userId: "near-cap",
-          amount: 10_000,
+          amount: 40_000,
         }),
       ],
     });
