@@ -352,23 +352,50 @@ export async function placeMiniBetPick(input: {
     return placeExactScorePick(input.userId, input.matchId, input.choice);
   }
 
-  return prisma.miniBetPick.upsert({
-    where: {
-      userId_matchId_type_choice: {
-        userId: input.userId,
-        matchId: input.matchId,
-        type: input.type,
-        choice: input.choice,
-      },
+  return prisma.$transaction(
+    async (tx) => {
+      const existing = await tx.miniBetPick.findMany({
+        where: {
+          userId: input.userId,
+          matchId: input.matchId,
+          type: input.type,
+        },
+        orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      });
+      const targetPick =
+        existing.find((pick) => pick.choice === input.choice) ?? existing[0];
+
+      if (!targetPick) {
+        return tx.miniBetPick.create({
+          data: {
+            userId: input.userId,
+            matchId: input.matchId,
+            type: input.type,
+            choice: input.choice,
+          },
+        });
+      }
+
+      const duplicateIds = existing
+        .filter((pick) => pick.id !== targetPick.id)
+        .map((pick) => pick.id);
+      if (duplicateIds.length > 0) {
+        await tx.miniBetPick.deleteMany({
+          where: { id: { in: duplicateIds } },
+        });
+      }
+
+      return tx.miniBetPick.update({
+        where: { id: targetPick.id },
+        data: { choice: input.choice },
+      });
     },
-    update: { choice: input.choice },
-    create: {
-      userId: input.userId,
-      matchId: input.matchId,
-      type: input.type,
-      choice: input.choice,
+    {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      maxWait: 5_000,
+      timeout: 10_000,
     },
-  });
+  );
 }
 
 async function placeExactScorePick(
