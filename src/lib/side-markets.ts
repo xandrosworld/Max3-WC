@@ -112,6 +112,11 @@ export type SideMarketCard = {
   closeAtLabel: string | null;
   phase: SideMarketPickPhase | null;
   phaseLabel: string | null;
+  result: {
+    label: string;
+    value: string;
+    detail: string;
+  } | null;
   pick: SideMarketPickCard | null;
   publicPicks: SideMarketPickCard[];
   options: SideMarketOptionCard[];
@@ -457,7 +462,7 @@ export async function getSideMarketCardsForUser(
   now = new Date(),
 ): Promise<SideMarketCard[]> {
   await ensureSideMarkets();
-  const [markets, milestones] = await Promise.all([
+  const [markets, milestones, knockoutState, topScorerAudit] = await Promise.all([
     prisma.sideMarket.findMany({
       where: {
         slug: {
@@ -487,12 +492,26 @@ export async function getSideMarketCardsForUser(
       },
     }),
     getTournamentMilestones(),
+    getChampionKnockoutState(prisma),
+    prisma.auditLog.findFirst({
+      where: {
+        action: "SIDE_MARKET_TOP_SCORER_SETTLED",
+        entityType: "SideMarket",
+      },
+      orderBy: { createdAt: "desc" },
+      select: { details: true },
+    }),
   ]);
 
   const originalMarket = markets.find((market) => market.slug === CHAMPION_MARKET_SLUG);
   const originalPick = originalMarket?.picks.find((pick) => pick.user.id === userId) ?? null;
   const canUseReopenedChampion = canJoinReopenedChampionMarket(
     originalPick?.outcome ?? null,
+  );
+  const resultLabels = await getSettledSideMarketResultLabels(
+    markets,
+    knockoutState.championTeam,
+    getAuditWinningOption(topScorerAudit?.details ?? null),
   );
 
   return markets
@@ -505,7 +524,7 @@ export async function getSideMarketCardsForUser(
           market.slug === CHAMPION_REOPEN_MARKET_SLUG && !canUseReopenedChampion
             ? "Đội bạn chọn ở lượt trước vẫn còn tranh chức vô địch."
             : null,
-      }),
+      }, resultLabels.get(market.slug) ?? null),
     );
 }
 
@@ -1125,6 +1144,7 @@ function buildSideMarketCard(
     canPick: true,
     blockedReason: null,
   },
+  resultValue: string | null = null,
 ): SideMarketCard {
   const availability = getSideMarketAvailability(
     market.type,
@@ -1157,6 +1177,10 @@ function buildSideMarketCard(
     closeAtLabel: availability.closeAt ? formatVietnamTime(availability.closeAt) : null,
     phase: availability.phase,
     phaseLabel: availability.phaseLabel,
+    result:
+      market.settledAt && resultValue
+        ? getSideMarketResultCard(market.slug, resultValue)
+        : null,
     pick: pick
       ? {
           optionLabel: pick.option.label,
@@ -1496,6 +1520,151 @@ function optionDetail(
   return phase === SideMarketPickPhase.SEMI_FINAL
     ? "Đang ở mốc bán kết: thưởng thấp hơn, thua trừ nhiều hơn."
     : "Đang ở mốc tứ kết: thưởng cao hơn, thua trừ nhẹ hơn.";
+}
+
+async function getSettledSideMarketResultLabels(
+  markets: Array<{
+    slug: string;
+    type: SideMarketType;
+    settledAt: Date | null;
+    options: Array<{ label: string; metadata: Prisma.JsonValue | null }>;
+    picks: Array<{
+      outcome: SideMarketPickOutcome;
+      option: { label: string };
+    }>;
+  }>,
+  championTeam: string | null,
+  topScorerWinner: string | null,
+) {
+  const labels = new Map<string, string>();
+
+  for (const market of markets) {
+    if (!market.settledAt) continue;
+
+    if (market.type === SideMarketType.CHAMPION) {
+      const championLabel = championTeam
+        ? market.options.find((option) =>
+            getChampionTeamNames(option)
+              .map(normalizeTeamName)
+              .includes(normalizeTeamName(championTeam)),
+          )?.label
+        : null;
+      const pickedWinner = getWonOptionLabels(market.picks)[0] ?? null;
+      if (championLabel ?? pickedWinner) {
+        labels.set(market.slug, championLabel ?? pickedWinner ?? "");
+      }
+    }
+
+    if (market.type === SideMarketType.TOP_SCORER) {
+      const pickedWinner = getWonOptionLabels(market.picks)[0] ?? null;
+      if (topScorerWinner ?? pickedWinner) {
+        labels.set(market.slug, topScorerWinner ?? pickedWinner ?? "");
+      }
+    }
+  }
+
+  const contributorMarkets = markets.filter(
+    (market) => market.type === SideMarketType.CONTRIBUTOR && market.settledAt,
+  );
+  if (contributorMarkets.length > 0) {
+    const candidateOptions = contributorMarkets.flatMap((market) => market.options);
+    const candidateIds = [
+      ...new Set(
+        candidateOptions
+          .map((option) => getContributorUserId(option.metadata))
+          .filter((candidateId): candidateId is string => Boolean(candidateId)),
+      ),
+    ];
+
+    if (candidateIds.length > 0) {
+      const balances = await getBalances(prisma, candidateIds);
+      const candidateBalances = candidateIds.map((candidateId) => ({
+        userId: candidateId,
+        balance: balances.get(candidateId) ?? 0,
+      }));
+      const candidateNames = new Map(
+        candidateOptions.map((option) => [
+          getContributorUserId(option.metadata),
+          option.label,
+        ]),
+      );
+
+      const highest = [...getContributorWinnerIds(candidateBalances, "highest")]
+        .map((candidateId) => candidateNames.get(candidateId) ?? candidateId)
+        .join(", ");
+      const lowest = [...getContributorWinnerIds(candidateBalances, "lowest")]
+        .map((candidateId) => candidateNames.get(candidateId) ?? candidateId)
+        .join(", ");
+
+      for (const market of contributorMarkets) {
+        if (market.slug === TOP_CONTRIBUTOR_MARKET_SLUG && highest) {
+          labels.set(market.slug, highest);
+        }
+        if (market.slug === BOTTOM_CONTRIBUTOR_MARKET_SLUG && lowest) {
+          labels.set(market.slug, lowest);
+        }
+      }
+    }
+  }
+
+  return labels;
+}
+
+function getWonOptionLabels(
+  picks: Array<{ outcome: SideMarketPickOutcome; option: { label: string } }>,
+) {
+  return [
+    ...new Set(
+      picks
+        .filter((pick) => pick.outcome === SideMarketPickOutcome.WON)
+        .map((pick) => pick.option.label),
+    ),
+  ];
+}
+
+function getAuditWinningOption(details: Prisma.JsonValue | null) {
+  if (
+    details &&
+    typeof details === "object" &&
+    !Array.isArray(details) &&
+    "winningOption" in details &&
+    typeof (details as { winningOption?: unknown }).winningOption === "string"
+  ) {
+    return (details as { winningOption: string }).winningOption;
+  }
+  return null;
+}
+
+function getSideMarketResultCard(slug: string, value: string) {
+  if (slug === TOP_SCORER_MARKET_SLUG) {
+    return {
+      label: "Kết quả đã chốt",
+      value: `Vua phá lưới: ${value}`,
+      detail: "Các phiếu chọn đúng hoặc sai đã được tính vào góp quỹ.",
+    };
+  }
+
+  if (slug === TOP_CONTRIBUTOR_MARKET_SLUG) {
+    return {
+      label: "Kết quả đã chốt",
+      value: `Góp quỹ nhiều nhất: ${value}`,
+      detail: "Tính theo tổng Belly sau chung kết và toàn bộ kèo mini.",
+    };
+  }
+
+  if (slug === BOTTOM_CONTRIBUTOR_MARKET_SLUG) {
+    return {
+      label: "Kết quả đã chốt",
+      value: `Góp quỹ ít nhất: ${value}`,
+      detail: "Tính theo tổng Belly sau chung kết và toàn bộ kèo mini.",
+    };
+  }
+
+  return {
+    label: "Kết quả đã chốt",
+    value: `Đội vô địch: ${value}`,
+    detail: "Các phiếu chọn đội vô địch đã được tính vào góp quỹ.",
+  };
 }
 
 function getChampionTeamNames(option: { metadata: Prisma.JsonValue | null; label: string }) {

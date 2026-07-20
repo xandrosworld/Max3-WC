@@ -1,4 +1,4 @@
-import { CircleDollarSign, Sparkles, Trophy, UsersRound } from "lucide-react";
+import { CircleDollarSign, CheckCircle2, Sparkles, Trophy, UsersRound } from "lucide-react";
 import {
   SideMarketPickForm,
   SideMarketSelectPickForm,
@@ -83,7 +83,9 @@ function SideMarketCardView({ market }: { market: SideMarketCard }) {
         <InfoLine label="Luật" value="Chọn một lần" />
       </div>
 
-      <PublicPicksList picks={market.publicPicks} />
+      {market.result && <SettledResult result={market.result} />}
+
+      <PublicPicksList picks={market.publicPicks} isSettled={market.isSettled} />
 
       {market.pick ? (
         <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
@@ -181,7 +183,34 @@ function SideMarketCardView({ market }: { market: SideMarketCard }) {
   );
 }
 
-function PublicPicksList({ picks }: { picks: SideMarketPickCard[] }) {
+function SettledResult({
+  result,
+}: {
+  result: NonNullable<SideMarketCard["result"]>;
+}) {
+  return (
+    <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/90 p-3 text-emerald-950 shadow-sm">
+      <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+        <CheckCircle2 size={15} aria-hidden="true" />
+        {result.label}
+      </p>
+      <p className="mt-1 text-base font-black leading-snug text-slate-950">
+        {result.value}
+      </p>
+      <p className="mt-1 text-xs font-bold leading-5 text-slate-600">
+        {result.detail}
+      </p>
+    </div>
+  );
+}
+
+function PublicPicksList({
+  picks,
+  isSettled,
+}: {
+  picks: SideMarketPickCard[];
+  isSettled: boolean;
+}) {
   if (picks.length === 0) return null;
 
   const visiblePicks = picks.slice(0, 12);
@@ -207,6 +236,23 @@ function PublicPicksList({ picks }: { picks: SideMarketPickCard[] }) {
             <span className="max-w-28 truncate text-emerald-700 sm:max-w-36">
               {pick.optionLabel}
             </span>
+            {isSettled && (
+              <span
+                className={`ml-1 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-normal ${
+                  pick.outcome === "WON"
+                    ? "bg-emerald-100 text-emerald-800"
+                    : pick.outcome === "LOST"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                {pick.outcome === "WON"
+                  ? "Đúng"
+                  : pick.outcome === "LOST"
+                    ? "Sai"
+                    : "Chờ"}
+              </span>
+            )}
           </span>
         ))}
         {hiddenCount > 0 && (
